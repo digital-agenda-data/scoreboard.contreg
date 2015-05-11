@@ -181,11 +181,6 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>StripesDispatcher</servlet-name>
-        <url-pattern>/home</url-pattern>
-    </servlet-mapping>
-
-    <servlet-mapping>
-        <servlet-name>StripesDispatcher</servlet-name>
         <url-pattern>/admin/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>

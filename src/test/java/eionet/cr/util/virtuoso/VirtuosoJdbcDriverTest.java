@@ -30,8 +30,8 @@ import junit.framework.TestCase;
 
 import org.junit.Test;
 
-import virtuoso.jdbc3.VirtuosoConnectionPoolDataSource;
-import virtuoso.jdbc3.VirtuosoPooledConnection;
+import virtuoso.jdbc4.VirtuosoConnectionPoolDataSource;
+import virtuoso.jdbc4.VirtuosoPooledConnection;
 import eionet.cr.config.GeneralConfig;
 import eionet.cr.test.helpers.RdfLoader;
 
@@ -58,7 +58,7 @@ public class VirtuosoJdbcDriverTest extends TestCase {
         dbsource.setUser(GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_USR));
         dbsource.setCharset("UTF-8");
         VirtuosoPooledConnection pooledConnection = (VirtuosoPooledConnection) dbsource.getPooledConnection();
-        virtuoso.jdbc3.VirtuosoConnection con = pooledConnection.getVirtuosoConnection();
+        virtuoso.jdbc4.VirtuosoConnection con = pooledConnection.getVirtuosoConnection();
         String jdbcComp = "DB.DBA.TTLP (?, ?, ?, ?)";
         CallableStatement stmt = null;
         int MAXIT = 10000;

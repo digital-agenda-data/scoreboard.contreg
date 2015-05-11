@@ -49,7 +49,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.RepositoryException;
 
-import virtuoso.jdbc3.VirtuosoException;
+import virtuoso.jdbc4.VirtuosoException;
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
 import eionet.cr.dao.DAOException;
