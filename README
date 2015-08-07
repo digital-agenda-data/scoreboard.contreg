@@ -1,5 +1,6 @@
 
-# This is the Scoreboard's Content Registry (CR) software.
+This is the Scoreboard's Content Registry (CR) software.
+========================================================
 
 CR is a search engine and triplestore data structured in RDF format.
 The data is collected and uploaded from various sources, including the Web and user-uploaded files.
@@ -9,7 +10,8 @@ The following sections describe how to install and run CR.
 You might also find complementing instructions from the CR installation guide available at EEA's Reportnet wiki:
 https://taskman.eionet.europa.eu/projects/reportnet/wiki/CR_Installation_Guide
 
-## 1. Download and install Java, Tomcat and Maven.
+1. Download and install Java, Tomcat and Maven.
+-----------------------------------------------
 
 CR runs on Java platform, and has been tested and run on Tomcat Java Servlet Container.
 CR source code is built with Maven.
@@ -21,7 +23,8 @@ The necessary versions are as follows:
  - Maven 2.0.4 or higher
  - Tomcat 5.5 or higher
 
-## 2. Download and install Virtuoso
+2. Download and install Virtuoso
+--------------------------------
 
 CR uses OpenLink Virtuoso as its backend for relational database and triplestore.
 Download Open-Source Edition of Virtuoso from here:
@@ -44,8 +47,8 @@ http://virtuoso.openlinksw.com/dataspace/dav/wiki/Main/VOSIndex
 **NB!!!** For security reasons, be sure to change your Virtuoso administrator password to
 something other than the default!
 
-## 3. Download, configure and build CR source code
-
+3. Download, configure and build CR source code
+-----------------------------------------------
 
 CR source code is kept in a Git repository located at
 https://github.com/tripledev/scoreboard.contreg.git
@@ -61,10 +64,13 @@ Now you are ready to build your CR code. It is built with Maven.
 The following command assumes that Maven's executable (mvn) is on the command path,
 and that it is run while being in CR_SOURCE_HOME directory:
 
-    shell> mvn clean install
+```
+shell> mvn clean install
+```
 
 
-## 4. Import CR database creation scripts
+4. Import CR database creation scripts
+--------------------------------------
 
 The following commands shall import scripts that create necessary users,
 table structures, indexes and other CR setup information into Virtuoso.
@@ -81,6 +87,7 @@ and the following commands should be executed while being in that directory.
 The commands also assume that ISQL executable is on the command path
 (it is located in VIRTUOSO_HOME/bin directory).
 
+```
     Create necessary Virtuoso users for CR:
 
         shell> isql localhost:1111 -U dba -P password < 1_create_users.sql
@@ -96,13 +103,15 @@ The commands also assume that ISQL executable is on the command path
     Enforce CR's default inference rules:
 
         shell> isql localhost:1111 -U dba -P password < 4_enforce_inferene_rules.sql
+```
 
 Note that inference is something that is part of Semantic Web and helps CR to self-derive
 conclusions and new information from certain structured data statements, based on a certain
 ruleset. The last above command imports CR's default ruleset. It downloads the ruleset from
 http://cr.eionet.europa.eu/ontologies/contreg.rdf
 
-## 5. Conditional: register Eionet's GlobalSign CA certificates in your JVM.
+5. Conditional: register Eionet's GlobalSign CA certificates in your JVM.
+-------------------------------------------------------------------------
 
 This step is required only if you configured CR to use EEA's  Central Authentication Service (CAS) in step 3.
 In other words: if you pointed edu.yale.its.tp.cas.client.filter.loginUrl and edu.yale.its.tp.cas.client.filter.validateUrl
@@ -122,13 +131,16 @@ shell> keytool -list -keystore $JAVA_HOME/jre/lib/security/cacerts
 
 c) Import the certificate from the .crt file into your JVM's default keystore of  trusted certificates.
 Example:
+```
 shell> keytool -import -file GlobalSign-Root-CA.crt -alias globalsignca28 -keystore $JAVA_HOME/jre/lib/security/cacerts
 This certificate will be added under alias "globalsignca28".
+```
 
 d) Do steps b) and c) for GlobalSign-Domain-Validation-CA.crt as well.
 Store it under the alias 'globalsigndomain14'.
 
-## 6. Deploy CR web application and run Tomcat
+6. Deploy CR web application and run Tomcat
+--------------------------------------------
 
 If the build went well, you shall have cr.war file in CR_SOURCE_HOME/target directory.
 Now all you have to do is to simply copy that file into Tomcat's webapps directory.
@@ -139,8 +151,10 @@ Before you run Tomcat, you need to change the way Tomcat handles URI encoding.
 By default, it uses ISO-8859-1 for that. But CR needs UTF-8. Therefore make sure
 that the <Connector> tag in Tomcat's server.xml has the following attributes:
 
-    URIEncoding="UTF-8"
-    useBodyEncodingForURI="true"
+```
+URIEncoding="UTF-8"
+useBodyEncodingForURI="true"
+```
 
 Once Tomcat is running, open CR in the browser. It's application context path is /cr,
 unless you renamed cr.war to something else or you chose to deploy CR into a virtual host.
