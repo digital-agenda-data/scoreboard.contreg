@@ -49,7 +49,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.RepositoryException;
 
-import virtuoso.jdbc3.VirtuosoException;
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
 import eionet.cr.dao.DAOException;
@@ -94,6 +93,9 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
     /** */
     private static final String STEP2_JSP = "/pages/admin/staging/exportRDF2.jsp";
+
+    /** */
+    private static final int VIRTUOSO_SQL_ERROR = -8;
 
     /** */
     private String dbName;
@@ -158,8 +160,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         // Handle POST request.
         try {
             // Compile the query on the database side, get the names of columns selected by the query.
-            Set<String> columnNames =
-                    DAOFactory.get().getDao(StagingDatabaseDAO.class).prepareStatement(queryConf.getQuery(), dbName);
+            Set<String> columnNames = DAOFactory.get().getDao(StagingDatabaseDAO.class).prepareStatement(queryConf.getQuery(), dbName);
 
             // If column names changed, make corrections in the mappings map then too.
             if (!equalsCaseInsensitive(columnNames, prevColumnNames)) {
@@ -177,12 +178,12 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             return new ForwardResolution(STEP2_JSP);
         } catch (DAOException e) {
             Throwable cause = e.getCause();
-            if (cause instanceof VirtuosoException) {
-                VirtuosoException ve = (VirtuosoException) cause;
-                if (ve.getErrorCode() == VirtuosoException.SQLERROR) {
-                    addGlobalValidationError("An SQL error occurred:\n" + ve.getMessage());
+            if (cause != null && cause.getClass().getSimpleName().startsWith("VirtuosoException") && cause instanceof SQLException) {
+                SQLException sqlE = (SQLException) cause;
+                if (sqlE.getErrorCode() == VIRTUOSO_SQL_ERROR) {
+                    addGlobalValidationError("An SQL error occurred:\n" + sqlE.getMessage());
                 } else {
-                    addGlobalValidationError("A database error occurred:\n" + ve.getMessage());
+                    addGlobalValidationError("A database error occurred:\n" + sqlE.getMessage());
                 }
                 return new ForwardResolution(STEP1_JSP);
             } else {
@@ -225,8 +226,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             return new ForwardResolution(STEP2_JSP);
         }
 
-        addSystemMessage("RDF export successfully started! "
-                + "Use operations menu to list ongoing and finished RDF exports from this database.");
+        addSystemMessage("RDF export successfully started! " + "Use operations menu to list ongoing and finished RDF exports from this database.");
         return new RedirectResolution(StagingDatabaseActionBean.class).addParameter("dbName", dbName);
     }
 
@@ -763,8 +763,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         if (indicators == null) {
 
-            String[] labels =
-                    {Predicates.SKOS_PREF_LABEL, Predicates.SKOS_ALT_LABEL, Predicates.RDFS_LABEL, Predicates.SKOS_NOTATION};
+            String[] labels = {Predicates.SKOS_PREF_LABEL, Predicates.SKOS_ALT_LABEL, Predicates.RDFS_LABEL, Predicates.SKOS_NOTATION};
             HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
             SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DAS_INDICATOR, null, null, labels);
             if (searchResult != null) {
