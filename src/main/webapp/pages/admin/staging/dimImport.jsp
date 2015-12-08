@@ -14,7 +14,7 @@
 
             <div style="padding-top:10px">
 
-                <stripes:form id="filesForm" method="post" beanclass="${actionBean.class.name}">
+                <stripes:form id="filesForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <p>Query:</p>
                     <stripes:textarea id="txtQuery" name="query" cols="80" rows="15" value="${actionBean.query}"/>

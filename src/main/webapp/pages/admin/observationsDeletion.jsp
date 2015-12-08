@@ -18,7 +18,7 @@
         </p>
 
         <div style="margin-top:1em">
-            <crfn:form beanclass="${actionBean.class.name}" method="post">
+            <crfn:form beanclass="${actionBean['class'].name}" method="post">
                 <div>
                     <stripes:label for="datasetSelect" class="question required">Target dataset:</stripes:label><br/>
                     <stripes:select id="datasetSelect" name="datasetUri" value="${actionBean.datasetUri}">

@@ -53,7 +53,7 @@
             <%-- The form and selection box of endpoints. --%>
 
             <div style="margin-top:2em;width:100%">
-                <crfn:form id="endpointsForm" beanclass="${actionBean.class.name}" method="get">
+                <crfn:form id="endpointsForm" beanclass="${actionBean['class'].name}" method="get">
                     <label for="endpointSelect" class="question">Select a SPARQL endpoint:</label><br/>
                     <stripes:select id="endpointSelect" name="endpointUrl" value="${actionBean.endpointUrl}" onchange="this.form.submit();" size="10" style="width:70%">
                         <c:forEach items="${actionBean.endpoints}" var="endpoint">
@@ -68,7 +68,7 @@
             <c:if test="${not empty actionBean.endpointUrl}">
                 <c:if test="${not empty actionBean.queries}">
                     <div style="margin-top:20px">
-                        <crfn:form id="queriesForm" beanclass="${actionBean.class.name}" method="post">
+                        <crfn:form id="queriesForm" beanclass="${actionBean['class'].name}" method="post">
 
                             <display:table name="${actionBean.queries}" class="datatable" id="query" sort="list" pagesize="20" requestURI="${actionBean.urlBinding}" style="width:80%">
 

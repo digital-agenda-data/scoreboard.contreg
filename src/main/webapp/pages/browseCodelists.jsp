@@ -34,7 +34,7 @@
     </p>
 
     <div style="margin-top:20px;width:100%">
-        <crfn:form id="codelistsForm" beanclass="${actionBean.class.name}" method="get">
+        <crfn:form id="codelistsForm" beanclass="${actionBean['class'].name}" method="get">
             <label for="codelistsSelect" class="question">Displaying items of this codelist:</label><br/>
             <stripes:select id="codelistsSelect" name="codelistUri" value="${actionBean.codelistUri}" onchange="this.form.submit();" title="${actionBean.codelistUri}">
                 <c:forEach items="${actionBean.codelists}" var="codelist">

@@ -13,13 +13,13 @@
             <h1>Edit staging database metadata</h1>
 
             <div style="margin-top:20px">
-                This page enables you to edit the metadata of staging database <stripes:link beanclass="${actionBean.class.name}"><c:out value="${actionBean.dbName}"/><stripes:param name="dbName" value="${actionBean.dbName}"/></stripes:link>.
+                This page enables you to edit the metadata of staging database <stripes:link beanclass="${actionBean['class'].name}"><c:out value="${actionBean.dbName}"/><stripes:param name="dbName" value="${actionBean.dbName}"/></stripes:link>.
             </div>
 
             <%-- The table with the database's metadata. --%>
 
             <div style="padding-top:20px">
-                <crfn:form id="editForm" beanclass="${actionBean.class.name}" method="post">
+                <crfn:form id="editForm" beanclass="${actionBean['class'].name}" method="post">
                     <table class="datatable" style="width:90%">
                         <colgroup>
                             <col width="25%">

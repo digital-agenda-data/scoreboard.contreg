@@ -18,7 +18,7 @@
         </div>
 
         <div style="margin-top:20px">
-           <crfn:form id="searchForm" beanclass="${actionBean.class.name}" method="get" focus="first">
+           <crfn:form id="searchForm" beanclass="${actionBean['class'].name}" method="get" focus="first">
                <stripes:label for="txtSearch" class="question">Search text:</stripes:label><br/>
                <stripes:text name="search" id="txtSearch" size="70"/>
                <button type="submit">Search</button>

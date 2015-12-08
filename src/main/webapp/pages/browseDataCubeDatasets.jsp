@@ -103,7 +103,7 @@
     <%-- The "create new dataset" dialog. Hidden unless activated. --%>
 
     <div id="creationDialog" title="Create a new dataset">
-        <stripes:form beanclass="${actionBean.class.name}" method="post">
+        <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
             <p>
                 The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.<br/>

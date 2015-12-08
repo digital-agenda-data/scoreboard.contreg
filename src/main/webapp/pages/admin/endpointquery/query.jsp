@@ -39,7 +39,7 @@
         <%-- The section that displays the query's properties, editable or not, depending on the event. --%>
 
         <div style="margin-top:20px">
-            <crfn:form id="queryForm" beanclass="${actionBean.class.name}" method="post" focus="first">
+            <crfn:form id="queryForm" beanclass="${actionBean['class'].name}" method="post" focus="first">
                 <table>
                     <tr>
                         <td>
@@ -135,7 +135,7 @@
                         </display:column>
                         <display:column title="Object">
                             <c:choose>
-                                <c:when test="${fn:contains(statement.object.class.name, 'Literal')}">
+                                <c:when test="${fn:contains(statement.object['class'].name, 'Literal')}">
                                     <c:out value="${statement.object.label}"/>
                                 </c:when>
                                 <c:otherwise>

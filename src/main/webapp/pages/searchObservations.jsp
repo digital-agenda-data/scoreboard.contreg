@@ -23,7 +23,7 @@
 
     <c:set var="noFilters" value="true"/>
     
-    <crfn:form beanclass="${actionBean.class.name}" method="get">
+    <crfn:form beanclass="${actionBean['class'].name}" method="get">
         <table>
             <c:forEach items="${actionBean.availFilters}" var="filter" varStatus="filtersLoopStatus">
                 <tr>

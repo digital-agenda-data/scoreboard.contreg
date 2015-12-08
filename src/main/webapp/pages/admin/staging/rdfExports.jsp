@@ -94,7 +94,7 @@
             <c:set var="currColNum" value="0"/>
 
             <div style="width:75%;padding-top:10px">
-                <stripes:form id="exportsForm" method="post" beanclass="${actionBean.class.name}">
+                <stripes:form id="exportsForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <display:table name="${actionBean.rdfExports}" class="sortable" id="rdfExport" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
 

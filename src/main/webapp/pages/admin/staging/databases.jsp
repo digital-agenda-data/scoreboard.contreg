@@ -73,7 +73,7 @@
         <c:if test="${not empty actionBean.databases}">
 
             <div style="width:75%;padding-top:10px">
-                <stripes:form id="databasesForm" method="post" beanclass="${actionBean.class.name}">
+                <stripes:form id="databasesForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <display:table name="${actionBean.databases}" class="sortable" id="database" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
                         <display:column style="width:5%">

@@ -63,7 +63,7 @@
         <%-- The form --%>
 
         <div style="padding-top:20px">
-            <crfn:form id="uploadForm" beanclass="${actionBean.class.name}" method="post">
+            <crfn:form id="uploadForm" beanclass="${actionBean['class'].name}" method="post">
 
                 <table>
                     <tr>
@@ -147,7 +147,7 @@
         <%-- The "create new dataset" popup. Displayed when user clicks on the relevant popup link. --%>
 
         <div id="createNewDatasetDialog" title="Create a new dataset">
-            <stripes:form beanclass="${actionBean.class.name}" method="post">
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <p>
                     The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.<br/>

@@ -67,7 +67,7 @@
 
         <div style="width:100%;padding-top:10px">
 
-            <stripes:form id="filtersForm" method="post" beanclass="${actionBean.class.name}">
+            <stripes:form id="filtersForm" method="post" beanclass="${actionBean['class'].name}">
 
                 <div>
                     <fieldset id="filterFieldset">

@@ -65,7 +65,7 @@
                             </stripes:link>
                         </li>
                         <li>
-                            <stripes:link beanclass="${actionBean.class.name}" event="edit" title="Edit database metadata">
+                            <stripes:link beanclass="${actionBean['class'].name}" event="edit" title="Edit database metadata">
                                 <c:out value="Edit metadata"/>
                                 <stripes:param name="dbName" value="${actionBean.dbDTO.name}"/>
                             </stripes:link>

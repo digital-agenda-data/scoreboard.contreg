@@ -379,7 +379,7 @@
 
             <c:set var="currentDatasetStatus" value="${actionBean.subject.predicates['http://www.w3.org/ns/adms#status'][0].value}"/>
 
-            <stripes:form beanclass="${actionBean.class.name}" method="post">
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <table>
                     <tr>

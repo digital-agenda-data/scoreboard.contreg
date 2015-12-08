@@ -128,7 +128,7 @@
                     <tr>
                         <th class="question" style="text-align:right" title="The export's status as of right now">Status:</th>
                         <td>
-                            <stripes:link id="exportLogLink_1" beanclass="${actionBean.class.name}" event="openLog" title="View the export's log">
+                            <stripes:link id="exportLogLink_1" beanclass="${actionBean['class'].name}" event="openLog" title="View the export's log">
                                 <c:out value="${actionBean.exportDTO.status}"/>
                                 <stripes:param name="exportId" value="${actionBean.exportDTO.exportId}"/>
                             </stripes:link>

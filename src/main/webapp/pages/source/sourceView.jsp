@@ -18,7 +18,7 @@
                     <li><a href="#">Operations</a>
                     <ul>
                         <li>
-                            <stripes:link beanclass="${actionBean.class.name}" event="scheduleUrgentHarvest" title="Schedule urgent harvest of this source">
+                            <stripes:link beanclass="${actionBean['class'].name}" event="scheduleUrgentHarvest" title="Schedule urgent harvest of this source">
                                 <c:out value="Schedule urgent harvest"/>
                                 <stripes:param name="uri" value="${actionBean.uri}"/>
                             </stripes:link>

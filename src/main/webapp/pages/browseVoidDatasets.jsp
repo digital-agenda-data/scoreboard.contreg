@@ -56,7 +56,7 @@
 
         <h1>Browse VoID datasets</h1>
 
-        <crfn:form id="filtersForm" beanclass="${actionBean.class.name}" method="post">
+        <crfn:form id="filtersForm" beanclass="${actionBean['class'].name}" method="post">
 
             <fieldset>
                 <legend>Filters</legend>

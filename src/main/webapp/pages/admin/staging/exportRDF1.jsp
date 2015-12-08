@@ -71,7 +71,7 @@
         <%-- The form --%>
 
         <div style="padding-top:10px">
-            <crfn:form id="form1" beanclass="${actionBean.class.name}" method="post">
+            <crfn:form id="form1" beanclass="${actionBean['class'].name}" method="post">
                 <table>
                     <tr>
                         <td style="text-align:right;vertical-align:top">

@@ -21,7 +21,7 @@
         By default, the first value of every filter is selected. Changing a filter reloads all filters below it.
     </p>
 
-    <crfn:form beanclass="${actionBean.class.name}" method="get">
+    <crfn:form beanclass="${actionBean['class'].name}" method="get">
         <table>
             <c:forEach items="${actionBean.availFilters}" var="filter" varStatus="filtersLoopStatus">
                 <tr>

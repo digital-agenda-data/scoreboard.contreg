@@ -314,7 +314,7 @@ public final class SQLUtil {
         if (conn != null) {
             try {
                 conn.close();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 // Ignore closing exceptions.
                 LOGGER.warn("Exception when closing connection", e);
             }
@@ -329,7 +329,7 @@ public final class SQLUtil {
         if (stmt != null) {
             try {
                 stmt.close();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 // Ignore closing exceptions.
                 LOGGER.warn("Exception when closing statement", e);
             }
@@ -344,7 +344,7 @@ public final class SQLUtil {
         if (rs != null) {
             try {
                 rs.close();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 // Ignore closing exceptions.
                 LOGGER.warn("Exception when closing result set", e);
             }

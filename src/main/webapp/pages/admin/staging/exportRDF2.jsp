@@ -82,7 +82,7 @@
         <%-- The form --%>
 
         <div style="padding-top:20px">
-            <crfn:form id="form1" beanclass="${actionBean.class.name}" method="post">
+            <crfn:form id="form1" beanclass="${actionBean['class'].name}" method="post">
                 <fieldset>
                     <legend style="font-weight:bold">The query:</legend>
                     <pre style="font-size:0.75em;max-height:130px;overflow:auto"><c:out value="${actionBean.queryConf.query}" /></pre>
@@ -253,7 +253,7 @@
         <%-- The "create new dataset" popup. Displayed when user clicks on the relevant popup link. --%>
 
         <div id="createNewDatasetDialog" title="Create a new dataset">
-            <stripes:form beanclass="${actionBean.class.name}" method="post">
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <p>
                     The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.<br/>

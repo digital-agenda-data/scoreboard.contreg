@@ -23,7 +23,7 @@
             <div style="margin-top:20px">
                 <display:table name="${actionBean.queryResult}" id="statement" sort="page" class="datatable" style="width:80%">
                     <display:column title="Property">
-                        <stripes:link beanclass="${actionBean.class.name}">
+                        <stripes:link beanclass="${actionBean['class'].name}">
                             <c:out value="${statement.predicate}"/>
                             <stripes:param name="url" value="${statement.predicate}"/>
                             <stripes:param name="endpoint" value="${actionBean.endpoint}"/>
@@ -31,11 +31,11 @@
                     </display:column>
                     <display:column title="Value">
                         <c:choose>
-                            <c:when test="${fn:contains(statement.object.class.name, 'Literal')}">
+                            <c:when test="${fn:contains(statement.object['class'].name, 'Literal')}">
                                 <c:out value="${statement.object.label}"/>
                             </c:when>
                             <c:otherwise>
-                                <stripes:link beanclass="${actionBean.class.name}">
+                                <stripes:link beanclass="${actionBean['class'].name}">
                                     <c:out value="${statement.object}"/>
                                     <stripes:param name="url" value="${statement.object}"/>
                                     <stripes:param name="endpoint" value="${actionBean.endpoint}"/>

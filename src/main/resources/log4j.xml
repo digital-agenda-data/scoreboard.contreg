@@ -13,6 +13,10 @@
         <level value="debug" />
     </logger>
 
+    <logger name="net.sourceforge.stripes.controller.StripesFilter">
+        <level value="fatal" />
+    </logger>
+
     <root>
         <priority value="warn" />
         <appender-ref ref="stdout" />

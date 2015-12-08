@@ -121,7 +121,7 @@
             </div>
 
             <div style="width:75%;padding-top:10px">
-                <stripes:form id="filesForm" method="post" beanclass="${actionBean.class.name}">
+                <stripes:form id="filesForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <display:table name="${actionBean.availableFiles}" id="file" class="sortable" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
                         <display:column>
@@ -133,7 +133,7 @@
                                     <c:out value="${file.name}"/>
                                 </c:when>
                                 <c:otherwise>
-                                    <stripes:link beanclass="${actionBean.class.name}">
+                                    <stripes:link beanclass="${actionBean['class'].name}">
                                         <c:out value="${file.name}"/>
                                         <stripes:param name="select" value="${file.name}"/>
                                     </stripes:link>
@@ -173,7 +173,7 @@
         <%-- The upload dialog. Hidden unless activated. --%>
 
         <div id="uploadDialog" title="Upload file">
-            <stripes:form beanclass="${actionBean.class.name}" method="post">
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <table>
                     <tr>
@@ -209,7 +209,7 @@
         <%-- The download dialog. Hidden unless activated. --%>
 
         <div id="downloadDialog" title="Download file">
-            <stripes:form beanclass="${actionBean.class.name}" method="post">
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <table>
                     <tr>
@@ -250,7 +250,7 @@
                     The uncompressed file's name will be: <strong><c:out value="${actionBean.uncompressedFileName}"/></strong>.
                 </p>
 
-                <crfn:form beanclass="${actionBean.class.name}" method="post" style="margin-top:20px">
+                <crfn:form beanclass="${actionBean['class'].name}" method="post" style="margin-top:20px">
                     <input type="submit" value="Uncompress">
                     <input type="button" id="closeCompressedFileDialog" value="Cancel"/>
 
@@ -275,7 +275,7 @@
                     Otherwise click "Cancel".
                 </p>
 
-                <crfn:form beanclass="${actionBean.class.name}" method="post" style="margin-top:20px">
+                <crfn:form beanclass="${actionBean['class'].name}" method="post" style="margin-top:20px">
 
                     <display:table name="${actionBean.archiveEntries}" id="entry" class="datatable" requestURI="${actionBean.urlBinding}" style="padding-bottom:20px">
 
