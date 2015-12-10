@@ -22,7 +22,11 @@ package eionet.cr.dao.virtuoso;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+
+import org.apache.commons.lang.time.DateUtils;
 
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.HarvestDAO;
@@ -34,7 +38,6 @@ import eionet.cr.dto.HarvestDTO;
 import eionet.cr.dto.HarvestStatDTO;
 import eionet.cr.harvest.HarvestConstants;
 import eionet.cr.harvest.util.HarvestMessageType;
-import eionet.cr.util.Util;
 import eionet.cr.util.sql.SQLUtil;
 
 /**
@@ -133,7 +136,8 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
         values.add(harvestType);
         values.add(user);
         values.add(status);
-        values.add(Util.currentDateAsString());
+        long now = DateUtils.truncate(new Date(), Calendar.SECOND).getTime();
+        values.add(new java.sql.Timestamp(now));
 
         Connection conn = null;
         try {
@@ -158,7 +162,8 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
 
         List<Object> values = new ArrayList<Object>();
         values.add(HarvestConstants.STATUS_FINISHED);
-        values.add(Util.currentDateAsString());
+        long now = DateUtils.truncate(new Date(), Calendar.SECOND).getTime();
+        values.add(new java.sql.Timestamp(now));
         values.add(new Integer(noOfTriples));
         values.add(new Integer(httpCode));
 

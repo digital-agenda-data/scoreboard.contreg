@@ -107,4 +107,14 @@ public class UrgentHarvestQueueItemDTO implements Serializable {
     public boolean isPushHarvest() {
         return pushedContent != null;
     }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return String.format("url: [%s], time: [%s]", url, timeAdded.toString());
+    }
 }
