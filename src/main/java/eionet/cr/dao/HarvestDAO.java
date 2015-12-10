@@ -37,11 +37,10 @@ public interface HarvestDAO extends DAO {
      * @param harvestSourceId
      * @param harvestType
      * @param user
-     * @param status
      * @return int
      * @throws DAOException
      */
-    int insertStartedHarvest(int harvestSourceId, String harvestType, String user, String status) throws DAOException;
+    int insertStartedHarvest(int harvestSourceId, String harvestType, String user) throws DAOException;
 
     /**
      *

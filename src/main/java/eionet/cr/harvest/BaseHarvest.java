@@ -224,7 +224,8 @@ public abstract class BaseHarvest implements Harvest {
 
         // create harvest record in the database
         try {
-            harvestId = getHarvestDAO().insertStartedHarvest(sourceId, getHarvestType(), user, HarvestConstants.STATUS_STARTED);
+            harvestId = getHarvestDAO().insertStartedHarvest(sourceId, getHarvestType(), user);
+            LOGGER.debug("Saved started-harvest record with id=" + harvestId);
         } catch (DAOException e) {
             throw new HarvestException(e.getMessage(), e);
         }
@@ -525,6 +526,7 @@ public abstract class BaseHarvest implements Harvest {
 
         LOGGER.debug(loggerMsg("Updating harvest record, saving harvest messages"));
         Integer noOfStatements = getContextSourceDTO().getStatements();
+        LOGGER.debug("Saving finished-harvest record with id=" + harvestId);
         getHarvestDAO().updateFinishedHarvest(harvestId, noOfStatements == null ? 0 : noOfStatements, httpResponseCode);
         for (HarvestMessageDTO messageDTO : harvestMessages) {
             getHarvestMessageDAO().insertHarvestMessage(messageDTO);

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.dao.DAOException;
@@ -48,12 +49,16 @@ public class VirtuosoUrgentHarvestQueueDAO extends VirtuosoBaseDAO implements Ur
 
     /** */
     private static final String ADD_PISH_HARVEST_SQL = "insert into URGENT_HARVEST_QUEUE (URL,\"TIMESTAMP\",PUSHED_CONTENT) VALUES (?,NOW(),?)";
+
     /** */
     private static final String GET_URGENT_HARVEST_QUEUE_SQL = "select * from URGENT_HARVEST_QUEUE order by \"TIMESTAMP\" asc";
+
     /** */
     private static final String PEEK_SQL = "select top 1 * from URGENT_HARVEST_QUEUE order by \"TIMESTAMP\" asc";
+
     /** */
-    private static final String DELETE_QUEUE_ITEM_SQL = "delete from URGENT_HARVEST_QUEUE where URL=? and \"TIMESTAMP\"=?";
+    private static final String DELETE_QUEUE_ITEM_SQL = "delete from URGENT_HARVEST_QUEUE "
+            + "where URL=? and substring(cast(\"TIMESTAMP\" as varchar), 1, 19)=?";
 
     /*
      * (non-Javadoc)
@@ -176,14 +181,18 @@ public class VirtuosoUrgentHarvestQueueDAO extends VirtuosoBaseDAO implements Ur
 
     /**
      *
-     * @param queueItem
+     * @param item
      * @throws SQLException
      */
-    private static int deleteQueueItem(UrgentHarvestQueueItemDTO queueItem, Connection conn) throws SQLException {
+    private static int deleteQueueItem(UrgentHarvestQueueItemDTO item, Connection conn) throws SQLException {
+
+        if (item == null || StringUtils.isBlank(item.getUrl()) || item.getTimeAdded() == null) {
+            return 0;
+        }
 
         List<Object> values = new ArrayList<Object>();
-        values.add(queueItem.getUrl());
-        values.add(queueItem.getTimeAdded());
+        values.add(item.getUrl());
+        values.add(DateFormatUtils.format(item.getTimeAdded(), "yyyy-MM-dd HH:mm:ss"));
 
         return SQLUtil.executeUpdate(DELETE_QUEUE_ITEM_SQL, values, conn);
     }

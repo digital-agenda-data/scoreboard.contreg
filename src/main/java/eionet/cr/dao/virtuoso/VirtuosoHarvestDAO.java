@@ -22,11 +22,7 @@ package eionet.cr.dao.virtuoso;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.lang.time.DateUtils;
 
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.HarvestDAO;
@@ -123,21 +119,19 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
 
     /** */
     private static final String INSERT_STARTED_HARVEST_SQL =
-            "insert into HARVEST (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, ?)";
+            "insert into HARVEST (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, NOW())";
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public int insertStartedHarvest(int harvestSourceId, String harvestType, String user, String status) throws DAOException {
+    public int insertStartedHarvest(int harvestSourceId, String harvestType, String user) throws DAOException {
 
         List<Object> values = new ArrayList<Object>();
         values.add(new Integer(harvestSourceId));
         values.add(harvestType);
         values.add(user);
-        values.add(status);
-        long now = DateUtils.truncate(new Date(), Calendar.SECOND).getTime();
-        values.add(new java.sql.Timestamp(now));
+        values.add(HarvestConstants.STATUS_STARTED);
 
         Connection conn = null;
         try {
@@ -152,7 +146,7 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
 
     /** */
     private static final String UPDATE_FINISHED_HARVEST_SQL =
-            "update HARVEST set STATUS=?, FINISHED=?, TOT_STATEMENTS=?, HTTP_CODE=? where HARVEST_ID=?";
+            "update HARVEST set STATUS=?, FINISHED=NOW(), TOT_STATEMENTS=?, HTTP_CODE=? where HARVEST_ID=?";
 
     /**
      * {@inheritDoc}
@@ -162,11 +156,8 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
 
         List<Object> values = new ArrayList<Object>();
         values.add(HarvestConstants.STATUS_FINISHED);
-        long now = DateUtils.truncate(new Date(), Calendar.SECOND).getTime();
-        values.add(new java.sql.Timestamp(now));
         values.add(new Integer(noOfTriples));
         values.add(new Integer(httpCode));
-
         values.add(new Integer(harvestId));
 
         Connection conn = null;
