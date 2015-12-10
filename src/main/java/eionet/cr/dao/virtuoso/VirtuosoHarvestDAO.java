@@ -22,7 +22,11 @@ package eionet.cr.dao.virtuoso;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+
+import org.apache.commons.lang.time.DateUtils;
 
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.HarvestDAO;
@@ -176,9 +180,8 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
      */
     @Override
     public void deleteOldHarvests(int harvestId, int preserveRecent) throws DAOException {
-        /*
-         * Because "TOP N" cannot be used in subselect, I must get the highest started value from the last element in the resultset.
-         */
+
+        //Because "TOP N" cannot be used in subselect, I must get the highest started value from the last element in the resultset.
 
         // get harvest source id and maximum started time
         List<Object> selectParams = new ArrayList<Object>();
@@ -199,7 +202,8 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
         // delete older harvests with same harvest source
         List<Object> deleteParams = new ArrayList<Object>();
         deleteParams.add(dto.getHarvestSourceId());
-        deleteParams.add(dto.getDateString());
+        Date started = dto.getDatetimeStarted();
+        deleteParams.add(started == null ? null : DateUtils.truncate(started, Calendar.SECOND));
 
         StringBuffer deleteSql = new StringBuffer();
         deleteSql.append("DELETE FROM harvest AS h ");

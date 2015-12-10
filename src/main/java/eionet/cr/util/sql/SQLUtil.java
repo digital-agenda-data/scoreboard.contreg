@@ -28,10 +28,13 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.common.CRException;
@@ -393,32 +396,124 @@ public final class SQLUtil {
         }
     }
 
+    public static void main4(String[] args) throws Exception {
+
+        String insertSQL = "insert into TEST_TABLE (STARTED) values (NOW())";
+        Vector<Object> insertValues = new Vector<Object>();
+//        insertValues.add(new Date());
+
+        String updateSQL = "update TEST_TABLE set FINISHED=NOW() where ID=?";
+        Vector<Object> updateValues = new Vector<Object>();
+//        updateValues.add(new Date());
+        updateValues.add(1);
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = SesameUtil.getSQLConnection();
+
+            for (int i = 0; i < 100; i++) {
+                //insertValues.setElementAt(new Date(), 0);
+                int id = executeUpdateReturnAutoID(insertSQL, insertValues, conn);
+                System.out.println("" + i + ", id = " + id);
+
+                Thread.sleep(123);
+
+                //updateValues.setElementAt(new Date(), 0);
+                updateValues.setElementAt(new Integer(id), 0);
+                int updCount = executeUpdate(updateSQL, updateValues, conn);
+                System.out.println("" + i + ", updCount = " + updCount);
+
+                Thread.sleep(1000);
+            }
+
+            System.out.println("DONE!");
+        } finally {
+            close(pstmt);
+            close(conn);
+        }
+    }
+    /**
+     *
+     * @param args
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
 
-        String insertSQL = "insert into HARVEST2 (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, NOW())";
-        List<Object> insertValues = new ArrayList<Object>();
+        String insertSQL = "insert into TEST_TABLE (STARTED) values (?)";
+        Vector<Object> insertValues = new Vector<Object>();
+        insertValues.add(DateUtils.truncate(new Date(), Calendar.SECOND));
+
+        String updateSQL = "update TEST_TABLE set FINISHED=? where ID=?";
+        Vector<Object> updateValues = new Vector<Object>();
+        updateValues.add(DateUtils.truncate(new Date(), Calendar.SECOND));
+        updateValues.add(1);
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = SesameUtil.getSQLConnection();
+
+            for (int i = 0; i < 100; i++) {
+                insertValues.setElementAt(DateUtils.truncate(new Date(), Calendar.SECOND), 0);
+                int id = executeUpdateReturnAutoID(insertSQL, insertValues, conn);
+                System.out.println("" + i + ", id = " + id);
+
+                Thread.sleep(123);
+
+                updateValues.setElementAt(DateUtils.truncate(new Date(), Calendar.SECOND), 0);
+                updateValues.setElementAt(new Integer(id), 1);
+                int updCount = executeUpdate(updateSQL, updateValues, conn);
+                System.out.println("" + i + ", updCount = " + updCount);
+
+                Thread.sleep(1000);
+            }
+
+            System.out.println("DONE!");
+        } finally {
+            close(pstmt);
+            close(conn);
+        }
+    }
+
+    public static void main2(String[] args) throws Exception {
+
+        String insertSQL = "insert into HARVEST2 (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, ?)";
+        Vector<Object> insertValues = new Vector<Object>();
         insertValues.add(new Integer(39));
         insertValues.add("pull");
         insertValues.add("application");
         insertValues.add(HarvestConstants.STATUS_STARTED);
+        insertValues.add(new Date());
 
-        String updateSQL = "update HARVEST2 set STATUS=?, FINISHED=NOW(), TOT_STATEMENTS=?, HTTP_CODE=? where harvest_id=?";
-        List<Object> updateValues = new ArrayList<Object>();
+        String updateSQL = "update HARVEST2 set STATUS=?, FINISHED=?, TOT_STATEMENTS=?, HTTP_CODE=? where harvest_id=?";
+        Vector<Object> updateValues = new Vector<Object>();
         updateValues.add(HarvestConstants.STATUS_FINISHED);
+        updateValues.add(new Date());
         updateValues.add(new Integer(300));
         updateValues.add(new Integer(200));
+        updateValues.add(null);
 
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             conn = SesameUtil.getSQLConnection();
-            int id = executeUpdateReturnAutoID(insertSQL, insertValues, conn);
-            System.out.println("id = " + id);
 
-            updateValues.add(new Integer(id));
-            int updCount = executeUpdate(updateSQL, updateValues, conn);
-            System.out.println("updCount = " + updCount);
+            for (int i = 0; i < 30; i++) {
+                insertValues.setElementAt(new Date(), 4);
+                int id = executeUpdateReturnAutoID(insertSQL, insertValues, conn);
+                System.out.println("id = " + id);
+
+                Thread.sleep(123);
+
+                updateValues.setElementAt(new Date(), 1);
+                updateValues.setElementAt(new Integer(id), 4);
+                int updCount = executeUpdate(updateSQL, updateValues, conn);
+                System.out.println("updCount = " + updCount);
+
+                Thread.sleep(1000);
+            }
 
 //            pstmt = conn.prepareStatement(insertSQL);
 //

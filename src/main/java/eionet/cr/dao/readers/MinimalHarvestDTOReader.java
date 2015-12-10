@@ -44,7 +44,7 @@ public class MinimalHarvestDTOReader extends SQLResultSetBaseReader<HarvestDTO> 
 
         HarvestDTO harvestDTO = new HarvestDTO();
         harvestDTO.setHarvestSourceId(new Integer(rs.getInt("harvest_source_id")));
-        harvestDTO.setDateString(rs.getString("started"));
+        harvestDTO.setDatetimeStarted(rs.getDate("started"));
 
         resultList.add(harvestDTO);
     }
