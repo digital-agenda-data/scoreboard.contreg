@@ -34,14 +34,15 @@ import eionet.cr.harvest.HarvestException;
  * @author Enriko Käsper
  */
 public class UrgentHarvestTest extends TestCase {
+
     @Test
     public void testUrgentHarvestUnicodeUrls() throws HarvestException, DAOException {
-        String url = "http://www.google.com/öö";
-        UrgentHarvestQueue.addPullHarvest(url);
 
+        String url = "http://www.google.com/öö";
+
+        UrgentHarvestQueue.addPullHarvest(url);
         assertTrue(UrgentHarvestQueue.isInQueue(url));
         UrgentHarvestQueue.poll();
         assertFalse(UrgentHarvestQueue.isInQueue(url));
     }
-
 }

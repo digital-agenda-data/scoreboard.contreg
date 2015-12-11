@@ -76,17 +76,10 @@ public class VirtuosoReferencesSearchHelperTest extends TestCase {
 
         String sourceUri = "http://goodsource.eea.europa.eu";
         String query = helper.getSubjectsDataQuery(subjectUris, sourceUri);
-        assertEquals(
-                "select * where {graph ?g {?s ?p ?o. filter (?s IN (?subjectUriValue1,?subjectUriValue2,?subjectUriValue3)) . "
-                        + "filter(?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> || <http://www.w3.org/2000/01/rdf-schema#label> || (isURI(?o) && ?o=?sourceUri))}} "
-                        + "ORDER BY ?s", query);
-        // assertTrue(helper.getSubjectDataBindings().toString().indexOf("subjectUriValue2=http://subjecturispecial21.somwhere.eu")
-        // != -1);
-        // assertTrue(helper.getSubjectDataBindings().toString().indexOf("sourceUri=http://goodsource.eea.europa.eu") != -1);
-        // main bindings must not be used:
-        // assertTrue(helper.getQueryBindings().toString().indexOf("subjectUriValue2=http://subjecturispecial21.somwhere.eu") ==
-        // -1);
-
+        String expected = "select ?g ?s ?p bif:either(isLiteral(?o), bif:substring(str(?o), 1, 800), ?o) as ?o "
+                + "where {graph ?g {?s ?p ?o. filter (?s IN (?subjectUriValue1,?subjectUriValue2,?subjectUriValue3)) . "
+                + "filter(?p = <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> || "
+                + "<http://www.w3.org/2000/01/rdf-schema#label> || (isURI(?o) && ?o=?sourceUri))}} ORDER BY ?s";
+        assertEquals(expected, query);
     }
-
 }

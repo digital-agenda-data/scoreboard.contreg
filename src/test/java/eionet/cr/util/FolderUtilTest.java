@@ -101,20 +101,29 @@ public class FolderUtilTest extends TestCase {
     }
 
     public void testExtractAcl() {
-        String aclPath = FolderUtil.extractAclPath("http://127.0.0.1:8080/cr/abc/cba");
+
+        String appHomeUrl = GeneralConfig.getRequiredProperty(GeneralConfig.APPLICATION_HOME_URL);
+        String aclPath = FolderUtil.extractAclPath(appHomeUrl + "/abc/cba");
 
         assertEquals("/abc/cba", aclPath);
     }
 
-    public void testExtractProcectAcl() {
-        String aclPath = FolderUtil.extractAclPath("http://127.0.0.1:8080/cr/project/aux/poux");
+    public void testExtractProjectAcl() {
 
-        assertEquals("/project/aux", aclPath);
+        String appHomeUrl = GeneralConfig.getRequiredProperty(GeneralConfig.APPLICATION_HOME_URL);
+        String aclPath = FolderUtil.extractAclPath(appHomeUrl + "/project/aux/poux");
+
+        assertEquals("/project/aux/poux", aclPath);
     }
 
     public void testEmtpyProcectAcl() {
-        String aclPath = FolderUtil.extractAclPath("http://127.0.0.1:8080/cr");
+        String appHomeUrl = GeneralConfig.getRequiredProperty(GeneralConfig.APPLICATION_HOME_URL);
+        String aclPath = FolderUtil.extractAclPath(appHomeUrl);
 
         assertEquals("", aclPath);
+    }
+
+    public void testExtractParentFolderUri() {
+        assertEquals("http://aa.bb.com/level1/level2/level3", FolderUtil.extractParentFolderUri("http://aa.bb.com/level1/level2/level3/somethingattheen"));
     }
 }

@@ -595,7 +595,7 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
 
     /** */
     private static final String GET_NEXT_SCHEDULED_SOURCES_SQL = "select top <limit> * from HARVEST_SOURCE where"
-            + " count_unavail < 5 AND" + " INTERVAL_MINUTES > 0 and <seconds_since_last_harvest> >= <harvest_interval_seconds>"
+            + " COUNT_UNAVAIL < 5 and INTERVAL_MINUTES > 0 and <seconds_since_last_harvest> >= <harvest_interval_seconds>"
             + " order by (<seconds_since_last_harvest> / <harvest_interval_seconds>) desc";
 
     /** */

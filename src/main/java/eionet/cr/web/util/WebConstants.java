@@ -28,7 +28,7 @@ package eionet.cr.web.util;
 public interface WebConstants {
 
     /** */
-    int MAX_OBJECT_LENGTH = 2000;
+    int MAX_OBJECT_LENGTH = 800;
 
     /** CR user session attribute name. */
     String USER_SESSION_ATTR = "crUser";

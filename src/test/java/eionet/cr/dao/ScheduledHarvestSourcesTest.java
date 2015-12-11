@@ -53,6 +53,8 @@ public class ScheduledHarvestSourcesTest extends CRDatabaseTestCase {
         source.setEmails("bob@europe.eu");
         dao.addSource(source);
 
+        Thread.sleep(1100);
+
         // finish harvest
         source.setStatements(100);
         source.setLastHarvestFailed(false);
@@ -60,9 +62,13 @@ public class ScheduledHarvestSourcesTest extends CRDatabaseTestCase {
         source.setOwner("system");
         dao.updateSourceHarvestFinished(source);
 
+        Thread.sleep(1100);
+
         source.setUrl("http://rod.eionet.europa.eu/testObligations2");
         source.setIntervalMinutes(10);
         dao.addSource(source);
+
+        Thread.sleep(1100);
 
         List<HarvestSourceDTO> dtos = dao.getNextScheduledSources(10);
         assertNotNull(dtos);

@@ -2,7 +2,6 @@ package eionet.cr.dao.virtuoso;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,18 +45,13 @@ public class VirtuosoBaseDAOTest extends MockVirtuosoBaseDAOTest {
             logger.trace("Free-text search, getting the data of the found subjects");
             resultList = getFoundSubjectsData(subjectUris, neededPredicates);
         } catch (DAOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        SubjectDTO subjectDTO = resultList.get(0);
-
-        assertTrue(subjectDTO.getPredicateCount() == 1);
 
         // String query = fakeDao.getSubjectsDataQ
         assertNotNull(resultList);
         // assertTrue(resultList.contains(arg0))
         assertEquals(resultList.size(), 15);
-
     }
 
     @Test
@@ -88,11 +82,21 @@ public class VirtuosoBaseDAOTest extends MockVirtuosoBaseDAOTest {
             e.printStackTrace();
         }
 
-        assertEquals(
-                "select ?g ?s ?p bif:either(isLiteral(?obj), fn:substring(str(?obj), 1, 2000), ?obj) as ?o where {graph ?g {?s ?p ?obj. filter (?s IN (?subjectValue1,?subjectValue2,?subjectValue3,"
-                        + "?subjectValue4,?subjectValue5,?subjectValue6,?subjectValue7,?subjectValue8,?subjectValue9,?subjectValue10,"
-                        + "?subjectValue11,?subjectValue12,?subjectValue13,?subjectValue14,?subjectValue15)) "
-                        + "filter (?p IN (?predicateValue1,?predicateValue2)) }} ORDER BY ?s ?p", getSPARQL());
+        String expected = "select distinct "
+                + "?s bif:either(isLiteral(?o0), bif:substring(str(?o0), 1, 800), ?o0) as ?val0 "
+                + "bif:either(isLiteral(?o1), bif:substring(str(?o1), 1, 800), ?o1) as ?val1 "
+                + "where {?s ?p ?o. optional {?s ?p0 ?o0} optional {?s ?p1 ?o1} "
+                + "filter (?s IN (?subjectValue1,?subjectValue2,?subjectValue3,?subjectValue4,?subjectValue5,?subjectValue6,"
+                + "?subjectValue7,?subjectValue8,?subjectValue9,?subjectValue10,?subjectValue11,?subjectValue12,?subjectValue13,"
+                + "?subjectValue14,?subjectValue15)) } order by ?s";
+        String actual = getSPARQL();
+        assertEquals(expected, actual);
+
+//        assertEquals(
+//                "select ?g ?s ?p bif:either(isLiteral(?obj), fn:substring(str(?obj), 1, 2000), ?obj) as ?o where {graph ?g {?s ?p ?obj. filter (?s IN (?subjectValue1,?subjectValue2,?subjectValue3,"
+//                        + "?subjectValue4,?subjectValue5,?subjectValue6,?subjectValue7,?subjectValue8,?subjectValue9,?subjectValue10,"
+//                        + "?subjectValue11,?subjectValue12,?subjectValue13,?subjectValue14,?subjectValue15)) "
+//                        + "filter (?p IN (?predicateValue1,?predicateValue2)) }} ORDER BY ?s ?p", getSPARQL());
 
     }
 

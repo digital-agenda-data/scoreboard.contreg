@@ -25,6 +25,7 @@ import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.openrdf.model.URI;
+import org.openrdf.model.vocabulary.XMLSchema;
 
 import eionet.cr.util.Hashes;
 import eionet.cr.util.NamespaceUtil;
@@ -490,6 +491,16 @@ public class ObjectDTO implements Serializable {
      */
     public static ObjectDTO createLiteral(Object value) {
         return new ObjectDTO(value.toString(), true);
+    }
+
+    /**
+     * Utility method for constructing a literal with datatype set to {@link XMLSchema#INT}.
+     *
+     * @param value The value.
+     * @return The literal object.
+     */
+    public static ObjectDTO createLiteral(int value) {
+        return createLiteral(Integer.valueOf(value), XMLSchema.INTEGER);
     }
 
     /**

@@ -96,12 +96,14 @@ public class PostHarvestScriptDAOTest extends CRDatabaseTestCase {
         PostHarvestScriptDAO postHarvestDao = DAOFactory.get().getDao(PostHarvestScriptDAO.class);
         postHarvestDao.insert(TargetType.SOURCE, targetUrl, title1, script, true, false);
 
+        // There must definitely be no script newer than two days in the future.
         Calendar cal = Calendar.getInstance();
-        // script is older than current data
+        cal.add(Calendar.DATE, 2);
         assertFalse(postHarvestDao.isScriptsModified(cal.getTime(), targetUrl));
 
+        // The above-inserted script is definitely modified after two days in the past.
         cal.add(Calendar.DATE, -1);
-        // script is newer than current data
+        cal.add(Calendar.DATE, -2);
         assertTrue(postHarvestDao.isScriptsModified(cal.getTime(), targetUrl));
 
         Calendar calNow = Calendar.getInstance();

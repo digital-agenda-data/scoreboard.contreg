@@ -703,7 +703,7 @@ public class PullHarvest extends BaseHarvest {
             // content size
             int contentLength = urlConn.getContentLength();
             if (contentLength >= 0) {
-                addSourceMetadata(Predicates.CR_BYTE_SIZE, ObjectDTO.createLiteral(String.valueOf(contentLength)));
+                addSourceMetadata(Predicates.CR_BYTE_SIZE, ObjectDTO.createLiteral(contentLength));
             }
         }
 

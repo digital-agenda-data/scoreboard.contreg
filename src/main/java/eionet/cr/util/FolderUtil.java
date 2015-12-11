@@ -264,18 +264,8 @@ public final class FolderUtil {
      */
     public static String extractAclPath(String uri) {
 
-        String result = null;
         String appHome = GeneralConfig.getRequiredProperty(GeneralConfig.APPLICATION_HOME_URL);
-        if (uri.startsWith(appHome)) {
-            if (uri.startsWith(appHome + "/project")) {
-                result = extractSpecialAclPath(uri, "project");
-            } else if (uri.startsWith(appHome + "/home")) {
-                result = extractSpecialAclPath(uri, "home");
-            } else {
-                result = StringUtils.substringAfter(uri, appHome);
-            }
-        }
-        return result;
+        return StringUtils.substringAfter(uri, appHome);
     }
 
     /**
@@ -364,5 +354,14 @@ public final class FolderUtil {
         }
 
         return context;
+    }
+
+    /**
+     * returns parent folder URI.
+     * @param uri this URI
+     * @return parent uri
+     */
+    public static String extractParentFolderUri(String uri) {
+        return StringUtils.substringBeforeLast(uri, "/");
     }
 }
