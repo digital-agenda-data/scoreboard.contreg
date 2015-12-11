@@ -94,6 +94,9 @@ public final class GeneralConfig {
     public static final String VIRTUOSO_CR_RULESET_NAME = "virtuoso.cr.ruleset.name";
 
     /** */
+    public static final String VIRTUOSO_REAL_TIME_FT_INDEXING = "virtuoso.unittest.realTimeFullTextIndexing";
+
+    /** */
     public static final String FILESTORE_PATH = "filestore.path";
 
     /** */

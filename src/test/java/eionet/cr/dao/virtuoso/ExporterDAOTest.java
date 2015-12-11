@@ -56,17 +56,22 @@ public class ExporterDAOTest extends VirtuosoExporterDAO {
             e.printStackTrace();
         }
 
-        String expected = SPARQLQueryUtil.getCrInferenceDefinitionStr()
-                + "select distinct * where {?s ?p ?o .?s ?p1 ?o1 . filter(?p1 = ?p1Val) . "
-                + "filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . filter (regex(?o2, ?o2Val, \"i\")) . "
-                + "filter (?p IN (?exportPredicateValue1,?exportPredicateValue2,?exportPredicateValue3,"
-                + "?exportPredicateValue4,?exportPredicateValue5))} ORDER BY ?s";
+        String expected =
+                SPARQLQueryUtil.getCrInferenceDefinitionStr() + "select distinct * where {?s ?p ?o .?s ?p1 ?o1 . filter(?p1 = ?p1Val) . "
+                        + "filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . filter (regex(?o2, ?o2Val, \"i\")) . "
+                        + "filter (?p IN (?exportPredicateValue1,?exportPredicateValue2,?exportPredicateValue3,"
+                        + "?exportPredicateValue4,?exportPredicateValue5))} ORDER BY ?s";
+
+        if (Runtime.class.getPackage().getImplementationVersion().trim().startsWith("1.8")) {
+            expected =
+                    SPARQLQueryUtil.getCrInferenceDefinitionStr() + "select distinct * where {" + "?s ?p ?o .?s ?p1 ?o1 . filter(?p1 = ?p1Val) . "
+                            + "filter (regex(?o1, ?o1Val, \"i\")) . " + "?s ?p2 ?o2 . filter(?p2 = ?p2Val) . " + "filter(?o2 = ?o2Val) . "
+                            + "filter (?p IN ("
+                            + "?exportPredicateValue1,?exportPredicateValue2,?exportPredicateValue3,?exportPredicateValue4,?exportPredicateValue5))"
+                            + "} ORDER BY ?s";
+        }
         String actual = sparql;
         assertEquals(expected, actual);
-
-        // assertTrue(bindings.toString().indexOf("objectValue1Uri=http://rod.eionet.europa.eu/schema.rdf#Obligation") != -1);
-        // assertTrue(bindings.toString().indexOf("exportPredicateValue1=http://www.w3.org/2000/01/rdf-schema#label") != -1);
-        // assertTrue(bindings.toString().indexOf("exportPredicateValue4=http://purl.org/dc/terms/abstract") != -1);
     }
 
     @Override

@@ -27,10 +27,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang.BooleanUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import eionet.cr.common.Predicates;
+import eionet.cr.config.GeneralConfig;
 import eionet.cr.dao.helpers.FreeTextSearchHelper;
 import eionet.cr.dao.util.SearchExpression;
 import eionet.cr.dto.SearchResultDTO;
@@ -54,6 +56,13 @@ public class SearchDAOTest {
 
     @Test
     public void testFreeTextSearchCountResults() throws Exception {
+
+        // Should not test full-text search if there is no real-time full-text indexing activated in the underlying repository.
+        // By "real-time" we mean that the index is updated instantly after loading a triple.
+        if (isRealTimeFullTextIndexingActivated() == false) {
+            System.out.println("Skipping full-text search test, as no real-time full-text indexing has been activated!");
+            return;
+        }
 
         PagingRequest pagingRequest = PagingRequest.create(1);
         SearchResultDTO<SubjectDTO> result =
@@ -83,5 +92,15 @@ public class SearchDAOTest {
                         .searchByTypeAndFilters(filters, false, pagingRequest, null, selectedPredicates);
 
         assertEquals(3, result.getMatchCount());
+    }
+
+    /**
+     * Returns true if the configuration says that the underlying triple-store has real-time full-text indexing activated.
+     *
+     * @return True/false.
+     */
+    private boolean isRealTimeFullTextIndexingActivated() {
+        String value = GeneralConfig.getProperty(GeneralConfig.VIRTUOSO_REAL_TIME_FT_INDEXING);
+        return BooleanUtils.toBoolean(value);
     }
 }

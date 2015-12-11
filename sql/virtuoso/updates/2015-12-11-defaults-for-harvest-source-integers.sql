@@ -1,0 +1,1 @@
+--alter table CR.cr3user.harvest_source modify column is_sparql_endpoint character NOT NULL DEFAULT 'N';

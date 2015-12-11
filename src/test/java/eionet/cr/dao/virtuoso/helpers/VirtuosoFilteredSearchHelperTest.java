@@ -76,11 +76,8 @@ public class VirtuosoFilteredSearchHelperTest {
 
         String query = helper.getUnorderedQuery(inParams);
 
-        assertEquals(
-                query,
-                SPARQLQueryUtil.getCrInferenceDefinitionStr()
-                        + "select distinct ?s where {?s ?p1 ?o1 . "
-                        + "filter(?p1 = ?p1Val) . filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . filter (regex(?o2, ?o2Val, \"i\"))}");
+        assertEquals(query, SPARQLQueryUtil.getCrInferenceDefinitionStr() + "select distinct ?s where {?s ?p1 ?o1 . "
+                + "filter(?p1 = ?p1Val) . filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . filter (regex(?o2, ?o2Val, \"i\"))}");
     }
 
     @Test
@@ -98,8 +95,15 @@ public class VirtuosoFilteredSearchHelperTest {
 
         String paramStr = helper.getWhereContents();
 
-        assertEquals("?s ?p1 ?o1 . filter(?p1 = ?p1Val) . filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . "
-                + "filter(?o2 = ?o2Val) . ?s ?p3 ?o3 . filter(?p3 = ?p3Val) . filter (regex(?o3, ?o3Val, \"i\"))", paramStr);
+        String expected =
+                "?s ?p1 ?o1 . filter(?p1 = ?p1Val) . filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . "
+                        + "filter(?o2 = ?o2Val) . ?s ?p3 ?o3 . filter(?p3 = ?p3Val) . filter (regex(?o3, ?o3Val, \"i\"))";
+        if (Runtime.class.getPackage().getImplementationVersion().trim().startsWith("1.8")) {
+            expected =
+                    "?s ?p1 ?o1 . filter(?p1 = ?p1Val) . filter(?o1 = ?o1Val) . ?s ?p2 ?o2 . filter(?p2 = ?p2Val) . "
+                            + "filter (regex(?o2, ?o2Val, \"i\")) . ?s ?p3 ?o3 . filter(?p3 = ?p3Val) . filter(?o3 = ?o3Val)";
+        }
+        assertEquals(expected, paramStr);
     }
 
     private void checkQuery(String query, Bindings bindings) {
@@ -137,11 +141,11 @@ public class VirtuosoFilteredSearchHelperTest {
 
         String query = helper.getOrderedQuery(inParams);
 
-        String expected = SPARQLQueryUtil.getCrInferenceDefinitionStr()
-                + "select distinct ?s where {?s ?p1 ?o1 . "
-                + "filter(?p1 = ?p1Val) . filter (regex(?o1, ?sortObjVal, \"i\"))} order by asc(bif:either( bif:isnull(?sortObjVal) , "
-                + "(bif:lcase(bif:subseq (bif:replace (?s, '/', '#'), bif:strrchr (bif:replace (?s, '/', '#'), '#')+1))) , "
-                + "bif:lcase(?sortObjVal)))";
+        String expected =
+                SPARQLQueryUtil.getCrInferenceDefinitionStr() + "select distinct ?s where {?s ?p1 ?o1 . "
+                        + "filter(?p1 = ?p1Val) . filter (regex(?o1, ?sortObjVal, \"i\"))} order by asc(bif:either( bif:isnull(?sortObjVal) , "
+                        + "(bif:lcase(bif:subseq (bif:replace (?s, '/', '#'), bif:strrchr (bif:replace (?s, '/', '#'), '#')+1))) , "
+                        + "bif:lcase(?sortObjVal)))";
         String actual = query;
         assertEquals(expected, actual);
     }
@@ -154,8 +158,7 @@ public class VirtuosoFilteredSearchHelperTest {
 
         Map<String, String> filters = new HashMap<String, String>();
         filters.put("http://www.w3.org/2000/01/rdf-schema#label", "ippc");
-        VirtuosoFilteredSearchHelper helper =
-                new VirtuosoFilteredSearchHelper(filters, null, pagingRequest, sortingRequest, false);
+        VirtuosoFilteredSearchHelper helper = new VirtuosoFilteredSearchHelper(filters, null, pagingRequest, sortingRequest, false);
         ArrayList<Object> inParams = new ArrayList<Object>();
 
         String query = helper.getOrderedQuery(inParams);
