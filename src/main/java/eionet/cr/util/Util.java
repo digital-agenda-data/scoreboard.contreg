@@ -29,9 +29,11 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +57,7 @@ import nl.bitwalker.useragentutils.BrowserType;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.quartz.CronExpression;
 
 import eionet.cr.common.CRRuntimeException;
@@ -67,6 +70,11 @@ import eionet.cr.util.export.XmlUtil;
  *
  */
 public final class Util {
+
+    /**
+     * Constant equals to 1000.
+     */
+    private static final int MILLISECONDS_COUNT_IN_SECOND = 1000;
 
     /**
      * Private constructor to prevent public initiation.
@@ -180,20 +188,6 @@ public final class Util {
             throw new CRRuntimeException("Failed to convert the given string to java.util.Date: " + e.toString(), e);
         }
     }
-
-    /**
-     *
-     * @return String
-     */
-    public static String currentDateAsString() {
-        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-        return sf.format(new java.util.Date());
-    }
-
-    /**
-     * Constant equals to 1000.
-     */
-    private static final int MILLISECONDS_COUNT_IN_SECOND = 1000;
 
     /**
      * Current time in seconds.
@@ -922,5 +916,13 @@ public final class Util {
         }
 
         return true;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public static Date getNowSecondsPrecision() {
+        return DateUtils.truncate(new Date(), Calendar.SECOND);
     }
 }

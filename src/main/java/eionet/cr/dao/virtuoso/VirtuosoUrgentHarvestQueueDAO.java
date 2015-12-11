@@ -48,7 +48,7 @@ public class VirtuosoUrgentHarvestQueueDAO extends VirtuosoBaseDAO implements Ur
     private static final Logger LOGGER = Logger.getLogger(VirtuosoUrgentHarvestQueueDAO.class);
 
     /** */
-    private static final String ADD_PISH_HARVEST_SQL = "insert into URGENT_HARVEST_QUEUE (URL,\"TIMESTAMP\",PUSHED_CONTENT) VALUES (?,NOW(),?)";
+    private static final String ADD_PUSH_HARVEST_SQL = "insert into URGENT_HARVEST_QUEUE (URL,\"TIMESTAMP\",PUSHED_CONTENT) VALUES (?,NOW(),?)";
 
     /** */
     private static final String GET_URGENT_HARVEST_QUEUE_SQL = "select * from URGENT_HARVEST_QUEUE order by \"TIMESTAMP\" asc";
@@ -112,7 +112,7 @@ public class VirtuosoUrgentHarvestQueueDAO extends VirtuosoBaseDAO implements Ur
         Connection conn = null;
         try {
             conn = getSQLConnection();
-            SQLUtil.executeUpdate(ADD_PISH_HARVEST_SQL, values, conn);
+            SQLUtil.executeUpdate(ADD_PUSH_HARVEST_SQL, values, conn);
         } catch (Exception e) {
             throw new DAOException(e.getMessage(), e);
         } finally {

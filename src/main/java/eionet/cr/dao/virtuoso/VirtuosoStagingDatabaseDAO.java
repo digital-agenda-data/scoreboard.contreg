@@ -32,7 +32,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -99,7 +98,7 @@ public class VirtuosoStagingDatabaseDAO extends VirtuosoBaseDAO implements Stagi
 
     /** */
     private static final String ADD_NEW_DB_SQL =
-            "insert into STAGING_DB (NAME,CREATOR,CREATED,DESCRIPTION,IMPORT_STATUS,IMPORT_LOG) values (?,?,?,?,?,?)";
+            "insert into STAGING_DB (NAME,CREATOR,CREATED,DESCRIPTION,IMPORT_STATUS,IMPORT_LOG) values (?,?,NOW(),?,?,?)";
 
     /** */
     private static final String UPDATE_DB_METADATA_SQL =
@@ -123,11 +122,11 @@ public class VirtuosoStagingDatabaseDAO extends VirtuosoBaseDAO implements Stagi
 
     /** */
     private static final String START_RDF_EXPORT_SQL =
-            "insert into STAGING_DB_RDF_EXPORT (DATABASE_ID,EXPORT_NAME,USER_NAME,QUERY_CONF,STARTED,STATUS) values (?,?,?,?,?,?)";
+            "insert into STAGING_DB_RDF_EXPORT (DATABASE_ID,EXPORT_NAME,USER_NAME,QUERY_CONF,STARTED,STATUS) values (?,?,?,?,NOW(),?)";
 
     /** */
     private static final String FINISH_RDF_EXPORT_SQL = "update STAGING_DB_RDF_EXPORT "
-            + "set FINISHED=?,STATUS=?,ROW_COUNT=?,NOOF_SUBJECTS=?,NOOF_TRIPLES=?,MISSING_CONCEPTS=?,GRAPHS=? "
+            + "set FINISHED=NOW(),STATUS=?,ROW_COUNT=?,NOOF_SUBJECTS=?,NOOF_TRIPLES=?,MISSING_CONCEPTS=?,GRAPHS=? "
             + "where EXPORT_ID=?";
 
     /** */
@@ -189,7 +188,6 @@ public class VirtuosoStagingDatabaseDAO extends VirtuosoBaseDAO implements Stagi
         ArrayList<Object> params = new ArrayList<Object>();
         params.add(databaseDTO.getName());
         params.add(userName);
-        params.add(new Date());
         params.add(databaseDTO.getDescription());
         params.add(ImportStatus.NOT_STARTED.name());
         params.add("");
@@ -245,7 +243,6 @@ public class VirtuosoStagingDatabaseDAO extends VirtuosoBaseDAO implements Stagi
         params.add(exportName);
         params.add(userName);
         params.add(queryConf.toLongString());
-        params.add(new Date());
         params.add(ExportStatus.STARTED.name());
 
         Connection conn = null;
@@ -283,7 +280,6 @@ public class VirtuosoStagingDatabaseDAO extends VirtuosoBaseDAO implements Stagi
     public void finishRDFExport(int exportId, ExportRunner exportRunner, ExportStatus status) throws DAOException {
 
         ArrayList<Object> params = new ArrayList<Object>();
-        params.add(new Date());
         params.add(status.name());
         params.add(exportRunner.getRowCount());
         params.add(exportRunner.getSubjectCount());

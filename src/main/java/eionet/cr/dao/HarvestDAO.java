@@ -85,15 +85,6 @@ public interface HarvestDAO extends DAO {
     HarvestDTO getLastHarvestBySourceId(Integer harvestSourceId) throws DAOException;
 
     /**
-     * Deletes all the old harvest of the current harvest's harvest source, except the most recent.
-     *
-     * @param harvestId current harvest's id
-     * @param preserveRecent nr of most recent messages to preserve
-     * @throws DAOException
-     */
-    void deleteOldHarvests(int harvestId, int preserveRecent) throws DAOException;
-
-    /**
      * Returns last harvest that has really happened.
      * Harvests that have returned http codes like 304 : source not modified are not queried.
      *
@@ -103,4 +94,11 @@ public interface HarvestDAO extends DAO {
      */
     HarvestDTO getLastRealHarvestBySourceId(Integer harvestSourceId) throws DAOException;
 
+    /**
+     * Deletes the given harvest source's harvests that are older than the latest 10.
+     *
+     * @param harvestSourceId Harvest source ID.
+     * @throws DAOException
+     */
+    void deleteOldHarvests(int harvestSourceId) throws DAOException;
 }

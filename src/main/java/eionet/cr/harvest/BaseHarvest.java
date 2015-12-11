@@ -86,9 +86,6 @@ public abstract class BaseHarvest implements Harvest {
     /** */
     private static final Logger LOGGER = Logger.getLogger(BaseHarvest.class);
 
-    /** No of latest harvests whose history is kept in the database. Used in houskeeping. */
-    protected static final int NO_OF_LAST_HARVESTS_PRESERVED = 10;
-
     /** Default harvesting timeout (36 hours = 129600000 ms) if no last harvest duration could be detected. */
     protected static final int DEFAULT_HARVEST_TIMEOUT = 129600000;
 
@@ -423,7 +420,7 @@ public abstract class BaseHarvest implements Harvest {
      */
     private void housekeepOldHarvests() throws DAOException {
         LOGGER.debug(loggerMsg("Deleting old harvests history"));
-        getHarvestDAO().deleteOldHarvests(harvestId, NO_OF_LAST_HARVESTS_PRESERVED);
+        getHarvestDAO().deleteOldHarvests(getContextSourceDTO().getSourceId());
     }
 
     /**

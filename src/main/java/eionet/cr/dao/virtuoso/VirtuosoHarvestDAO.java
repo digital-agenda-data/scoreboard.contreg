@@ -22,18 +22,14 @@ package eionet.cr.dao.virtuoso;
 
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.lang.time.DateUtils;
 
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.HarvestDAO;
 import eionet.cr.dao.readers.HarvestDTOReader;
 import eionet.cr.dao.readers.HarvestStatReader;
 import eionet.cr.dao.readers.HarvestWithMessageTypesReader;
-import eionet.cr.dao.readers.MinimalHarvestDTOReader;
 import eionet.cr.dto.HarvestDTO;
 import eionet.cr.dto.HarvestStatDTO;
 import eionet.cr.harvest.HarvestConstants;
@@ -49,6 +45,74 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
 
     /** */
     private static final String GET_HARVEST_BY_ID_SQL = "select *, USERNAME as \"USER\" from HARVEST where HARVEST_ID=?";
+
+    /** */
+    private static final String GET_LAST_HARVEST_BY_SOURCE_ID_SQL = "select top 1 *, USERNAME as \"USER\""
+            + " from HARVEST where HARVEST_SOURCE_ID=? order by HARVEST.STARTED desc";
+
+    /**
+     * SQL for last harvest record while harvest has not returned Source not modified http code.
+     */
+    private static final String GET_LAST_REAL_HARVEST_BY_SOURCE_ID_SQL = "select top 1 *, USERNAME as \"USER\""
+            + " from HARVEST where HARVEST_SOURCE_ID=? AND http_code = 200 order by HARVEST.STARTED desc";
+
+    /** */
+    private static final String INSERT_STARTED_HARVEST_SQL =
+            "insert into HARVEST (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, NOW())";
+
+    /** */
+    private static final String UPDATE_FINISHED_HARVEST_SQL =
+            "update HARVEST set STATUS=?, FINISHED=NOW(), TOT_STATEMENTS=?, HTTP_CODE=? where HARVEST_ID=?";
+
+    /** */
+    private static final String DELETE_HARVESTS_OLDER_THAN_LAST_10_SQL = "DELETE FROM harvest WHERE started < (SELECT TOP 1 started FROM ("
+            + "SELECT TOP 10 harvest_id, started FROM harvest WHERE harvest_source_id=? ORDER BY started desc) as A ORDER BY STARTED asc)";
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int insertStartedHarvest(int harvestSourceId, String harvestType, String user) throws DAOException {
+
+        List<Object> values = new ArrayList<Object>();
+        values.add(new Integer(harvestSourceId));
+        values.add(harvestType);
+        values.add(user);
+        values.add(HarvestConstants.STATUS_STARTED);
+
+        Connection conn = null;
+        try {
+            conn = getSQLConnection();
+            return SQLUtil.executeUpdateReturnAutoID(INSERT_STARTED_HARVEST_SQL, values, conn);
+        } catch (Exception e) {
+            throw new DAOException(e.getMessage(), e);
+        } finally {
+            SQLUtil.close(conn);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void updateFinishedHarvest(int harvestId, int noOfTriples, int httpCode) throws DAOException {
+
+        List<Object> values = new ArrayList<Object>();
+        values.add(HarvestConstants.STATUS_FINISHED);
+        values.add(new Integer(noOfTriples));
+        values.add(new Integer(httpCode));
+        values.add(new Integer(harvestId));
+
+        Connection conn = null;
+        try {
+            conn = getSQLConnection();
+            SQLUtil.executeUpdate(UPDATE_FINISHED_HARVEST_SQL, values, conn);
+        } catch (Exception e) {
+            throw new DAOException(e.getMessage(), e);
+        } finally {
+            SQLUtil.close(conn);
+        }
+    }
 
     /**
      * {@inheritDoc}
@@ -99,16 +163,6 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
         return executeSQL(getHarvestStatsSQL, values, new HarvestStatReader());
     }
 
-    /** */
-    private static final String GET_LAST_HARVEST_BY_SOURCE_ID_SQL = "select top 1 *, USERNAME as \"USER\""
-            + " from HARVEST where HARVEST_SOURCE_ID=? order by HARVEST.STARTED desc";
-
-    /**
-     * SQL for last harvest record while harvest has not returned Source not modified http code.
-     */
-    private static final String GET_LAST_REAL_HARVEST_BY_SOURCE_ID_SQL = "select top 1 *, USERNAME as \"USER\""
-            + " from HARVEST where HARVEST_SOURCE_ID=? AND http_code = 200 order by HARVEST.STARTED desc";
-
     /**
      * {@inheritDoc}
      */
@@ -121,96 +175,12 @@ public class VirtuosoHarvestDAO extends VirtuosoBaseDAO implements HarvestDAO {
         return list != null && !list.isEmpty() ? list.get(0) : null;
     }
 
-    /** */
-    private static final String INSERT_STARTED_HARVEST_SQL =
-            "insert into HARVEST (HARVEST_SOURCE_ID, TYPE, USERNAME, STATUS, STARTED) values (?, ?, ?, ?, NOW())";
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public int insertStartedHarvest(int harvestSourceId, String harvestType, String user) throws DAOException {
-
-        List<Object> values = new ArrayList<Object>();
-        values.add(new Integer(harvestSourceId));
-        values.add(harvestType);
-        values.add(user);
-        values.add(HarvestConstants.STATUS_STARTED);
-
-        Connection conn = null;
-        try {
-            conn = getSQLConnection();
-            return SQLUtil.executeUpdateReturnAutoID(INSERT_STARTED_HARVEST_SQL, values, conn);
-        } catch (Exception e) {
-            throw new DAOException(e.getMessage(), e);
-        } finally {
-            SQLUtil.close(conn);
-        }
-    }
-
-    /** */
-    private static final String UPDATE_FINISHED_HARVEST_SQL =
-            "update HARVEST set STATUS=?, FINISHED=NOW(), TOT_STATEMENTS=?, HTTP_CODE=? where HARVEST_ID=?";
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void updateFinishedHarvest(int harvestId, int noOfTriples, int httpCode) throws DAOException {
-
-        List<Object> values = new ArrayList<Object>();
-        values.add(HarvestConstants.STATUS_FINISHED);
-        values.add(new Integer(noOfTriples));
-        values.add(new Integer(httpCode));
-        values.add(new Integer(harvestId));
-
-        Connection conn = null;
-        try {
-            conn = getSQLConnection();
-            SQLUtil.executeUpdate(UPDATE_FINISHED_HARVEST_SQL, values, conn);
-        } catch (Exception e) {
-            throw new DAOException(e.getMessage(), e);
-        } finally {
-            SQLUtil.close(conn);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void deleteOldHarvests(int harvestId, int preserveRecent) throws DAOException {
-
-        //Because "TOP N" cannot be used in subselect, I must get the highest started value from the last element in the resultset.
-
-        // get harvest source id and maximum started time
-        List<Object> selectParams = new ArrayList<Object>();
-        selectParams.add(harvestId);
-
-        StringBuffer selectSql = new StringBuffer();
-        selectSql.append("SELECT TOP " + preserveRecent + " h.harvest_source_id, h.started ");
-        selectSql.append("FROM harvest AS h ");
-        selectSql.append("WHERE h.harvest_source_id = ( ");
-        selectSql.append("    SELECT h.harvest_source_id ");
-        selectSql.append("    FROM harvest AS h ");
-        selectSql.append("    WHERE h.harvest_id = ? ) ");
-        selectSql.append("ORDER BY h.started DESC");
-
-        List<HarvestDTO> list = executeSQL(selectSql.toString(), selectParams, new MinimalHarvestDTOReader());
-        HarvestDTO dto = list.get(list.size() - 1);
-
-        // delete older harvests with same harvest source
-        List<Object> deleteParams = new ArrayList<Object>();
-        deleteParams.add(dto.getHarvestSourceId());
-        Date started = dto.getDatetimeStarted();
-        deleteParams.add(started == null ? null : DateUtils.truncate(started, Calendar.SECOND));
-
-        StringBuffer deleteSql = new StringBuffer();
-        deleteSql.append("DELETE FROM harvest AS h ");
-        deleteSql.append("WHERE h.harvest_source_id = ? ");
-        deleteSql.append("AND h.started < ?");
-
-        executeSQL(deleteSql.toString(), deleteParams);
+    public void deleteOldHarvests(int harvestSourceId) throws DAOException {
+        executeSQL(DELETE_HARVESTS_OLDER_THAN_LAST_10_SQL, Arrays.asList(harvestSourceId));
     }
 
     /**

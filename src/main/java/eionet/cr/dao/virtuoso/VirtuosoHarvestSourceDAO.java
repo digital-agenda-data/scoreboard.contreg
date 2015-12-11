@@ -50,6 +50,7 @@ import eionet.cr.util.Bindings;
 import eionet.cr.util.Hashes;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
+import eionet.cr.util.Util;
 import eionet.cr.util.YesNoBoolean;
 import eionet.cr.util.pagination.PagingRequest;
 import eionet.cr.util.sesame.SesameUtil;
@@ -108,8 +109,30 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
     private static final String RENAME_GRAPH_SQL =
             "UPDATE DB.DBA.RDF_QUAD TABLE OPTION (index RDF_QUAD_GS) SET g = iri_to_id ('new') WHERE g = iri_to_id ('old',0)";
 
+    /**
+     * Insert a record into the the table of harvest sources in VirtuosoSQL syntax. INSERT SOFT means that if such source already
+     * exists then don't insert (like MySQL INSERT IGNORE)
+     */
+    private static final String ADD_SOURCE_SQL = "insert soft HARVEST_SOURCE ("
+            + "URL,URL_HASH,EMAILS,TIME_CREATED,INTERVAL_MINUTES,PRIORITY_SOURCE,SOURCE_OWNER,MEDIA_TYPE,IS_SPARQL_ENDPOINT) "
+            + "VALUES (?,?,?,NOW(),?,?,?,?,?)";
+    /** */
+    private static final String DELETE_HARVEST_SOURCES = "delete from HARVEST_SOURCE where URL_HASH=?";
+    /** */
+    private static final String DELETE_FROM_URGENT_HARVEST_QUEUE = "delete from URGENT_HARVEST_QUEUE where URL=?";
+    /** */
+    private static final String DELETE_FROM_RULESET = "DB.DBA.rdfs_rule_set (?, ?, 1)";
+    /** delete post harvest scripts of the source */
+    private static final String DELETE_POST_HARVES_SCRIPTS = "DELETE FROM post_harvest_script WHERE target_source_url = ?";
     /** class logger. */
     private static final Logger LOGGER = Logger.getLogger(VirtuosoHarvestSourceDAO.class);
+
+    /**
+     * Calculation of number of sources needed to be harvested in VirtuosoSQL syntax.
+     */
+    private static final String URGENCY_SOURCES_COUNT = "select count(*) from HARVEST_SOURCE where"
+            + " INTERVAL_MINUTES > 0 AND -datediff('second', now(), coalesce(LAST_HARVEST,"
+            + " dateadd('minute', -INTERVAL_MINUTES, TIME_CREATED))) / (INTERVAL_MINUTES*60) >= 1.0";
 
     /*
      * (non-Javadoc)
@@ -306,13 +329,6 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
         return new Pair<Integer, List<HarvestSourceDTO>>(rowCount, list);
     }
 
-    /**
-     * Calculation of number of sources needed to be harvested in VirtuosoSQL syntax.
-     */
-    private static final String URGENCY_SOURCES_COUNT = "select count(*) from HARVEST_SOURCE where"
-            + " INTERVAL_MINUTES > 0 AND -datediff('second', now(), coalesce(LAST_HARVEST,"
-            + " dateadd('minute', -INTERVAL_MINUTES, TIME_CREATED))) / (INTERVAL_MINUTES*60) >= 1.0";
-
     /*
      * (non-Javadoc)
      *
@@ -332,14 +348,6 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
             SQLUtil.close(conn);
         }
     }
-
-    /**
-     * Insert a record into the the table of harvest sources in VirtuosoSQL syntax. INSERT SOFT means that if such source already
-     * exists then don't insert (like MySQL INSERT IGNORE)
-     */
-    private static final String ADD_SOURCE_SQL = "insert soft HARVEST_SOURCE ("
-            + "URL,URL_HASH,EMAILS,TIME_CREATED,INTERVAL_MINUTES,PRIORITY_SOURCE,SOURCE_OWNER,MEDIA_TYPE,IS_SPARQL_ENDPOINT) "
-            + "VALUES (?,?,?,NOW(),?,?,?,?,?)";
 
     /*
      * (non-Javadoc)
@@ -431,16 +439,6 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
     public void addSourceIgnoreDuplicate(Connection conn, HarvestSourceDTO source) throws DAOException {
         addSource(conn, source);
     }
-
-    /** */
-    private static final String DELETE_HARVEST_SOURCES = "delete from HARVEST_SOURCE where URL_HASH=?";
-    /** */
-    private static final String DELETE_FROM_URGENT_HARVEST_QUEUE = "delete from URGENT_HARVEST_QUEUE where URL=?";
-    /** */
-    private static final String DELETE_FROM_RULESET = "DB.DBA.rdfs_rule_set (?, ?, 1)";
-
-    /** delete post harvest scripts of the source */
-    private static final String DELETE_POST_HARVES_SCRIPTS = "DELETE FROM post_harvest_script WHERE target_source_url = ?";
 
     /**
      *
@@ -794,7 +792,7 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
         values.add(sourceDTO.getEmails());
         values.add(sourceDTO.getStatements() == null ? (int) 0 : sourceDTO.getStatements());
         values.add(sourceDTO.getCountUnavail() == null ? (int) 0 : sourceDTO.getCountUnavail());
-        values.add(sourceDTO.getLastHarvest() == null ? null : new Timestamp(sourceDTO.getLastHarvest().getTime()));
+        values.add(sourceDTO.getLastHarvest() == null ? null : new Timestamp(Util.getNowSecondsPrecision().getTime()));
         values.add(sourceDTO.getIntervalMinutes() == null ? (int) 0 : sourceDTO.getIntervalMinutes());
         values.add(YesNoBoolean.format(sourceDTO.isLastHarvestFailed()));
         values.add(YesNoBoolean.format(sourceDTO.isPrioritySource()));
