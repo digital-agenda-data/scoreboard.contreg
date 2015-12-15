@@ -28,19 +28,13 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.common.CRException;
 import eionet.cr.dao.readers.ResultSetReaderException;
-import eionet.cr.harvest.HarvestConstants;
-import eionet.cr.util.sesame.SesameUtil;
 
 /**
  *

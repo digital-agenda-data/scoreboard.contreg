@@ -2,9 +2,11 @@ package eionet.cr.dao;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Ignore;
 import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
@@ -68,9 +70,10 @@ public class MockVirtuosoBaseDAOTest extends VirtuosoBaseDAO {
         parser.setStopAtFirstError(false);
         parser.setRDFHandler(rdfHandler);
 
+        InputStreamReader reader = null;
         try {
-            parser.parse(this.getClass().getClassLoader().getResourceAsStream(fileName), "http://127.0.0.1/test");
-
+            reader = new InputStreamReader(getClass().getClassLoader().getResourceAsStream(fileName));
+            parser.parse(reader, "http://127.0.0.1/test");
         } catch (RDFParseException e) {
             e.printStackTrace();
         } catch (RDFHandlerException e) {
@@ -79,6 +82,8 @@ public class MockVirtuosoBaseDAOTest extends VirtuosoBaseDAO {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            IOUtils.closeQuietly(reader);
         }
     }
 
@@ -135,6 +140,7 @@ public class MockVirtuosoBaseDAOTest extends VirtuosoBaseDAO {
         /**
          * creates a fake bindingset object.
          */
+        @Override
         public void handleStatement(Statement statement) throws RDFHandlerException {
             // new binding started:
             if (statement.getPredicate() != null && statement.getPredicate().stringValue().equals(SOLUTION_NAME)) {

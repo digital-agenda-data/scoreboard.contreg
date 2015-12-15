@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.nio.channels.FileLockInterruptionException;
 import java.util.LinkedHashMap;
@@ -120,7 +121,7 @@ public class FileRdfFormatDetector {
         RDFParser parser = parserFactory.getParser();
         parser.setRDFHandler(new Handler());
         try {
-            parser.parse(inputStream, baseUri);
+            parser.parse(new InputStreamReader(inputStream), baseUri);
             result = true;
         } catch (RDFParseException e) {
             parsingExceptions.put(parserFactory.getRDFFormat(), e);

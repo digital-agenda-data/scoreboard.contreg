@@ -18,6 +18,7 @@ import info.aduna.xml.XMLWriter;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.List;
 
 import org.openrdf.model.BNode;
@@ -26,9 +27,13 @@ import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryResultHandlerException;
 import org.openrdf.query.TupleQueryResultHandlerException;
+import org.openrdf.query.resultio.QueryResultFormat;
 import org.openrdf.query.resultio.TupleQueryResultFormat;
 import org.openrdf.query.resultio.TupleQueryResultWriter;
+import org.openrdf.rio.RioSetting;
+import org.openrdf.rio.WriterConfig;
 
 /**
  * A {@link TupleQueryResultWriter} that writes tuple query results in the <a href="http://www.w3.org/TR/rdf-sparql-XMLres/">SPARQL
@@ -204,5 +209,71 @@ public class CRXmlWriter implements TupleQueryResultWriter {
         }
 
         xmlWriter.textElement(LITERAL_TAG, literal.getLabel());
+    }
+
+    @Override
+    public void handleBoolean(boolean paramBoolean) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void handleLinks(List<String> paramList) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public QueryResultFormat getQueryResultFormat() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void handleNamespace(String paramString1, String paramString2) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void startDocument() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void handleStylesheet(String paramString) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void startHeader() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void endHeader() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setWriterConfig(WriterConfig paramWriterConfig) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public WriterConfig getWriterConfig() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<RioSetting<?>> getSupportedSettings() {
+        // TODO Auto-generated method stub
+        return null;
     }
 }

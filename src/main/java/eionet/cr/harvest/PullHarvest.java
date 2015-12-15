@@ -52,14 +52,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
-import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
-import org.openrdf.query.GraphQuery;
-import org.openrdf.query.GraphQueryResult;
-import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.sparql.SPARQLConnection;
-import org.openrdf.repository.sparql.SPARQLRepository;
-import org.openrdf.repository.sparql.query.SPARQLGraphQuery;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
@@ -70,11 +63,9 @@ import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.config.GeneralConfig;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
-import eionet.cr.dao.EndpointHarvestQueryDAO;
 import eionet.cr.dao.HarvestSourceDAO;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.PostHarvestScriptDAO;
-import eionet.cr.dto.EndpointHarvestQueryDTO;
 import eionet.cr.dto.HarvestMessageDTO;
 import eionet.cr.dto.HarvestSourceDTO;
 import eionet.cr.dto.ObjectDTO;
@@ -91,7 +82,6 @@ import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Hashes;
 import eionet.cr.util.URLUtil;
 import eionet.cr.util.Util;
-import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.xml.ConversionsParser;
 
 /**
@@ -221,87 +211,89 @@ public class PullHarvest extends BaseHarvest {
      */
     private void doEndpointHarvest() throws HarvestException {
 
-        int numberOfTriples = 0;
-        EndpointHttpClient httpClient = prepareEndpointHttpClient();
+        throw new UnsupportedOperationException("Method not supported due to backward compatibility issues with Sesame 2.7.x!");
 
-        GraphQueryResult queryResult = null;
-        RepositoryConnection localConn = null;
-        RepositoryConnection endpointConn = null;
-        try {
-            // First see if this particular endpoint has any active harvest queries mapped to it at all.
-            String endpointUrl = getContextUrl();
-            List<EndpointHarvestQueryDTO> queries =
-                    DAOFactory.get().getDao(EndpointHarvestQueryDAO.class).listByEndpointUrl(endpointUrl, true);
-            if (queries == null || queries.isEmpty()) {
-                LOGGER.warn(loggerMsg("Found no active harvest queries for this endpoint"));
-                return;
-            }
-
-            // Prepare remote repository connection
-            SPARQLRepository sparqlRepository = new SPARQLRepository(endpointUrl);
-            endpointConn = sparqlRepository.getConnection();
-
-            // Prepare local repository connection
-            localConn = SesameUtil.getRepositoryConnection();
-            localConn.setAutoCommit(false);
-
-            // Prepare local repository value factory
-            ValueFactory vf = localConn.getValueFactory();
-            org.openrdf.model.URI graphURI = vf.createURI(endpointUrl);
-
-            // Loop through the harvest queries, execute each one of them on the remote repository,
-            // write the returned statements straight into local repository.
-            for (EndpointHarvestQueryDTO queryDTO : queries) {
-
-                LOGGER.debug(loggerMsg("Executing endpoint harvest query with id = " + queryDTO.getId()));
-                GraphQuery graphQuery = new SPARQLGraphQuery(httpClient, endpointUrl, endpointUrl, queryDTO.getQuery());
-
-                // Note that the returned GraphQueryResult is always a org.openrdf.repository.sparql.query.BackgroundGraphResult
-                // for remote endpoints, and it's a result that returns its statements (i.e. triples) AS THEY ARE PARSED.
-                // i.e. the statements ARE NOT written to the memory first and then passed back. So no memory problems here, and
-                // safe to use it this way.
-                queryResult = graphQuery.evaluate();
-                if (queryResult != null) {
-                    while (queryResult.hasNext()) {
-
-                        // Clear the graph just before first insert.
-                        if (numberOfTriples == 0) {
-                            localConn.clear(graphURI);
-                        }
-                        localConn.add(queryResult.next(), graphURI);
-                        numberOfTriples++;
-                    }
-                }
-            }
-
-            localConn.commit();
-
-            setStoredTriplesCount(numberOfTriples);
-            LOGGER.debug(loggerMsg("All queries executed, total of " + numberOfTriples + " triples loaded"));
-            finishWithOK(null, numberOfTriples);
-
-        } catch (Exception e) {
-
-            SesameUtil.rollback(localConn);
-            LOGGER.debug(loggerMsg("Exception occurred (will be further logged by caller below): " + e.toString()));
-
-            checkAndSetFatalExceptionFlag(e.getCause());
-            try {
-                finishWithError(httpClient.getLastExecutionResponseCode(), httpClient.getLastExecutionResponseText(), e);
-            } catch (RuntimeException finishingException) {
-                LOGGER.error("Error when finishing up: ", finishingException);
-            }
-
-            if (e instanceof HarvestException) {
-                throw (HarvestException) e;
-            } else {
-                throw new HarvestException(e.getMessage(), e);
-            }
-        } finally {
-            SesameUtil.close(queryResult);
-            SesameUtil.close(localConn);
-            SesameUtil.close(endpointConn);
-        }
+//        int numberOfTriples = 0;
+//        EndpointHttpClient httpClient = prepareEndpointHttpClient();
+//
+//        GraphQueryResult queryResult = null;
+//        RepositoryConnection localConn = null;
+//        RepositoryConnection endpointConn = null;
+//        try {
+//            // First see if this particular endpoint has any active harvest queries mapped to it at all.
+//            String endpointUrl = getContextUrl();
+//            List<EndpointHarvestQueryDTO> queries =
+//                    DAOFactory.get().getDao(EndpointHarvestQueryDAO.class).listByEndpointUrl(endpointUrl, true);
+//            if (queries == null || queries.isEmpty()) {
+//                LOGGER.warn(loggerMsg("Found no active harvest queries for this endpoint"));
+//                return;
+//            }
+//
+//            // Prepare remote repository connection
+//            SPARQLRepository sparqlRepository = new SPARQLRepository(endpointUrl);
+//            endpointConn = sparqlRepository.getConnection();
+//
+//            // Prepare local repository connection
+//            localConn = SesameUtil.getRepositoryConnection();
+//            localConn.setAutoCommit(false);
+//
+//            // Prepare local repository value factory
+//            ValueFactory vf = localConn.getValueFactory();
+//            org.openrdf.model.URI graphURI = vf.createURI(endpointUrl);
+//
+//            // Loop through the harvest queries, execute each one of them on the remote repository,
+//            // write the returned statements straight into local repository.
+//            for (EndpointHarvestQueryDTO queryDTO : queries) {
+//
+//                LOGGER.debug(loggerMsg("Executing endpoint harvest query with id = " + queryDTO.getId()));
+//                GraphQuery graphQuery = new SPARQLGraphQuery(httpClient, endpointUrl, queryDTO.getQuery());
+//
+//                // Note that the returned GraphQueryResult is always a org.openrdf.repository.sparql.query.BackgroundGraphResult
+//                // for remote endpoints, and it's a result that returns its statements (i.e. triples) AS THEY ARE PARSED.
+//                // i.e. the statements ARE NOT written to the memory first and then passed back. So no memory problems here, and
+//                // safe to use it this way.
+//                queryResult = graphQuery.evaluate();
+//                if (queryResult != null) {
+//                    while (queryResult.hasNext()) {
+//
+//                        // Clear the graph just before first insert.
+//                        if (numberOfTriples == 0) {
+//                            localConn.clear(graphURI);
+//                        }
+//                        localConn.add(queryResult.next(), graphURI);
+//                        numberOfTriples++;
+//                    }
+//                }
+//            }
+//
+//            localConn.commit();
+//
+//            setStoredTriplesCount(numberOfTriples);
+//            LOGGER.debug(loggerMsg("All queries executed, total of " + numberOfTriples + " triples loaded"));
+//            finishWithOK(null, numberOfTriples);
+//
+//        } catch (Exception e) {
+//
+//            SesameUtil.rollback(localConn);
+//            LOGGER.debug(loggerMsg("Exception occurred (will be further logged by caller below): " + e.toString()));
+//
+//            checkAndSetFatalExceptionFlag(e.getCause());
+//            try {
+//                finishWithError(httpClient.getLastExecutionResponseCode(), httpClient.getLastExecutionResponseText(), e);
+//            } catch (RuntimeException finishingException) {
+//                LOGGER.error("Error when finishing up: ", finishingException);
+//            }
+//
+//            if (e instanceof HarvestException) {
+//                throw (HarvestException) e;
+//            } else {
+//                throw new HarvestException(e.getMessage(), e);
+//            }
+//        } finally {
+//            SesameUtil.close(queryResult);
+//            SesameUtil.close(localConn);
+//            SesameUtil.close(endpointConn);
+//        }
     }
 
     /**
@@ -327,7 +319,7 @@ public class PullHarvest extends BaseHarvest {
 
         HashMap<String, String> headers = new HashMap<String, String>();
         headers.put("Connection", "close");
-        clientParams.setParameter(SPARQLConnection.ADDITIONAL_HEADER_NAME, headers);
+        clientParams.setParameter("additionalHTTPHeaders", headers);
 
         return new EndpointHttpClient(clientParams, manager);
     }

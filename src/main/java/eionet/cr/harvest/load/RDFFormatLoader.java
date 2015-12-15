@@ -23,6 +23,7 @@ package eionet.cr.harvest.load;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 
 import org.openrdf.OpenRDFException;
@@ -79,7 +80,7 @@ public class RDFFormatLoader implements ContentLoader {
         rdfParser.setRDFHandler(rdfHandler);
 
         // Parse the stream, return number of loaded triples.
-        rdfParser.parse(inputStream, baseUri);
+        rdfParser.parse(new InputStreamReader(inputStream), baseUri);
         return rdfHandler.getNumberOfTriplesSaved();
     }
 

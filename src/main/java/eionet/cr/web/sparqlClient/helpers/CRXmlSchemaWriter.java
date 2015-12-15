@@ -1,6 +1,7 @@
 package eionet.cr.web.sparqlClient.helpers;
 
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,9 +14,13 @@ import javax.xml.stream.XMLStreamWriter;
 
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
+import org.openrdf.query.QueryResultHandlerException;
 import org.openrdf.query.TupleQueryResultHandlerException;
+import org.openrdf.query.resultio.QueryResultFormat;
 import org.openrdf.query.resultio.TupleQueryResultFormat;
 import org.openrdf.query.resultio.TupleQueryResultWriter;
+import org.openrdf.rio.RioSetting;
+import org.openrdf.rio.WriterConfig;
 
 import eionet.cr.util.Util;
 import eionet.cr.util.export.SchemaHelper;
@@ -58,10 +63,12 @@ public class CRXmlSchemaWriter implements TupleQueryResultWriter {
         validNames = new HashSet<String>();
     }
 
+    @Override
     public final TupleQueryResultFormat getTupleQueryResultFormat() {
         return TupleQueryResultFormat.SPARQL;
     }
 
+    @Override
     public void startQueryResult(List<String> bindingNames) throws TupleQueryResultHandlerException {
         try {
             for (String bindingName : bindingNames) {
@@ -81,6 +88,7 @@ public class CRXmlSchemaWriter implements TupleQueryResultWriter {
         }
     }
 
+    @Override
     public void endQueryResult() throws TupleQueryResultHandlerException {
         try {
             writer.writeEndElement();
@@ -92,6 +100,7 @@ public class CRXmlSchemaWriter implements TupleQueryResultWriter {
         }
     }
 
+    @Override
     public void handleSolution(BindingSet bindingSet) throws TupleQueryResultHandlerException {
         try {
             writer.writeStartElement(ROW_ELEMENT);
@@ -112,6 +121,72 @@ public class CRXmlSchemaWriter implements TupleQueryResultWriter {
         } catch (Exception e) {
             throw new TupleQueryResultHandlerException(e);
         }
+    }
+
+    @Override
+    public void handleBoolean(boolean paramBoolean) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void handleLinks(List<String> paramList) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public QueryResultFormat getQueryResultFormat() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void handleNamespace(String paramString1, String paramString2) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void startDocument() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void handleStylesheet(String paramString) throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void startHeader() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void endHeader() throws QueryResultHandlerException {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void setWriterConfig(WriterConfig paramWriterConfig) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public WriterConfig getWriterConfig() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<RioSetting<?>> getSupportedSettings() {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

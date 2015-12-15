@@ -9,8 +9,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <env>local</env>
-        <javaVersion>1.6</javaVersion>
-        <sesame.openrdf.version>2.6.10</sesame.openrdf.version>
+        <javaVersion>1.7</javaVersion>
+        <sesame.openrdf.version>2.7.16</sesame.openrdf.version>
     </properties>
 
     <version>1.0-SNAPSHOT</version>
@@ -48,6 +48,7 @@
 
     <!-- the build configuration -->
     <build>
+        <pluginManagement>
         <plugins>
 
             <!-- maven-compiler-plugin -->
@@ -55,12 +56,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>3.2</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <verbose>false</verbose>
-                    <fork>false</fork>
-                    <compilerVersion>${javaVersion}</compilerVersion>
                     <source>${javaVersion}</source>
                     <target>${javaVersion}</target>
                 </configuration>
@@ -186,6 +184,7 @@
             </plugin>
 
         </plugins>
+        </pluginManagement>
 
         <!-- filters for src/main/resources and src/test/resources -->
 
@@ -571,7 +570,7 @@
         <dependency>
             <groupId>virtuoso</groupId>
             <artifactId>virt-sesame</artifactId>
-            <version>2.1</version>
+            <version>2.7.3</version>
         </dependency>
         <dependency>
             <groupId>virtuoso</groupId>
