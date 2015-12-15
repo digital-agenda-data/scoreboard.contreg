@@ -363,10 +363,12 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             repoConn.add(identifierURI, typePredicateURI, vf.createURI(Subjects.DATACUBE_DATA_SET), graphURI);
             repoConn.add(identifierURI, titlePredicateURI, vf.createLiteral(dctermsTitle), graphURI);
             repoConn.add(identifierURI, labelPredicateURI, vf.createLiteral(identifier), graphURI);
-            repoConn.add(identifierURI, descriptionPredicateURI, vf.createLiteral(dctermsDescription), graphURI);
             repoConn.add(identifierURI, distributionPredicateURI, distributionURI, graphURI);
             repoConn.add(identifierURI, modifiedPredicateURI, dateModified, graphURI);
             repoConn.add(identifierURI, dsdPredicateURI, vf.createURI(DEFAULT_DSD_URI), graphURI);
+            if (StringUtils.isNotBlank(dctermsDescription)) {
+                repoConn.add(identifierURI, descriptionPredicateURI, vf.createLiteral(dctermsDescription), graphURI);
+            }
 
             // Add properties for linked resources
             repoConn.add(distributionURI, typePredicateURI, vf.createURI(Subjects.DCAT_WEB_SERVICE), graphURI);
