@@ -31,6 +31,9 @@ public final class SesameConnectionProvider {
     private static final Logger LOGGER = Logger.getLogger(SesameConnectionProvider.class);
 
     /** */
+    private static final String VIRTUOSO_DB_URL_DB_NAME_PARAM = "DATABASE";
+
+    /** */
     public static final String READWRITE_DATASOURCE_NAME = "jdbc/readWriteRepo";
     public static final String READONLY_DATASOURCE_NAME = "jdbc/readOnlyRepo";
 
@@ -211,14 +214,18 @@ public final class SesameConnectionProvider {
     }
 
     /**
-     * @param dbName
+     * @param databaseName
      * @return
      */
-    public static Connection getSQLConnection(String dbName) throws SQLException {
+    public static Connection getSQLConnection(String databaseName) throws SQLException {
 
-        // first try to create connection through data source (but not when connection is requested to specific DB)
+        boolean specificDatabaseRequested = databaseName != null && databaseName.trim().length() > 0;
+
+        // First, try to create a connection through the data source (but not when connection is requested to specific DB!).
+
         DataSource dataSource = getReadWriteDataSource();
-        if (dbName == null || dbName.trim().length() == 0) {
+        if (!specificDatabaseRequested) {
+
             if (dataSource != null) {
                 return dataSource.getConnection();
             } else if (!isReadWriteDataSourceMissingLogged()) {
@@ -229,41 +236,43 @@ public final class SesameConnectionProvider {
             }
         }
 
-        // no data source was found above, so create the connection through DriverManager
-
-        String urlProperty = GeneralConfig.VIRTUOSO_DB_URL;
-        String usrProperty = GeneralConfig.VIRTUOSO_DB_USR;
-        String pwdProperty = GeneralConfig.VIRTUOSO_DB_PWD;
+        // No data source was found above, so create the connection through DriverManager.
 
         String drv = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_DRV);
-        String url = GeneralConfig.getRequiredProperty(urlProperty);
-        String usr = GeneralConfig.getRequiredProperty(usrProperty);
-        String pwd = GeneralConfig.getRequiredProperty(pwdProperty);
+        String url = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_URL);
+        String usr = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_USR);
+        String pwd = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_PWD);
 
         if (drv == null || drv.trim().length() == 0) {
             throw new SQLException("Failed to get connection, missing property: " + GeneralConfig.VIRTUOSO_DB_DRV);
+        } else {
+            drv = drv.trim();
         }
 
         if (url == null || url.trim().length() == 0) {
             throw new SQLException("Failed to get connection, missing property: " + GeneralConfig.VIRTUOSO_DB_URL);
+        } else {
+            url = url.trim();
         }
 
         if (usr == null || usr.trim().length() == 0) {
             throw new SQLException("Failed to get connection, missing property: " + GeneralConfig.VIRTUOSO_DB_USR);
+        } else {
+            usr = usr.trim();
         }
 
         if (pwd == null || pwd.trim().length() == 0) {
             throw new SQLException("Failed to get connection, missing property: " + GeneralConfig.VIRTUOSO_DB_PWD);
+        } else {
+            pwd = pwd.trim();
         }
 
-        if (dbName != null && dbName.trim().length() > 0) {
-            url = url.trim();
-            if (!url.endsWith("/")) {
-                url = url + "/";
-            }
-            url = url + "DATABASE=" + dbName;
+        // If specific database requested and no database specified in the connection URL, append database name to the URL.
+        if (specificDatabaseRequested && !url.contains(VIRTUOSO_DB_URL_DB_NAME_PARAM + "=")) {
+            url = (url.endsWith("/") ? "" : "/") + VIRTUOSO_DB_URL_DB_NAME_PARAM + "=" + databaseName;
         }
 
+        // Finally, load the driver and get the database connection.
         try {
             Class.forName(drv);
             return DriverManager.getConnection(url, usr, pwd);
