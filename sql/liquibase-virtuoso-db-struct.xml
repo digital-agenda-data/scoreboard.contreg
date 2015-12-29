@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+    You can run this change log on your database as many times as you want, it will ignore the
+    changes that are already applied. It also means that you can't modify an existing revision.
+    Always add to the end.
+
+    Use the maven goals: liquibase:update, liquibase:status or liquibase:changelogSync
+    Potentially with -Dliquibase.dropFirst=true
+ -->
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-2.0.xsd">
+
+     <changeSet author="heinlja" id="rev-1">
+        <comment>Create the table of the dynamically edited documentation content</comment>
+        <sql>
+            create table "documentation"
+			(
+			  "page_id" VARCHAR(255),
+			  "content_type" VARCHAR(100),
+			  "title" VARCHAR(512),
+			  PRIMARY KEY ("page_id")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-2">
+        <comment>Create the table where the metadata of harvest sources is stored.</comment>
+        <sql>
+            create table "harvest_source"
+			(
+			  "url_hash" BIGINT,
+			  "harvest_source_id" INTEGER IDENTITY,
+			  "url" VARCHAR(1024),
+			  "emails" VARCHAR(255),
+			  "time_created" DATETIME,
+			  "statements" INTEGER,
+			  "count_unavail" INTEGER,
+			  "last_harvest" DATETIME,
+			  "interval_minutes" INTEGER,
+			  "source" BIGINT,
+			  "gen_time" BIGINT,
+			  "last_harvest_failed" VARCHAR(1),
+			  "priority_source" VARCHAR(1),
+			  "source_owner" VARCHAR(20),
+			  "permanent_error" VARCHAR(1),
+			  "media_type" VARCHAR(255),
+			  "last_harvest_id" INTEGER,
+			  "is_sparql_endpoint" VARCHAR(1),
+			  PRIMARY KEY ("url_hash")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-3">
+        <comment>Create the table where the metadata of every harvest is stored.</comment>
+        <sql>
+            create table "harvest"
+			(
+			  "harvest_id" INTEGER IDENTITY,
+			  "harvest_source_id" INTEGER,
+			  "type" VARCHAR(20),
+			  "username" VARCHAR(45),
+			  "status" VARCHAR(10),
+			  "started" DATETIME,
+			  "finished" DATETIME,
+			  "tot_statements" INTEGER,
+			  "lit_statements" INTEGER,
+			  "res_statements" INTEGER,
+			  "enc_schemes" INTEGER,
+			  "http_code" INTEGER,
+			  PRIMARY KEY ("harvest_id")
+			)
+        </sql>
+        <sql>
+            ALTER TABLE "harvest"
+                ADD CONSTRAINT "ha_haso_fk_test" FOREIGN KEY ("harvest_source_id")
+                    REFERENCES "harvest_source" ("harvest_source_id") ON DELETE CASCADE
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-4">
+        <comment>Create the table where the harvest messages are stored.</comment>
+        <sql>
+            create table "harvest_message"
+			(
+			  "harvest_message_id" INTEGER IDENTITY,
+			  "harvest_id" INTEGER,
+			  "type" VARCHAR(3),
+			  "message" LONG VARCHAR,
+			  "stack_trace" LONG VARCHAR,
+			  PRIMARY KEY ("harvest_message_id")
+			)
+        </sql>
+        <sql>
+            ALTER TABLE "harvest_message"
+                ADD CONSTRAINT "hame_ha_fk_test" FOREIGN KEY ("harvest_id")
+                    REFERENCES "harvest" ("harvest_id") ON DELETE CASCADE
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-5">
+        <comment>The table where the binary content of the local resources is stored.</comment>
+        <sql>
+            create table "spo_binary"
+			(
+			  "subject" BIGINT,
+			  "obj_lang" VARCHAR(10),
+			  "datatype" VARCHAR(50),
+			  "must_embed" VARCHAR(1),
+			  PRIMARY KEY ("subject")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-6">
+        <comment>Create the table that stores the queue of harvest sources to be removed.</comment>
+        <sql>
+            create table "remove_source_queue"
+			(
+			  "url" VARCHAR(1024),
+			  PRIMARY KEY ("url")
+			)
+        </sql>
+    </changeSet>
+
+
+    <changeSet author="heinlja" id="rev-7">
+        <comment>Create the table that stores the post-harvest SPARQL scripts.</comment>
+        <sql>
+            create table "post_harvest_script"
+			(
+			  "post_harvest_script_id" INTEGER IDENTITY,
+			  "target_source_url" VARCHAR(1024),
+			  "target_type_url" VARCHAR(1024),
+			  "title" VARCHAR(255),
+			  "script" LONG VARCHAR,
+			  "position_number" INTEGER,
+			  "active" VARCHAR(1),
+			  "run_once" VARCHAR(1),
+			  "last_modified" DATETIME,
+			  PRIMARY KEY ("post_harvest_script_id")
+			)
+        </sql>
+        <sql>
+            ALTER TABLE "post_harvest_script"
+            ADD CHECK ( target_source_url  IS NULL OR  target_type_url  IS NULL)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-8">
+        <comment>Create the table for filtering Reportnet deliveries.</comment>
+        <sql>
+            create table "delivery_filter"
+			(
+			  "delivery_filter_id" INTEGER IDENTITY,
+			  "obligation" VARCHAR(255),
+			  "obligation_label" VARCHAR(255),
+			  "locality" VARCHAR(255),
+			  "locality_label" VARCHAR(255),
+			  "year" VARCHAR(10),
+			  "username" VARCHAR(10)
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-9">
+        <comment>Create the table of Access Control Lists</comment>
+        <sql>
+            create table "acls"
+			(
+			  "acl_id" INTEGER IDENTITY,
+			  "acl_name" VARCHAR(100),
+			  "parent_name" VARCHAR(100),
+			  "owner" VARCHAR(255),
+			  "description" VARCHAR(255),
+			  PRIMARY KEY ("acl_id")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-10">
+        <comment>Create the table of the rows of Access Control Lists</comment>
+        <sql>
+            create table "acl_rows"
+			(
+			  "acl_id" INTEGER,
+			  "type" VARCHAR(50),
+			  "entry_type" VARCHAR(50),
+			  "principal" VARCHAR(16),
+			  "status" INTEGER,
+			  "permissions" VARCHAR(255),
+			  PRIMARY KEY ("acl_id", "type", "entry_type", "principal", "status")
+			)
+        </sql>
+        <sql>
+            ALTER TABLE "acl_rows"
+            ADD CHECK ( entry_type  = 'owner'  OR  entry_type  = 'user'  OR  entry_type  = 'localgroup'  OR  entry_type  = 'other'  OR  entry_type  = 'foreign'  OR  entry_type  = 'unauthenticated'  OR  entry_type  = 'authenticated'  OR  entry_type  = 'mask' )
+        </sql>
+        <sql>
+            ALTER TABLE "acl_rows"
+            ADD CHECK ( type  = 'object'  OR  type  = 'doc'  OR  type  = 'dcc' )
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-11">
+        <comment>Create the table of staging databases of the Digital Agenda Scoreboard module.</comment>
+        <sql>
+            create table "staging_db"
+			(
+			  "database_id" INTEGER IDENTITY,
+			  "name" VARCHAR(150),
+			  "creator" VARCHAR(80),
+			  "created" DATETIME,
+			  "description" LONG VARCHAR,
+			  "import_status" VARCHAR(30),
+			  "import_log" LONG VARCHAR,
+			  "default_query" LONG VARCHAR,
+			  PRIMARY KEY ("database_id")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-12">
+        <comment>Create the table of the RDF exports from staging databases of the Digital Agenda Scoreboard module.</comment>
+        <sql>
+            create table "staging_db_rdf_export"
+			(
+			  "export_id" INTEGER IDENTITY,
+			  "database_id" INTEGER,
+			  "export_name" VARCHAR(150),
+			  "user_name" VARCHAR(80),
+			  "query_conf" LONG VARCHAR,
+			  "started" DATETIME,
+			  "finished" DATETIME,
+			  "status" VARCHAR(30),
+			  "export_log" LONG VARCHAR,
+			  "row_count" INTEGER,
+			  "noof_subjects" INTEGER,
+			  "noof_triples" INTEGER,
+			  "missing_concepts" LONG VARCHAR,
+			  "graphs" LONG VARCHAR,
+			  PRIMARY KEY ("export_id")
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-13">
+        <comment>Create the table of the SPARQL queries executed on harvest sources that are SPARQL endpoints.</comment>
+        <sql>
+            create table "endpoint_harvest_query"
+			(
+			  "endpoint_harvest_query_id" INTEGER IDENTITY,
+			  "title" VARCHAR(255),
+			  "query" LONG VARCHAR,
+			  "endpoint_url" VARCHAR(1024),
+			  "endpoint_url_hash" BIGINT,
+			  "position_number" INTEGER,
+			  "active" VARCHAR(1),
+			  "last_modified" DATETIME,
+			  PRIMARY KEY ("endpoint_harvest_query_id")
+			)
+        </sql>
+        <sql>
+            ALTER TABLE "endpoint_harvest_query"
+                ADD CONSTRAINT "fk_url_hash_test" FOREIGN KEY ("endpoint_url_hash")
+                    REFERENCES "harvest_source" ("url_hash") ON UPDATE CASCADE ON DELETE CASCADE
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-14">
+        <comment>Create the table of where the queue of urgent harvests is to be stored.</comment>
+        <sql>
+            create table "urgent_harvest_queue"
+			(
+			  "url" VARCHAR(1024),
+			  "timestamp" DATETIME,
+			  "pushed_content" LONG VARCHAR
+			)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-15">
+        <preConditions onFail="MARK_RAN">
+            <customPrecondition className="eionet.liquibase.VirtuosoIndexNotExists">
+                <param name="tableName" value="post_harvest_script" />
+                <param name="indexName" value="post_harvest_script_source_url"  />
+            </customPrecondition>
+        </preConditions>
+        <comment>Add missing indexes to post harvest script.</comment>
+        <sql>
+            CREATE INDEX post_harvest_script_source_url ON post_harvest_script (target_source_url)
+        </sql>
+    </changeSet>
+
+    <changeSet author="heinlja" id="rev-16">
+        <preConditions onFail="MARK_RAN">
+            <customPrecondition className="eionet.liquibase.VirtuosoIndexNotExists">
+                <param name="tableName" value="post_harvest_script" />
+                <param name="indexName" value="post_harvest_script_type_uri"  />
+            </customPrecondition>
+        </preConditions>
+        <comment>Add missing indexes to post harvest script.</comment>
+        <sql>
+            CREATE INDEX post_harvest_script_type_uri ON post_harvest_script (target_type_url)
+        </sql>
+    </changeSet>
+<!--
+    <changeSet author="heinlja" id="rev-17">
+        <comment>Insert some initial data.</comment>
+        <sql>
+            INSERT SOFT "post_harvest_script" (target_source_url,target_type_url,title,script,position_number,active,run_once,last_modified) values
+            (NULL, 'http://reference.data.gov.uk/def/reference/URIset', 'Remove "Gregorian" from the start of skos:prefLabel', 'PREFIX skos: <http://www.w3.org/2004/02/skos/core#> MODIFY GRAPH ?harvestedSource DELETE { ?s skos:prefLabel ?oldLabel. } INSERT { ?s skos:prefLabel `xsd:string(bif:trim(fn:replace(?oldLabel,"Gregorian","")))` } WHERE { GRAPH ?harvestedSource { ?s skos:prefLabel ?oldLabel filter(strStarts(str(?oldLabel),"Gregorian")) } }', 1, 'Y', 'Y', now())
+        </sql>
+        <sql>
+            INSERT SOFT "post_harvest_script" (target_source_url,target_type_url,title,script,position_number,active,run_once,last_modified) values
+            (NULL, 'http://reference.data.gov.uk/def/reference/URIset', 'Remove "Gregorian" from the start of rdfs:label', 'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> MODIFY GRAPH ?harvestedSource DELETE { ?s rdfs:label ?oldLabel. } INSERT { ?s rdfs:label `xsd:string(bif:trim(fn:replace(?oldLabel,"Gregorian","")))` } WHERE { GRAPH ?harvestedSource { ?s rdfs:label ?oldLabel filter(strStarts(str(?oldLabel),"Gregorian")) } }', 2, 'Y', 'Y', now())
+        </sql>
+        <sql>
+            INSERT SOFT "post_harvest_script" (target_source_url,target_type_url,title,script,position_number,active,run_once,last_modified) values
+            (NULL, 'http://reference.data.gov.uk/def/reference/URIset', 'Add skos:notation and skos:altLabel', 'PREFIX skos: <http://www.w3.org/2004/02/skos/core#> INSERT INTO GRAPH ?harvestedSource { ?s skos:notation `xsd:string(bif:trim(fn:substring-after(?prefLabel,":")))`. ?s skos:altLabel `xsd:string(bif:trim(fn:substring-after(?prefLabel,":")))` } WHERE { GRAPH ?harvestedSource { ?s skos:prefLabel ?prefLabel filter(regex(?prefLabel,":")) } }', 3, 'Y', 'Y', now())
+        </sql>
+        <sql>
+            INSERT SOFT "post_harvest_script" (target_source_url,target_type_url,title,script,position_number,active,run_once,last_modified) values
+            (NULL, 'http://reference.data.gov.uk/def/reference/URIset', 'Generate 3-letter months in skos:prefLabel of UK time service months', 'PREFIX skos: <http://www.w3.org/2004/02/skos/core#> DELETE { graph ?g { ?s skos:prefLabel ?oldLabel } } INSERT { graph ?g { ?s skos:prefLabel `concat(bif:left(bif:monthname(bif:stringdate(concat(?notation, "-01"))), 3), " ", bif:left(?notation, 4))` } } WHERE { GRAPH ?g { ?s a <http://reference.data.gov.uk/def/intervals/Month> . ?s skos:prefLabel ?oldLabel . ?s skos:notation ?notation } }', 4, 'Y', 'Y', now())
+        </sql>
+        <sql>
+            INSERT SOFT "post_harvest_script" (target_source_url,target_type_url,title,script,position_number,active,run_once,last_modified) values
+            (NULL, 'http://reference.data.gov.uk/def/reference/URIset', 'Generate 3-letter months in rdfs:label of UK time service months', 'PREFIX skos: <http://www.w3.org/2004/02/skos/core#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> DELETE { graph ?g { ?s rdfs:label ?oldLabel } } INSERT { graph ?g { ?s rdfs:label `concat(bif:left(bif:monthname(bif:stringdate(concat(?notation, "-01"))), 3), " ", bif:left(?notation, 4))` } } WHERE { GRAPH ?g { ?s a <http://reference.data.gov.uk/def/intervals/Month> . ?s rdfs:label ?oldLabel . ?s skos:notation ?notation } }', 5, 'Y', 'Y', now())
+        </sql>
+    </changeSet>
+-->
+</databaseChangeLog>

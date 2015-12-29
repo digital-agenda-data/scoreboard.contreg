@@ -35,6 +35,28 @@
         <param-value>${enableEEAFunctionality}</param-value>
     </context-param>
 
+    <!-- Liquibase configuration -->
+
+    <context-param>
+        <param-name>liquibase.changelog</param-name>
+        <param-value>sql/liquibase-virtuoso-db-struct.xml</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>liquibase.datasource</param-name>
+        <param-value>java:comp/env/jdbc/readWriteRepo</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>liquibase.onerror.fail</param-name>
+        <param-value>true</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>liquibase.contexts</param-name>
+        <param-value>production</param-value>
+    </context-param>
+
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- filters -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
@@ -128,6 +150,9 @@
     <!-- listeners -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
+    <listener>
+        <listener-class>eionet.cr.liquibase.CRLiquibaseServletListener</listener-class>
+    </listener>
     <listener>
         <listener-class>eionet.cr.web.util.ApplicationCache</listener-class>
     </listener>
