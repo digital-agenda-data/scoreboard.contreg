@@ -74,8 +74,8 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liqui
         </sql>
         <sql>
             ALTER TABLE "harvest"
-                ADD CONSTRAINT "ha_haso_fk_test" FOREIGN KEY ("harvest_source_id")
-                    REFERENCES "harvest_source" ("harvest_source_id") ON DELETE CASCADE
+            ADD FOREIGN KEY ("harvest_source_id")
+            REFERENCES "harvest_source" ("harvest_source_id") ON DELETE CASCADE
         </sql>
     </changeSet>
 
@@ -94,8 +94,8 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liqui
         </sql>
         <sql>
             ALTER TABLE "harvest_message"
-                ADD CONSTRAINT "hame_ha_fk_test" FOREIGN KEY ("harvest_id")
-                    REFERENCES "harvest" ("harvest_id") ON DELETE CASCADE
+            ADD FOREIGN KEY ("harvest_id")
+            REFERENCES "harvest" ("harvest_id") ON DELETE CASCADE
         </sql>
     </changeSet>
 
@@ -263,8 +263,7 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liqui
         </sql>
         <sql>
             ALTER TABLE "endpoint_harvest_query"
-                ADD CONSTRAINT "fk_url_hash_test" FOREIGN KEY ("endpoint_url_hash")
-                    REFERENCES "harvest_source" ("url_hash") ON UPDATE CASCADE ON DELETE CASCADE
+            ADD FOREIGN KEY ("endpoint_url_hash") REFERENCES "harvest_source" ("url_hash") ON UPDATE CASCADE ON DELETE CASCADE
         </sql>
     </changeSet>
 

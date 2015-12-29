@@ -29,11 +29,9 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,7 +55,6 @@ import nl.bitwalker.useragentutils.BrowserType;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.apache.commons.lang.time.DateUtils;
 import org.quartz.CronExpression;
 
 import eionet.cr.common.CRRuntimeException;
@@ -916,13 +913,5 @@ public final class Util {
         }
 
         return true;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public static Date getNowSecondsPrecision() {
-        return DateUtils.truncate(new Date(), Calendar.SECOND);
     }
 }
