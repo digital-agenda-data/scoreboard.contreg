@@ -38,3 +38,19 @@ DB.DBA.RDF_OBJ_FT_RULE_ADD (null, null, 'All');
 DB.DBA.VT_INC_INDEX_DB_DBA_RDF_OBJ ();
 DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'OFF', null);
 DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'ON', 10);
+
+-- ---------------------------------------------------------------------------
+-- Some Virtuoso 7.2.1 specific permissions.
+-- ---------------------------------------------------------------------------
+
+grant execute on DB.DBA.RL_I2ID to cr3user;
+grant execute on DB.DBA.L_O_LOOK to cr3user;
+grant execute on DB.DBA.RL_I2ID_NP to cr3user;
+grant execute on DB.DBA.RDF_INSERT_TRIPLE_C to cr3user;
+grant execute on DB.DBA.RDF_CLEAR_GRAPHS_C to cr3user;
+
+grant execute on DB.DBA.RL_I2ID to cr3test;
+grant execute on DB.DBA.L_O_LOOK to cr3test;
+grant execute on DB.DBA.RL_I2ID_NP to cr3test;
+grant execute on DB.DBA.RDF_INSERT_TRIPLE_C to cr3test;
+grant execute on DB.DBA.RDF_CLEAR_GRAPHS_C to cr3test;
