@@ -772,7 +772,7 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
 
     /** */
     private static final String UPDATE_SOURCE_HARVEST_FINISHED_SQL = "update HARVEST_SOURCE "
-            + "set EMAILS=?, STATEMENTS=?, COUNT_UNAVAIL=?, LAST_HARVEST=forget_timezone(?), INTERVAL_MINUTES=?, "
+            + "set EMAILS=?, STATEMENTS=?, COUNT_UNAVAIL=?, LAST_HARVEST=?, INTERVAL_MINUTES=?, "
             + "LAST_HARVEST_FAILED=?, PRIORITY_SOURCE=?, SOURCE_OWNER=?, PERMANENT_ERROR=?, LAST_HARVEST_ID=? "
             + "where URL_HASH=?";
 
