@@ -68,8 +68,8 @@ public final class SesameConnectionProvider {
             String pwdProperty = GeneralConfig.VIRTUOSO_DB_PWD;
 
             readWriteRepository =
-                    createRepository(GeneralConfig.getRequiredProperty(urlProperty),
-                            GeneralConfig.getRequiredProperty(usrProperty), GeneralConfig.getRequiredProperty(pwdProperty));
+                    createRepository(GeneralConfig.getRequiredProperty(urlProperty), GeneralConfig.getRequiredProperty(usrProperty),
+                            GeneralConfig.getRequiredProperty(pwdProperty));
         }
         return readWriteRepository;
     }
@@ -187,8 +187,8 @@ public final class SesameConnectionProvider {
         if (dataSource == null) {
 
             if (!isReadOnlyDataSourceMissingLogged()) {
-                LOGGER.debug(MessageFormat.format("Found no data source with name {0}, going to create a direct connection",
-                        READONLY_DATASOURCE_NAME));
+                LOGGER.debug(MessageFormat
+                        .format("Found no data source with name {0}, going to create a direct connection", READONLY_DATASOURCE_NAME));
                 SesameConnectionProvider.readOnlyDataSourceMissingLogged = true;
             }
             return getReadOnlyRepository().getConnection();
@@ -229,8 +229,7 @@ public final class SesameConnectionProvider {
             if (dataSource != null) {
                 return dataSource.getConnection();
             } else if (!isReadWriteDataSourceMissingLogged()) {
-                LOGGER.debug(MessageFormat.format(
-                        "Found no data source with name {0}, going to create a connection through DriverManager",
+                LOGGER.debug(MessageFormat.format("Found no data source with name {0}, going to create a connection through DriverManager",
                         READWRITE_DATASOURCE_NAME));
                 SesameConnectionProvider.readWriteDataSourceMissingLogged = true;
             }
@@ -267,9 +266,19 @@ public final class SesameConnectionProvider {
             pwd = pwd.trim();
         }
 
-        // If specific database requested and no database specified in the connection URL, append database name to the URL.
-        if (specificDatabaseRequested && !url.contains(VIRTUOSO_DB_URL_DB_NAME_PARAM + "=")) {
-            url = (url.endsWith("/") ? "" : "/") + VIRTUOSO_DB_URL_DB_NAME_PARAM + "=" + databaseName;
+        // If specific database requested, then ensure that the connection is asked indeed for that particular database.
+        if (specificDatabaseRequested) {
+
+            // If no database name already requested in the URL, then just append it, otherwise overwrite with the requested database name.
+            String databaseEqualsStr = VIRTUOSO_DB_URL_DB_NAME_PARAM + "=";
+            if (!url.contains(databaseEqualsStr)) {
+                url = (url.endsWith("/") ? "" : "/") + databaseEqualsStr + databaseName;
+            } else {
+                int i = url.indexOf(databaseEqualsStr);
+                int j = url.indexOf('/', i);
+                String strToReplace = url.substring(i, j == -1 ? url.length() : j);
+                url = url.replace(strToReplace, databaseEqualsStr + databaseName);
+            }
         }
 
         // Finally, load the driver and get the database connection.

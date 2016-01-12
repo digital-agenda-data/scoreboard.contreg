@@ -40,7 +40,7 @@ DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'OFF', null);
 DB.DBA.VT_BATCH_UPDATE ('DB.DBA.RDF_OBJ', 'ON', 10);
 
 -- ---------------------------------------------------------------------------
--- Some Virtuoso 7.2.1 specific permissions.
+-- Some Virtuoso 7.2.x specific permissions.
 -- ---------------------------------------------------------------------------
 
 grant execute on DB.DBA.RL_I2ID to cr3user;
@@ -48,12 +48,16 @@ grant execute on DB.DBA.L_O_LOOK to cr3user;
 grant execute on DB.DBA.RL_I2ID_NP to cr3user;
 grant execute on DB.DBA.RDF_INSERT_TRIPLE_C to cr3user;
 grant execute on DB.DBA.RDF_CLEAR_GRAPHS_C to cr3user;
+grant execute on DB.DBA.TTLP to cr3user;
+grant execute on DB.DBA.TTLP_RL_NEW_GRAPH to cr3user;
 
 grant execute on DB.DBA.RL_I2ID to cr3test;
 grant execute on DB.DBA.L_O_LOOK to cr3test;
 grant execute on DB.DBA.RL_I2ID_NP to cr3test;
 grant execute on DB.DBA.RDF_INSERT_TRIPLE_C to cr3test;
 grant execute on DB.DBA.RDF_CLEAR_GRAPHS_C to cr3test;
+grant execute on DB.DBA.TTLP to cr3test;
+grant execute on DB.DBA.TTLP_RL_NEW_GRAPH to cr3test;
 
 -- -------------------------------------------------------------------------------------
 -- Define CR's default inference rule set.
