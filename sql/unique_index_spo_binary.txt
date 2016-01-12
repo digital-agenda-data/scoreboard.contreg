@@ -1,1 +1,0 @@
-create unique index SPO_BINARY_SUBJECT_UNQ on SPO_BINARY (SUBJECT);

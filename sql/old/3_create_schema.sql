@@ -1,4 +1,4 @@
-create table "CRTEST"."cr3test"."documentation"
+create table "CR"."cr3user"."documentation"
 (
   "page_id" VARCHAR(255),
   "content_type" VARCHAR(100),
@@ -6,31 +6,17 @@ create table "CRTEST"."cr3test"."documentation"
   PRIMARY KEY ("page_id")
 );
 
-
-create table "CRTEST"."cr3test"."harvest_source"
+create table "CR"."cr3user"."harvest_message"
 (
-  "url_hash" BIGINT,
-  "harvest_source_id" INTEGER IDENTITY,
-  "url" VARCHAR(1024),
-  "emails" VARCHAR(255),
-  "time_created" DATETIME,
-  "statements" INTEGER,
-  "count_unavail" INTEGER,
-  "last_harvest" DATETIME,
-  "interval_minutes" INTEGER,
-  "source" BIGINT,
-  "gen_time" BIGINT,
-  "last_harvest_failed" VARCHAR(1),
-  "priority_source" VARCHAR(1),
-  "source_owner" VARCHAR(20),
-  "permanent_error" VARCHAR(1),
-  "media_type" VARCHAR(255),
-  "last_harvest_id" INTEGER,
-  "is_sparql_endpoint" VARCHAR(1),
-  PRIMARY KEY ("url_hash")
+  "harvest_message_id" INTEGER IDENTITY,
+  "harvest_id" INTEGER,
+  "type" VARCHAR(3),
+  "message" LONG VARCHAR,
+  "stack_trace" LONG VARCHAR,
+  PRIMARY KEY ("harvest_message_id")
 );
 
-create table "CRTEST"."cr3test"."harvest"
+create table "CR"."cr3user"."harvest"
 (
   "harvest_id" INTEGER IDENTITY,
   "harvest_source_id" INTEGER,
@@ -47,24 +33,45 @@ create table "CRTEST"."cr3test"."harvest"
   PRIMARY KEY ("harvest_id")
 );
 
-create table "CRTEST"."cr3test"."harvest_message"
+create table "CR"."cr3user"."harvest_source"
 (
-  "harvest_message_id" INTEGER IDENTITY,
-  "harvest_id" INTEGER,
-  "type" VARCHAR(3),
-  "message" LONG VARCHAR,
-  "stack_trace" LONG VARCHAR,
-  PRIMARY KEY ("harvest_message_id")
+  "url_hash" BIGINT,
+  "harvest_source_id" INTEGER IDENTITY,
+  "url" VARCHAR(1024),
+  "emails" VARCHAR(255),
+  "time_created" DATETIME,
+  "statements" INTEGER DEFAULT 0,
+  "count_unavail" INTEGER DEFAULT 0,
+  "last_harvest" DATETIME,
+  "interval_minutes" INTEGER,
+  "source" BIGINT,
+  "gen_time" BIGINT,
+  "last_harvest_failed" VARCHAR(1),
+  "priority_source" VARCHAR(1),
+  "source_owner" VARCHAR(20),
+  "permanent_error" VARCHAR(1),
+  "media_type" VARCHAR(255),
+  "last_harvest_id" INTEGER,
+  "is_sparql_endpoint" VARCHAR(1),
+  PRIMARY KEY ("url_hash")
 );
 
-create table "CRTEST"."cr3test"."urgent_harvest_queue"
+ALTER TABLE "CR"."cr3user"."harvest_message"
+  ADD CONSTRAINT "harvest_message_harvest_fk" FOREIGN KEY ("harvest_id")
+    REFERENCES "CR"."cr3user"."harvest" ("harvest_id") ON DELETE CASCADE;
+
+ALTER TABLE "CR"."cr3user"."harvest"
+  ADD CONSTRAINT "harvest_harvest_source_fk" FOREIGN KEY ("harvest_source_id")
+    REFERENCES "CR"."cr3user"."harvest_source" ("harvest_source_id") ON DELETE CASCADE;
+
+create table "CR"."cr3user"."urgent_harvest_queue"
 (
   "url" VARCHAR(1024),
   "timestamp" DATETIME,
   "pushed_content" LONG VARCHAR
 );
 
-create table "CRTEST"."cr3test"."spo_binary"
+create table "CR"."cr3user"."spo_binary"
 (
   "subject" BIGINT,
   "obj_lang" VARCHAR(10),
@@ -73,13 +80,13 @@ create table "CRTEST"."cr3test"."spo_binary"
   PRIMARY KEY ("subject")
 );
 
-create table "CRTEST"."cr3test"."remove_source_queue"
+create table "CR"."cr3user"."remove_source_queue"
 (
   "url" VARCHAR(1024),
   PRIMARY KEY ("url")
 );
 
-create table "CRTEST"."cr3test"."post_harvest_script"
+create table "CR"."cr3user"."post_harvest_script"
 (
   "post_harvest_script_id" INTEGER IDENTITY,
   "target_source_url" VARCHAR(1024),
@@ -93,11 +100,11 @@ create table "CRTEST"."cr3test"."post_harvest_script"
   PRIMARY KEY ("post_harvest_script_id")
 );
 
-ALTER TABLE "CRTEST"."cr3test"."post_harvest_script"
+ALTER TABLE "CR"."cr3user"."post_harvest_script"
   ADD CHECK ( target_source_url  IS NULL OR  target_type_url  IS NULL);
 
 
-create table "CRTEST"."cr3test"."delivery_filter"
+create table "CR"."cr3user"."delivery_filter"
 (
   "delivery_filter_id" INTEGER IDENTITY,
   "obligation" VARCHAR(255),
@@ -108,7 +115,7 @@ create table "CRTEST"."cr3test"."delivery_filter"
   "username" VARCHAR(10)
 );
 
-create table "CRTEST"."cr3test"."acls"
+create table "CR"."cr3user"."acls"
 (
   "acl_id" INTEGER IDENTITY,
   "acl_name" VARCHAR(100),
@@ -118,7 +125,7 @@ create table "CRTEST"."cr3test"."acls"
   PRIMARY KEY ("acl_id")
 );
 
-create table "CRTEST"."cr3test"."acl_rows"
+create table "CR"."cr3user"."acl_rows"
 (
   "acl_id" INTEGER,
   "type" VARCHAR(50),
@@ -129,14 +136,14 @@ create table "CRTEST"."cr3test"."acl_rows"
   PRIMARY KEY ("acl_id", "type", "entry_type", "principal", "status")
 );
 
-ALTER TABLE "CRTEST"."cr3test"."acl_rows"
+ALTER TABLE "CR"."cr3user"."acl_rows"
   ADD CHECK ( entry_type  = 'owner'  OR  entry_type  = 'user'  OR  entry_type  = 'localgroup'  OR  entry_type  = 'other'  OR  entry_type  = 'foreign'  OR  entry_type  = 'unauthenticated'  OR  entry_type  = 'authenticated'  OR  entry_type  = 'mask' );
 
-ALTER TABLE "CRTEST"."cr3test"."acl_rows"
+ALTER TABLE "CR"."cr3user"."acl_rows"
   ADD CHECK ( type  = 'object'  OR  type  = 'doc'  OR  type  = 'dcc' );
 
 
-create table "CRTEST"."cr3test"."staging_db"
+create table "CR"."cr3user"."staging_db"
 (
   "database_id" INTEGER IDENTITY,
   "name" VARCHAR(150),
@@ -149,7 +156,7 @@ create table "CRTEST"."cr3test"."staging_db"
   PRIMARY KEY ("database_id")
 );
 
-create table "CRTEST"."cr3test"."staging_db_rdf_export"
+create table "CR"."cr3user"."staging_db_rdf_export"
 (
   "export_id" INTEGER IDENTITY,
   "database_id" INTEGER,
@@ -168,7 +175,7 @@ create table "CRTEST"."cr3test"."staging_db_rdf_export"
   PRIMARY KEY ("export_id")
 );
 
-create table "CRTEST"."cr3test"."endpoint_harvest_query"
+create table "CR"."cr3user"."endpoint_harvest_query"
 (
   "endpoint_harvest_query_id" INTEGER IDENTITY,
   "title" VARCHAR(255),
@@ -180,4 +187,8 @@ create table "CRTEST"."cr3test"."endpoint_harvest_query"
   "last_modified" DATETIME,
   PRIMARY KEY ("endpoint_harvest_query_id")
 );
+
+ALTER TABLE "CR"."cr3user"."endpoint_harvest_query"
+  ADD CONSTRAINT "fk_url_hash" FOREIGN KEY ("endpoint_url_hash")
+    REFERENCES "CR"."cr3user"."harvest_source" ("url_hash") ON UPDATE CASCADE ON DELETE CASCADE;
 

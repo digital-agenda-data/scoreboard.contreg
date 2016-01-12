@@ -1,1 +1,0 @@
-alter table CR.cr3user.harvest_source add column last_harvest_id integer;
