@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <localgroups>
     <group id="cr_admin">
-        <member userid="roug"/>
-        <member userid="heinlja"/>
-        <member userid="altnyris"/>
-        <member userid="kasperen"/>
-        <member userid="lainekai"/>
-        <member userid="voolajuh"/>
+        <member userid="admin"/>
     </group>
 </localgroups>
