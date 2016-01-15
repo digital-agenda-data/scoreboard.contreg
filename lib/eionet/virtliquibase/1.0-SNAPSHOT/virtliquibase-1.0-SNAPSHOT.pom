@@ -1,6 +1,0 @@
-<project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>eionet</groupId>
-  <artifactId>virtliquibase</artifactId>
-  <version>1.0-SNAPSHOT</version>
-</project>
