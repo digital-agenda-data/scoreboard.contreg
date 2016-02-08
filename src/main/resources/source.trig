@@ -39,7 +39,7 @@
             rdf:_1 [
                 a xl:RowShift ;
                 xl:restriction "A2:E2" ;
-                xl:breakCondition "ALLEMPTY(A2:E2)" ; 
+                xl:breakCondition "ALLEMPTY(A2:E2)" ;
                 xl:steps "1" ;
             ] ;
         ]
@@ -53,14 +53,14 @@
     skos:prefLabel "B2"^^xl:Expr ;
     skos:definition "C2"^^xl:Expr ;
     foaf:page "URI(D2)"^^xl:Expr ;
-    skos:notes "E2"^^xl:Expr .
-    
-    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/source"] 
+    skos:note "E2"^^xl:Expr .
+
+    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/source"]
     skos:hasTopConcept "URI('http://semantic.digital-agenda-data.eu/codelist/source/' & URLENCODE(LCASE(A2)))"^^xl:Expr .
 }
 
 :CodelistSetup {
-    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/source"] 
+    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/source"]
       a skos:ConceptScheme ;
       skos:prefLabel "Sources used by Digital Agenda Scoreboard indicators" ;
       skos:inScheme "URI('http://semantic.digital-agenda-data.eu/def/scheme')"^^xl:Expr ;

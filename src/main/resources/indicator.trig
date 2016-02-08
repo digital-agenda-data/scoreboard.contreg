@@ -39,7 +39,7 @@
             rdf:_1 [
                 a xl:RowShift ;
                 xl:restriction "A2:H2" ;
-                xl:breakCondition "ALLEMPTY(A2:H2)" ; 
+                xl:breakCondition "ALLEMPTY(A2:H2)" ;
                 xl:steps "1" ;
             ] ;
         ]
@@ -53,7 +53,7 @@
     skos:prefLabel "B2"^^xl:Expr ;
     skos:altLabel "C2"^^xl:Expr ;
     skos:definition "D2"^^xl:Expr ;
-    skos:notes "E2"^^xl:Expr ;
+    skos:note "E2"^^xl:Expr ;
     dad-prop:membership [
         xl:uri "URI('http://semantic.digital-agenda-data.eu/codelist/indicator-group/' & URLENCODE(LCASE(F2)) & '/' & URLENCODE(LCASE(A2)))"^^xl:Expr ;
         a dad-class:IndicatorToGroupMembership ;
@@ -62,15 +62,15 @@
         dad-prop:order "G2"^^xl:Expr
     ];
     dcterms:source "URI('http://semantic.digital-agenda-data.eu/codelist/source/' & URLENCODE(LCASE(H2)))"^^xl:Expr .
-    
-    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/indicator"] 
+
+    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/indicator"]
     skos:hasTopConcept "URI('http://semantic.digital-agenda-data.eu/codelist/indicator/' & URLENCODE(LCASE(A2)))"^^xl:Expr .
 }
 
 :CodelistSetup {
-    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/indicator"] 
+    [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/indicator"]
       a skos:ConceptScheme ; a sdmx:CodeList ;
-      skos:prefLabel "Code list for indicators used by Digital Agenda Scoreboard"; 
+      skos:prefLabel "Code list for indicators used by Digital Agenda Scoreboard";
       skos:inScheme "URI('http://semantic.digital-agenda-data.eu/def/scheme')"^^xl:Expr ;
       skos:notation "UCASE(SHEETNAME(A2))"^^xl:Expr ;
       rdfs:isDefinedBy "URI('http://digital-agenda-data.eu/')"^^xl:Expr .

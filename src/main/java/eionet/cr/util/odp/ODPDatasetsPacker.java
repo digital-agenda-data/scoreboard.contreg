@@ -821,7 +821,7 @@ public class ODPDatasetsPacker {
             sb.append(skosDefinition);
         }
 
-        // Now the skos:notes of the indicator, with header "Notes".
+        // Now the skos:note of the indicator, with header "Notes".
         String skosNotes = indSubject.getObjectValue(Predicates.SKOS_NOTE);
         if (StringUtils.isNotBlank(skosNotes)) {
             if (sb.length() > 0) {
