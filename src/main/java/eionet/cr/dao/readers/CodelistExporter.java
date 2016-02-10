@@ -365,55 +365,6 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
      * @param codelistItemMap
      * @return
      */
-    private HashSet<ArrayList<String>> createCodelistItemRows2(HashMap<Integer, List<String>> codelistItemMap) {
-
-        // Prepare first row of this codelist item (remember: a codelist item can have multiple values for column and for every such
-        // value an additional row must be created). The 1st row is initially filled with empty strings).
-        int maxColumnIndex = Collections.max(codelistItemMap.keySet()).intValue();
-        ArrayList<String> firstRow = new ArrayList<String>();
-        for (int i = 0; i <= maxColumnIndex; i++) {
-            firstRow.add(StringUtils.EMPTY);
-        }
-
-        // Set first row's values to the first ones in the columns' value-lists.
-        for (Entry<Integer, List<String>> entry : codelistItemMap.entrySet()) {
-            int columnIndex = entry.getKey();
-            List<String> columnValues = entry.getValue();
-            firstRow.set(columnIndex, columnValues.iterator().next());
-        }
-
-        // Prepare the codelist item's row-set (we use set to ensure distinct rows).
-        HashSet<ArrayList<String>> rowSet = new LinkedHashSet<ArrayList<String>>();
-        rowSet.add(firstRow);
-
-        // Loop over codelist item map once again, and process columns where number of values is > 1.
-        Set<Entry<Integer, List<String>>> entrySet = codelistItemMap.entrySet();
-        for (Entry<Integer, List<String>> entry : entrySet) {
-
-            int columnIndex = entry.getKey();
-            List<String> columnValues = entry.getValue();
-            if (columnValues.size() > 1) {
-
-                Iterator<String> iter = columnValues.iterator();
-                // We're looking for values starting from the 2nd one, hence iter.next() in the beginning of for-loop.
-                for (iter.next(); iter.hasNext();) {
-                    // Clone first row and change its column at the particular index.
-                    @SuppressWarnings("unchecked")
-                    ArrayList<String> row = (ArrayList<String>) firstRow.clone();
-                    row.set(columnIndex, iter.next());
-                    rowSet.add(row);
-                }
-            }
-        }
-
-        return rowSet;
-    }
-
-    /**
-     *
-     * @param codelistItemMap
-     * @return
-     */
     private HashSet<ArrayList<String>> createCodelistItemRows(HashMap<Integer, List<String>> codelistItemMap) {
 
         int maxColumnIndex = Collections.max(codelistItemMap.keySet()).intValue();
