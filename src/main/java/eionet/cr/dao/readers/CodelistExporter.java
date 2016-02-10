@@ -8,10 +8,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -52,9 +55,6 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
     /** */
     private static final Map<String, String> SPECIAL_BINDINGS_MAP = createSpecialBindingsMap();
 
-    /** The spreadsheet template reference. */
-    private File template;
-
     /** The properties to spreadsheet columns mapping */
     private Map<String, Integer> mappings;
 
@@ -68,13 +68,13 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
     private int worksheetRowsAdded;
 
     /**
-     * Represents current codelist item to be written into spreadsheet.
-     * Keys are spreadsheet columns (0-based index), values are sets of strings to be written into those columns.
+     * This map represents current codelist item to be written into spreadsheet.
+     * Keys are spreadsheet columns (0-based index), values are lists of strings to be written into those columns.
      * So the idea is that a column may have multiple values. For every such value the worksheet row will simply be duplicated
      * by repeating the values of the other columns.
      * This fields is to be initialized at first need.
      */
-    private HashMap<Integer, Set<String>> rowMap;
+    private HashMap<Integer, List<String>> currentCodelistItemMap;
 
     /** The current subject URI as the SPARQL result set is traversed. To be initialized at first need. */
     private String currentSubjectUri;
@@ -84,8 +84,6 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
 
     /** The current worksheet in the workbook. */
     private Sheet worksheet;
-
-    private int resultSetRowCounter;
 
     /**
      * Construct new instance with the given spreadsheet template reference and the properties to spreadsheet columns mapping.
@@ -125,7 +123,6 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
             throw new DAOException("Failed to get or create the workbook's first sheet: simply got null as the result");
         }
 
-        this.template = template;
         this.mappings = mappings;
         this.target = target;
     }
@@ -147,122 +144,127 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
             return;
         }
 
+        if (subjectUri.equals("http://semantic.digital-agenda-data.eu/codelist/breakdown/10_c19_23")) {
+            System.out.println();
+        }
+
         if (!subjectUri.equals(currentSubjectUri)) {
-            if (rowMap != null && !rowMap.isEmpty()) {
-                saveRowMap();
+            if (!MapUtils.isEmpty(currentCodelistItemMap)) {
+                saveCurrentCodelistItem();
                 itemsExported++;
             }
             currentSubjectUri = subjectUri;
-            rowMap = new HashMap<Integer, Set<String>>();
+            currentCodelistItemMap = new HashMap<Integer, List<String>>();
         }
 
         String predicateUri = getStringValue(bindingSet, "p");
         Integer columnIndex = mappings.get(predicateUri);
-        if (columnIndex == null || columnIndex.intValue() < 0) {
-            return;
-        }
 
-        Value value = bindingSet.getValue("o");
-        if (value != null) {
-            putIntoRowMap(columnIndex, value);
-        }
-
-        for (Entry<String, String> entry : SPECIAL_BINDINGS_MAP.entrySet()) {
-
-            String bindingName = entry.getKey();
-            String bindingPredicate = entry.getValue();
-
-            value = bindingSet.getValue(bindingName);
+        if (columnIndex != null && columnIndex.intValue() >= 0) {
+            Value value = bindingSet.getValue("o");
             if (value != null) {
-                columnIndex = mappings.get(bindingPredicate);
-                if (columnIndex != null && columnIndex.intValue() >= 0) {
-                    putIntoRowMap(columnIndex, value);
+                addToCurrentCodelistItemMap(columnIndex, value);
+            }
+        } else {
+            for (Entry<String, String> entry : SPECIAL_BINDINGS_MAP.entrySet()) {
+
+                String bindingName = entry.getKey();
+                String bindingPredicate = entry.getValue();
+
+                Value value = bindingSet.getValue(bindingName);
+                if (value != null) {
+                    columnIndex = mappings.get(bindingPredicate);
+                    if (columnIndex != null && columnIndex.intValue() >= 0) {
+                        addToCurrentCodelistItemMap(columnIndex, value);
+                    }
                 }
             }
         }
     }
 
     /**
-     * Puts the given column-index-to-value pair into the {@link #rowMap}. The latter is initialized if null.
+     * Puts the given column-index-to-value pair into the {@link #currentCodelistItemMap}. The latter is initialized if null.
      *
      * @param columnIndex
      * @param value
      */
-    private void putIntoRowMap(Integer columnIndex, Value value) {
+    private void addToCurrentCodelistItemMap(Integer columnIndex, Value value) {
 
         if (value instanceof Literal) {
-            putIntoRowMap(rowMap, columnIndex, value.stringValue());
+            addToMap(currentCodelistItemMap, columnIndex, value.stringValue());
         } else if (!(value instanceof BNode)) {
 
             String strValue = value.stringValue();
             if (strValue.startsWith(CODELIST_URI_PREFIX)) {
 
                 strValue = StringUtils.substringAfterLast(strValue.replace('/', '#'), "#");
-                putIntoRowMap(rowMap, columnIndex, strValue);
+                addToMap(currentCodelistItemMap, columnIndex, strValue);
             } else {
-                putIntoRowMap(rowMap, columnIndex, value.stringValue());
+                addToMap(currentCodelistItemMap, columnIndex, value.stringValue());
             }
         }
     }
 
     /**
-     * Puts the given column-index-to-string-value pair into the given row-map.{@link #rowMap}.
+     * Helper method: adds given value to the list behind the given key in the given map.
      *
-     * @param map The given row-map.
-     * @param columnIndex Column index, i.e. the key of the map entry.
-     * @param value Column value, i.e. the value of the map entry.
+     * @param map The given map.
+     * @param key Key in the map.
+     * @param value Value to add to the list behind the given key.
      */
-    private static void putIntoRowMap(HashMap<Integer, Set<String>> map, Integer columnIndex, String value) {
+    private static void addToMap(HashMap<Integer, List<String>> map, Integer key, String value) {
 
-        Set<String> set = map.get(columnIndex);
-        if (set == null) {
-            set = new HashSet<String>();
-            map.put(columnIndex, set);
+        List<String> list = map.get(key);
+        if (list == null) {
+            list = new ArrayList<String>();
+            map.put(key, list);
         }
-        set.add(value);
+
+        if (list.isEmpty() || !list.contains(value)) {
+            list.add(value);
+        }
     }
 
     /**
-     * Saves the contents of the current row-map into the target worksheet.
+     * Saves the contents of the current codelist item's map into the target worksheet.
      */
-    private void saveRowMap() {
+    private void saveCurrentCodelistItem() {
 
-        if (rowMap == null || rowMap.isEmpty()) {
+        if (MapUtils.isEmpty(currentCodelistItemMap)) {
             return;
         }
 
         LOGGER.trace("Saving item #" + itemsExported);
 
-        // The row-map represents the current codelist item to be written into the target rowsheet.
+        // The codelist item map represents the current codelist item to be written into the target rowsheet.
         // Each key-value pair in the row-map represents worksheet column index and corresponding values.
-        // Yes, the column can have multiple values. We handle this by repeating worksheet row for every such row.
+        // Yes, the column can have multiple values. We handle this by repeating worksheet row for every such value.
         // Imagine map like this: {1=["james"], 2="bond" 3=["tall", "handsome"]}
         // In the worksheet the outcome must be 2 "distinct rows", like this (columns ordered by column index starting from 1):
         // "james", "bond", "tall"
         // "james", "bond", "handsome".
 
         // Convert the map to the set of distinct rows, following above-described principle.
-        HashSet<ArrayList<String>> distinctRows = mapToDistinctRows(rowMap);
+        HashSet<ArrayList<String>> codelistItemRows = createCodelistItemRows(currentCodelistItemMap);
 
-        // Loop over distinct rows, save each row into worksheet.
-        for (Iterator<ArrayList<String>> iter = distinctRows.iterator(); iter.hasNext();) {
-            ArrayList<String> distinctRow = iter.next();
-            if (distinctRow != null && !distinctRow.isEmpty()) {
-                saveDistinctRow(distinctRow);
+        // Loop over codelist item rows, save each row into worksheet.
+        for (Iterator<ArrayList<String>> iter = codelistItemRows.iterator(); iter.hasNext();) {
+            ArrayList<String> codelistItemRow = iter.next();
+            if (codelistItemRow != null && !codelistItemRow.isEmpty()) {
+                saveCodelistItemRow(codelistItemRow);
                 worksheetRowsAdded++;
             }
         }
     }
 
     /**
-     * Saves a "distinct row" into the target worksheet.
-     * See inside {@link #saveRowMap()} for more comments on what's a "distinct row".
+     * Saves codelist item row into the target worksheet.
      *
-     * @param distinctRow The "distinct row" to save.
+     * @param codelistItemRow The row to save.
      */
-    private void saveDistinctRow(ArrayList<String> distinctRow) {
+    private void saveCodelistItemRow(ArrayList<String> codelistItemRow) {
 
-        if (distinctRow == null || distinctRow.isEmpty()) {
+        if (codelistItemRow == null || codelistItemRow.isEmpty()) {
             return;
         }
 
@@ -275,10 +277,10 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
         LOGGER.trace("Populating worksheet row at position " + worksheetRowsAdded);
 
         int maxLines = 1;
-        for (int i = 0; i < distinctRow.size(); i++) {
+        for (int i = 0; i < codelistItemRow.size(); i++) {
 
             int cellIndex = i;
-            String cellValue = distinctRow.get(i);
+            String cellValue = codelistItemRow.get(i);
 
             Cell cell = row.getCell(cellIndex);
             if (cell == null) {
@@ -331,8 +333,8 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
     @Override
     public void endResultSet() {
 
-        if (rowMap != null && !rowMap.isEmpty()) {
-            saveRowMap();
+        if (!MapUtils.isEmpty(currentCodelistItemMap)) {
+            saveCurrentCodelistItem();
             itemsExported++;
         }
     }
@@ -360,41 +362,90 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
 
     /**
      *
-     * @param map
+     * @param codelistItemMap
      * @return
      */
-    private static HashSet<ArrayList<String>> mapToDistinctRows(HashMap<Integer, Set<String>> map) {
+    private HashSet<ArrayList<String>> createCodelistItemRows2(HashMap<Integer, List<String>> codelistItemMap) {
 
-        int maxIndex = Collections.max(map.keySet()).intValue();
-        ArrayList<String> defaultRow = new ArrayList<String>();
-        for (int i = 0; i <= maxIndex; i++) {
-            defaultRow.add(StringUtils.EMPTY);
+        // Prepare first row of this codelist item (remember: a codelist item can have multiple values for column and for every such
+        // value an additional row must be created). The 1st row is initially filled with empty strings).
+        int maxColumnIndex = Collections.max(codelistItemMap.keySet()).intValue();
+        ArrayList<String> firstRow = new ArrayList<String>();
+        for (int i = 0; i <= maxColumnIndex; i++) {
+            firstRow.add(StringUtils.EMPTY);
         }
 
-        for (Entry<Integer, Set<String>> entry : map.entrySet()) {
-            int index = entry.getKey();
-            Set<String> values = entry.getValue();
-            defaultRow.set(index, values.iterator().next());
+        // Set first row's values to the first ones in the columns' value-lists.
+        for (Entry<Integer, List<String>> entry : codelistItemMap.entrySet()) {
+            int columnIndex = entry.getKey();
+            List<String> columnValues = entry.getValue();
+            firstRow.set(columnIndex, columnValues.iterator().next());
         }
 
-        HashSet<ArrayList<String>> distinctRows = new HashSet<ArrayList<String>>();
-        distinctRows.add(defaultRow);
+        // Prepare the codelist item's row-set (we use set to ensure distinct rows).
+        HashSet<ArrayList<String>> rowSet = new LinkedHashSet<ArrayList<String>>();
+        rowSet.add(firstRow);
 
-        Set<Entry<Integer, Set<String>>> entrySet = map.entrySet();
-        for (Entry<Integer, Set<String>> entry : entrySet) {
+        // Loop over codelist item map once again, and process columns where number of values is > 1.
+        Set<Entry<Integer, List<String>>> entrySet = codelistItemMap.entrySet();
+        for (Entry<Integer, List<String>> entry : entrySet) {
 
-            int index = entry.getKey();
-            Set<String> values = entry.getValue();
-            if (values.size() > 1) {
+            int columnIndex = entry.getKey();
+            List<String> columnValues = entry.getValue();
+            if (columnValues.size() > 1) {
 
-                Iterator<String> iter = values.iterator();
+                Iterator<String> iter = columnValues.iterator();
+                // We're looking for values starting from the 2nd one, hence iter.next() in the beginning of for-loop.
                 for (iter.next(); iter.hasNext();) {
-                    ArrayList<String> row = (ArrayList<String>) defaultRow.clone();
-                    row.set(index, iter.next());
-                    distinctRows.add(row);
+                    // Clone first row and change its column at the particular index.
+                    @SuppressWarnings("unchecked")
+                    ArrayList<String> row = (ArrayList<String>) firstRow.clone();
+                    row.set(columnIndex, iter.next());
+                    rowSet.add(row);
                 }
             }
         }
-        return distinctRows;
+
+        return rowSet;
+    }
+
+    /**
+     *
+     * @param codelistItemMap
+     * @return
+     */
+    private HashSet<ArrayList<String>> createCodelistItemRows(HashMap<Integer, List<String>> codelistItemMap) {
+
+        int maxColumnIndex = Collections.max(codelistItemMap.keySet()).intValue();
+
+        // Determine the maximum number of multiple values in any column.
+        int maxNumberOfMultipleValues = 0;
+        for (Entry<Integer, List<String>> entry : codelistItemMap.entrySet()) {
+            List<String> columnValues = entry.getValue();
+            maxNumberOfMultipleValues = Math.max(maxNumberOfMultipleValues, columnValues.size());
+        }
+
+        HashSet<ArrayList<String>> rowSet = new LinkedHashSet<ArrayList<String>>();
+        for (int rowIndex = 0; rowIndex < maxNumberOfMultipleValues; rowIndex++) {
+
+            ArrayList<String> row = new ArrayList<String>();
+            for (int colIndex = 0; colIndex <= maxColumnIndex; colIndex++) {
+                row.add(StringUtils.EMPTY);
+            }
+
+            for (Entry<Integer, List<String>> entry : codelistItemMap.entrySet()) {
+
+                int columnIndex = entry.getKey();
+                List<String> columnValues = entry.getValue();
+                if (!columnValues.isEmpty()) {
+                    int rowToGet = Math.min(rowIndex, columnValues.size() - 1);
+                    row.set(columnIndex, columnValues.get(rowToGet));
+                }
+            }
+
+            rowSet.add(row);
+        }
+
+        return rowSet;
     }
 }
