@@ -93,14 +93,13 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     private static final String EXPORT_CODELIST_ITEMS_SPARQL = "" +
             "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
             "PREFIX prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
-            "PREFIX dad-class: <http://semantic.digital-agenda-data.eu/def/class/>\n" +
             "select\n" +
             "  ?s ?p ?o ?memberOf ?order\n" +
             "where {\n" +
             "  ?s a ?type.\n" +
             "  ?s ?p ?o\n" +
             "  filter (?type = ?typeValue)\n" +
-            "  optional {?o a dad-class:BreakdownToGroupMembership . \n" +
+            "  optional {filter (?p = prop:membership) \n" +
             "            ?o prop:member-of ?memberOf . \n" +
             "            ?o prop:order ?order} \n" +
             "} \n" +
