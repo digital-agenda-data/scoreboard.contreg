@@ -119,15 +119,6 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  filter (bound(?propValue))\n" +
             "}";
 
-    /** The Constant GET_NOGROUP_MEMBERSHIPS. */
-    private static final String GET_NOGROUP_MEMBERSHIPS = "" +
-            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
-            "select ?y where {\n" +
-            "  ?x dad-prop:membership ?y .\n" +
-            "  ?y dad-prop:member-of ?groupUri.\n" +
-            "  filter (?groupUri = ?groupUriValue)\n" +
-            "}";
-
     /** The Constant DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS. */
     private static final String DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS = "" +
             "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
@@ -265,8 +256,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  }\n" +
             "}";
 
-    /** The Constant DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIME. */
-    private static final String DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIME = "" +
+    /** The Constant DELETE_OBSERVATIONS_OF_INDICATOR. */
+    private static final String DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIMES = "" +
             "SPARQL \n" +
             "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
             "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
@@ -277,9 +268,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  GRAPH `iri(??)` {\n" +
             "    ?obs ?p ?o .\n" +
             "    ?obs a cube:Observation .\n" +
-            "    ?obs dad-prop:indicator ?ind .\n" +
+            "    ?obs dad-prop:indicator `iri(??)` .\n" +
             "    ?obs dad-prop:time-period ?timePeriod \n" +
-            "    filter (?ind in (@INDICATOR_IRIS@)) \n" +
             "    filter (?timePeriod in (@TIME_PERIOD_IRIS@)) \n" +
             "  }\n" +
             "}";
@@ -1014,40 +1004,52 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             throw new IllegalArgumentException("The collection of indicator URIs must not be null or empty!");
         }
 
+        String sql = "";
+        boolean noTimes = CollectionUtils.isEmpty(timePeriodUris);
         String datasetGraphUri = StringUtils.replace(datasetUri, "/dataset/", "/data/");
 
+        if (noTimes) {
+            sql = DELETE_OBSERVATIONS_OF_INDICATOR;
+        } else {
+            sql = DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIMES;
+            sql = sql.replace("@TIME_PERIOD_IRIS@", Util.csv("iri(??)", timePeriodUris.size()));
+        }
+
+        int updateCount = 0;
         Connection conn = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        int updateCount = 0;
+
         try {
             conn = SesameUtil.getSQLConnection();
 
-            if (CollectionUtils.isEmpty(timePeriodUris)) {
+            pstmt = conn.prepareStatement(sql);
+            boolean datasetUpdated = false;
 
-                boolean datasetModificationUpdated = false;
-                pstmt = conn.prepareStatement(DELETE_OBSERVATIONS_OF_INDICATOR);
-                for (String indicatorUri : indicatorUris) {
+            for (String indicatorUri : indicatorUris) {
 
-                    LOGGER.debug("Deleting indicator: " + indicatorUri);
+                LOGGER.debug(String.format("Deleting indicator %s of %d time periods ...", indicatorUri, noTimes ? 0 : timePeriodUris.size()));
 
-                    pstmt.setString(1, datasetGraphUri);
-                    pstmt.setString(2, datasetGraphUri);
-                    pstmt.setString(3, indicatorUri);
-                    updateCount += pstmt.executeUpdate();
+                int i = 0;
+                pstmt.setString(++i, datasetGraphUri);
+                pstmt.setString(++i, datasetGraphUri);
+                pstmt.setString(++i, indicatorUri);
 
-                    if (updateCount > 0 &&!datasetModificationUpdated) {
-                        updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
-                        datasetModificationUpdated = true;
+                if (!noTimes) {
+                    for (String timePeriodUri : timePeriodUris) {
+                        pstmt.setString(++i, timePeriodUri);
                     }
                 }
-                SQLUtil.close(pstmt);
-            } else {
-                String sql = new String(DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIME);
-                pstmt = conn.prepareStatement(sql);
+
+                updateCount += pstmt.executeUpdate();
+                if (updateCount > 0 &&!datasetUpdated) {
+                    updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
+                    datasetUpdated = true;
+                }
             }
 
-            return new Pair<Integer, String>(Integer.valueOf(updateCount), "");
+            LOGGER.debug(String.format("A total of %d triples deleted!", updateCount));
+            return new Pair<Integer, String>(Integer.valueOf(updateCount), sql);
         } catch (Exception e) {
             throw new DAOException(e.getMessage(), e);
         } finally {

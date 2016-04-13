@@ -29,6 +29,7 @@ import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,11 +48,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
 
-import net.sourceforge.stripes.action.ActionBean;
-import net.sourceforge.stripes.action.UrlBinding;
-import nl.bitwalker.useragentutils.Browser;
-import nl.bitwalker.useragentutils.BrowserType;
-
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -59,6 +55,10 @@ import org.quartz.CronExpression;
 
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.util.export.XmlUtil;
+import net.sourceforge.stripes.action.ActionBean;
+import net.sourceforge.stripes.action.UrlBinding;
+import nl.bitwalker.useragentutils.Browser;
+import nl.bitwalker.useragentutils.BrowserType;
 
 /**
  * Utility methods.
@@ -913,5 +913,23 @@ public final class Util {
         }
 
         return true;
+    }
+
+    /**
+     * Return a comma-separated string of "times" instances of given object.
+     *
+     * @param obj
+     * @param times
+     * @return
+     */
+    public static String csv(Object obj, int times) {
+
+        if (times <= 0) {
+            return StringUtils.EMPTY;
+        }
+
+        Object[] array = new Object[times];
+        Arrays.fill(array, obj);
+        return StringUtils.join(array, ',');
     }
 }

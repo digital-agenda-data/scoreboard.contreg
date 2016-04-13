@@ -6,6 +6,19 @@
 <%@page import="net.sourceforge.stripes.action.ActionBean"%><stripes:layout-render name="/pages/common/template.jsp" pageTitle="Delete observations">
 
     <stripes:layout-component name="contents">
+    
+        <script type="text/javascript" xml:space="preserve">
+            ( function($) {
+                $(document).ready(function(){
+                	
+                	$('#submitForm').submit(function() {
+                	    $('#loader').show();
+                	    return true;
+                	});
+                	
+                });
+            } ) ( jQuery );
+        </script>
 
         <h1>Delete observations matching below criteria</h1>
 
@@ -18,7 +31,7 @@
         </p>
 
         <div style="margin-top:1em">
-            <crfn:form beanclass="${actionBean['class'].name}" method="post">
+            <crfn:form id="submitForm" beanclass="${actionBean['class'].name}" method="post">
                 <div>
                     <stripes:label for="datasetSelect" class="question required">Target dataset:</stripes:label><br/>
                     <stripes:select id="datasetSelect" name="datasetUri" value="${actionBean.datasetUri}">
@@ -35,6 +48,7 @@
                     <stripes:label for="timePeriodsText" class="question">Time period URIs:</stripes:label><br/>
                     <stripes:textarea id="timePeriodsText" name="timePeriodUris" cols="70" rows="4"/><br/>
                     <stripes:submit name="delete" value="Delete"/>
+                    <label><img id="loader" src="http://dev.cloudcell.co.uk/bin/loading.gif" style="display:none"/></label>
                 </div>
             </crfn:form>
         </div>
