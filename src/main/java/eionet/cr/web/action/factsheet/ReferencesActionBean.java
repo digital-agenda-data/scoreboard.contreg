@@ -26,10 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
-
 import org.apache.commons.lang.StringUtils;
 
 import eionet.cr.common.Predicates;
@@ -53,6 +49,9 @@ import eionet.cr.web.util.columns.SubjectPredicateRefsColumn;
 import eionet.cr.web.util.tabs.FactsheetTabMenuHelper;
 import eionet.cr.web.util.tabs.TabElement;
 import eionet.cr.web.util.tabs.TabId;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 
 /**
  *
@@ -85,6 +84,7 @@ public class ReferencesActionBean extends AbstractSearchActionBean<SubjectDTO> {
      *
      * @see eionet.cr.web.action.AbstractSearchActionBean#search()
      */
+    @Override
     public Resolution search() throws DAOException {
 
         if (StringUtils.isBlank(uri) && anonHash == 0) {
@@ -110,7 +110,9 @@ public class ReferencesActionBean extends AbstractSearchActionBean<SubjectDTO> {
 
             HashSet<Long> subjectHashes = new HashSet<Long>();
             for (SubjectDTO subj : resultList) {
-                subjectHashes.add(subj.getUriHash());
+                if (subj != null) {
+                    subjectHashes.add(subj.getUriHash());
+                }
             }
 
             PredicateLabels predLabels = DAOFactory.get().getDao(HelperDAO.class).getPredicateLabels(subjectHashes);
@@ -133,6 +135,7 @@ public class ReferencesActionBean extends AbstractSearchActionBean<SubjectDTO> {
      *
      * @see eionet.cr.web.action.AbstractSearchActionBean#getColumns()
      */
+    @Override
     public List<SearchResultColumn> getColumns() throws DAOException {
 
         ArrayList<SearchResultColumn> list = new ArrayList<SearchResultColumn>();
