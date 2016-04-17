@@ -67,6 +67,9 @@ import eionet.cr.util.sql.SQLUtil;
 public final class ExportRunner extends Thread {
 
     /** */
+    private static final int EXPORT_PAGE_SIZE = 5000;
+
+    /** */
     private static final String DEFAULT_INDICATOR_CODE = "*";
 
     /** */
@@ -314,7 +317,8 @@ public final class ExportRunner extends Thread {
     private void executeExport(RepositoryConnection repoConn) throws RepositoryException, SQLException, DAOException {
 
         // Nothing to do here if query or column mappings is empty.
-        if (StringUtils.isBlank(queryConf.getQuery()) || queryConf.getColumnMappings().isEmpty()) {
+        String query = queryConf.getQuery();
+        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
             return;
         }
 
@@ -327,24 +331,52 @@ public final class ExportRunner extends Thread {
 
             // Execute the query whose results are to be exported.
             sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
-            pstmt = sqlConn.prepareStatement(queryConf.getQuery());
+            pstmt = sqlConn.prepareStatement(query);
             rs = pstmt.executeQuery();
 
-            // Loop over the query's result set, export each row.
             rowCount = 0;
-            while (rs.next()) {
-                rowCount++;
-                exportRow(rs, rowCount, repoConn, valueFactory);
+            int offset = 0;
+            int limit = EXPORT_PAGE_SIZE;
+            int rsSize = 0;
+            int queryCounter = 0;
+            do {
+                queryCounter++;
 
-                // Log progress after every 1000 rows, but not more than 50 times.
-                if (rowCount % 1000 == 0) {
-                    if (rowCount == 50000) {
-                        LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
-                    } else if (rowCount < 50000) {
-                        LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
+                String pageQuery = buildPageQuery(query, offset, limit);
+                offset = offset + limit;
+
+                if (queryCounter <= 2) {
+                    LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
+                }
+
+                pstmt = sqlConn.prepareStatement(pageQuery);
+                rs = pstmt.executeQuery();
+
+                while (rs.next()) {
+
+                    rowCount++;
+                    rsSize++;
+
+                    exportRow(rs, rowCount, repoConn, valueFactory);
+
+                    // Log progress after every 1000 rows, but not more than 50 times.
+                    if (rowCount % 1000 == 0) {
+                        if (rowCount == 50000) {
+                            LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
+                        } else if (rowCount < 50000) {
+                            LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
+                        }
                     }
                 }
-            }
+
+                SQLUtil.close(rs);
+                SQLUtil.close(pstmt);
+
+            } while (rsSize == limit);
+
+            LOGGER.debug("Total number of page queries executed: " + queryCounter);
+            LogUtil.debug("A total of " + rowCount + " rows exported", exportLogger, LOGGER);
+
         } finally {
             SQLUtil.close(rs);
             SQLUtil.close(pstmt);
@@ -732,7 +764,7 @@ public final class ExportRunner extends Thread {
 
             if (rowCount > 0) {
 
-                String firstRowsQuery = buildPageQuery(query, 1, MAX_TEST_RESULTS);
+                String firstRowsQuery = buildPageQuery(query, 0, MAX_TEST_RESULTS);
 
                 LOGGER.debug("Executing test results query:\n" + firstRowsQuery + "\n");
                 pstmt = sqlConn.prepareStatement(firstRowsQuery);
