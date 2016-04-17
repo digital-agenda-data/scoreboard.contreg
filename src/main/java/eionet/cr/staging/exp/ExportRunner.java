@@ -771,7 +771,7 @@ public final class ExportRunner extends Thread {
             throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
         }
 
-        String resultQuery = StringUtils.replaceOnce(upperQuery, "SELECT", String.format("SELECT TOP %d,%d", offset, limit));
+        String resultQuery = query.replaceFirst("(?i)SELECT", String.format("SELECT TOP %d,%d", offset, limit));
         return resultQuery;
     }
 
