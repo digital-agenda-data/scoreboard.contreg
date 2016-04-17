@@ -35,16 +35,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sourceforge.stripes.action.Before;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.SessionScope;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.RepositoryException;
@@ -68,6 +58,15 @@ import eionet.cr.util.LinkedCaseInsensitiveMap;
 import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.SessionScope;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
  * Action bean that serves the "wizard" that helps user to run a RDF export query from a selected staging database. <b>Note that
@@ -249,8 +248,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             LOGGER.error("A repository access error occurred", e);
             addGlobalValidationError("A repository access error occurred:\n" + e.getMessage());
         } catch (DAOException e) {
-            LOGGER.error("Error when reading existing concepts", e);
-            addGlobalValidationError("Error when reading existing concepts:\n" + e.getMessage());
+            LOGGER.error("A query execution error occurred", e);
+            addGlobalValidationError("A query execution error occurred:\n" + e.getMessage());
         } catch (SQLException e) {
             LOGGER.error("A query execution error occurred", e);
             addGlobalValidationError("A query execution error occurred:\n" + e.getMessage());

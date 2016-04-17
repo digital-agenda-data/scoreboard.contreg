@@ -769,8 +769,12 @@ public final class ExportRunner extends Thread {
         String trimmedQuery = query.trim();
         int selectLength = "SELECT".length();
 
-        if (StringUtils.startsWithIgnoreCase(trimmedQuery, "SELECT") && trimmedQuery.length() > selectLength) {
-            throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
+        if (trimmedQuery.length() <= selectLength) {
+            throw new DAOException("Query too short!");
+        }
+
+        if (!StringUtils.startsWithIgnoreCase(trimmedQuery, "SELECT")) {
+            throw new DAOException("Was expecting the query to strat with a 'SELECT' statement!");
         }
 
         String queryAfterSelect = trimmedQuery.substring(selectLength);
