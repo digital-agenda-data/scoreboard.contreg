@@ -718,30 +718,36 @@ public final class ExportRunner extends Thread {
         ResultSet rs = null;
         Connection sqlConn = null;
         PreparedStatement pstmt = null;
-        RepositoryConnection repoConn = null;
-
         try {
             sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
 
             pstmt = sqlConn.prepareStatement(countQuery);
+            LOGGER.debug("Executing count query:\n" + countQuery + "\n");
             rs = pstmt.executeQuery();
             rowCount = rs.next() ? rs.getInt(1) : 0;
+            LOGGER.debug("Count query returned " + rowCount);
+
             SQLUtil.close(rs);
             SQLUtil.close(pstmt);
 
             if (rowCount > 0) {
 
                 String firstRowsQuery = buildPageQuery(query, 1, MAX_TEST_RESULTS);
+
+                LOGGER.debug("Executing test results query:\n" + firstRowsQuery + "\n");
                 pstmt = sqlConn.prepareStatement(firstRowsQuery);
                 rs = pstmt.executeQuery();
 
                 int i = 0;
                 while (rs.next()) {
                     if (++i == 1) {
+                        LOGGER.debug("Loading existing concepts...");
                         loadExistingConcepts();
+                        LOGGER.debug("Processing first test results row...");
                     }
                     processTestRow(rs);
                 }
+                LOGGER.debug(i + " test results rows processed!");
             }
         } finally {
             SQLUtil.close(rs);
