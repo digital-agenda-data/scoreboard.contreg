@@ -766,12 +766,15 @@ public final class ExportRunner extends Thread {
      */
     private String buildPageQuery(String query, int offset, int limit) throws DAOException {
 
-        String upperQuery = query.toUpperCase().trim();
-        if (!upperQuery.startsWith("SELECT")) {
+        String trimmedQuery = query.trim();
+        int selectLength = "SELECT".length();
+
+        if (StringUtils.startsWithIgnoreCase(trimmedQuery, "SELECT") && trimmedQuery.length() > selectLength) {
             throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
         }
 
-        String resultQuery = query.replaceFirst("(?i)SELECT", String.format("SELECT TOP %d,%d", offset, limit));
+        String queryAfterSelect = trimmedQuery.substring(selectLength);
+        String resultQuery = String.format("SELECT TOP %d,%d", offset, limit) + queryAfterSelect;
         return resultQuery;
     }
 
