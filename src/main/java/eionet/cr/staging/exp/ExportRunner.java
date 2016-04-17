@@ -339,8 +339,7 @@ public final class ExportRunner extends Thread {
                 // Log progress after every 1000 rows, but not more than 50 times.
                 if (rowCount % 1000 == 0) {
                     if (rowCount == 50000) {
-                        LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...",
-                                exportLogger, LOGGER);
+                        LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
                     } else if (rowCount < 50000) {
                         LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
                     }
@@ -413,8 +412,8 @@ public final class ExportRunner extends Thread {
      *             the repository exception
      * @throws DAOException
      */
-    private void exportRow(ResultSet rs, int rowIndex, RepositoryConnection repoConn, ValueFactory vf) throws SQLException,
-            RepositoryException, DAOException {
+    private void exportRow(ResultSet rs, int rowIndex, RepositoryConnection repoConn, ValueFactory vf)
+            throws SQLException, RepositoryException, DAOException {
 
         if (rowIndex == 1) {
             loadExistingConcepts();
@@ -580,8 +579,7 @@ public final class ExportRunner extends Thread {
      * @param datasetURI
      * @throws RepositoryException
      */
-    private void updateDatasetModificationDate(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI)
-            throws RepositoryException {
+    private void updateDatasetModificationDate(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI) throws RepositoryException {
 
         // Prepare some values
         URI predicateURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
@@ -623,12 +621,11 @@ public final class ExportRunner extends Thread {
      * @throws DAOException
      *             the dAO exception
      */
-    public static synchronized ExportRunner start(StagingDatabaseDTO dbDTO, String exportName, String userName,
-            QueryConfiguration queryConf) throws DAOException {
+    public static synchronized ExportRunner start(StagingDatabaseDTO dbDTO, String exportName, String userName, QueryConfiguration queryConf)
+            throws DAOException {
 
         // Create the export record in the database.
-        int exportId =
-                DAOFactory.get().getDao(StagingDatabaseDAO.class).startRDEExport(dbDTO.getId(), exportName, userName, queryConf);
+        int exportId = DAOFactory.get().getDao(StagingDatabaseDAO.class).startRDEExport(dbDTO.getId(), exportName, userName, queryConf);
 
         ExportRunner exportRunner = new ExportRunner(dbDTO, exportId, exportName, userName, queryConf);
         exportRunner.start();
@@ -695,8 +692,7 @@ public final class ExportRunner extends Thread {
      * @throws DAOException
      * @throws RepositoryException
      */
-    public static ExportRunner test(StagingDatabaseDTO dbDTO, QueryConfiguration queryConf) throws RepositoryException,
-            DAOException, SQLException {
+    public static ExportRunner test(StagingDatabaseDTO dbDTO, QueryConfiguration queryConf) throws RepositoryException, DAOException, SQLException {
 
         ExportRunner exportRunner = new ExportRunner(dbDTO, queryConf);
         exportRunner.test();
@@ -712,9 +708,12 @@ public final class ExportRunner extends Thread {
     private void test() throws RepositoryException, SQLException, DAOException {
 
         // Nothing to do here if query or column mappings is empty.
-        if (StringUtils.isBlank(queryConf.getQuery()) || queryConf.getColumnMappings().isEmpty()) {
+        String query = queryConf.getQuery();
+        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
             return;
         }
+
+        String countQuery = buildCountQuery(query);
 
         ResultSet rs = null;
         Connection sqlConn = null;
@@ -723,36 +722,77 @@ public final class ExportRunner extends Thread {
 
         try {
             sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
-            repoConn = SesameUtil.getRepositoryConnection();
 
-            pstmt = sqlConn.prepareStatement(queryConf.getQuery());
+            pstmt = sqlConn.prepareStatement(countQuery);
             rs = pstmt.executeQuery();
+            rowCount = rs.next() ? rs.getInt(1) : 0;
+            SQLUtil.close(rs);
+            SQLUtil.close(pstmt);
 
-            rowCount = 0;
-            while (rs.next()) {
-                rowCount++;
-                testRow(rs, rowCount);
+            if (rowCount > 0) {
+
+                String firstRowsQuery = buildPageQuery(query, 1, MAX_TEST_RESULTS);
+                pstmt = sqlConn.prepareStatement(firstRowsQuery);
+                rs = pstmt.executeQuery();
+
+                int i = 0;
+                while (rs.next()) {
+                    if (++i == 1) {
+                        loadExistingConcepts();
+                    }
+                    processTestRow(rs);
+                }
             }
         } finally {
             SQLUtil.close(rs);
             SQLUtil.close(pstmt);
             SQLUtil.close(sqlConn);
-            SesameUtil.close(repoConn);
         }
     }
 
     /**
      *
+     * @param query
+     * @param offset
+     * @param limit
+     * @return
+     * @throws DAOException
+     */
+    private String buildPageQuery(String query, int offset, int limit) throws DAOException {
+
+        String upperQuery = query.toUpperCase().trim();
+        if (!upperQuery.startsWith("SELECT")) {
+            throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
+        }
+
+        String resultQuery = StringUtils.replaceOnce(upperQuery, "SELECT", String.format("SELECT TOP %d,%d", offset, limit));
+        return resultQuery;
+    }
+
+    /**
+     *
+     * @param query
+     * @return
+     * @throws DAOException
+     */
+    private String buildCountQuery(String query) throws DAOException {
+
+        String upperQuery = query.toUpperCase().trim();
+        if (!upperQuery.startsWith("SELECT")) {
+            throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
+        }
+
+        String resultQuery = new StringBuilder().append("SELECT COUNT(*) FROM (").append(query.trim()).append(") as QRY").toString();
+        return resultQuery;
+    }
+
+    /**
+     *
      * @param rs
-     * @param rowIndex
      * @throws SQLException
      * @throws DAOException
      */
-    private void testRow(ResultSet rs, int rowIndex) throws SQLException, DAOException {
-
-        if (rowIndex == 1) {
-            loadExistingConcepts();
-        }
+    private void processTestRow(ResultSet rs) throws SQLException, DAOException {
 
         LinkedHashMap<String, String> rowMap = new LinkedHashMap<String, String>();
         for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
@@ -765,9 +805,7 @@ public final class ExportRunner extends Thread {
             String propertyValue = valueTemplate == null ? colValue : StringUtils.replace(valueTemplate, "<value>", colValue);
             recordMissingConcepts(property, colValue, propertyValue);
 
-            if (rowIndex <= MAX_TEST_RESULTS) {
-                rowMap.put(colName, colValue);
-            }
+            rowMap.put(colName, colValue);
         }
 
         if (!rowMap.isEmpty()) {
@@ -856,8 +894,7 @@ public final class ExportRunner extends Thread {
      */
     public boolean isFoundMissingConcepts() {
 
-        return !missingIndicators.isEmpty() || !missingBreakdowns.isEmpty() || !missingUnits.isEmpty()
-                || !missingRefAreas.isEmpty();
+        return !missingIndicators.isEmpty() || !missingBreakdowns.isEmpty() || !missingUnits.isEmpty() || !missingRefAreas.isEmpty();
     }
 
     /**
