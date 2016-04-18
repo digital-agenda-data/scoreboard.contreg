@@ -349,6 +349,7 @@ public final class ExportRunner extends Thread {
                     LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
                 }
 
+                rsSize = 0;
                 pstmt = sqlConn.prepareStatement(pageQuery);
                 rs = pstmt.executeQuery();
 
