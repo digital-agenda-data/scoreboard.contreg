@@ -326,13 +326,11 @@ public final class ExportRunner extends Thread {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
+            // Prepare SQL connection.
+            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
+
             // Prepare ValueFactory to be used by each "export row" call below.
             ValueFactory valueFactory = repoConn.getValueFactory();
-
-            // Execute the query whose results are to be exported.
-            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
-            pstmt = sqlConn.prepareStatement(query);
-            rs = pstmt.executeQuery();
 
             rowCount = 0;
             int offset = 0;
