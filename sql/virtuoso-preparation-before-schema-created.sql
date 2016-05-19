@@ -59,6 +59,12 @@ grant execute on DB.DBA.RDF_CLEAR_GRAPHS_C to cr3test;
 grant execute on DB.DBA.TTLP to cr3test;
 grant execute on DB.DBA.TTLP_RL_NEW_GRAPH to cr3test;
 
+-- ---------------------------------------------------------------------------
+-- Some Content Registry specific permissions.
+-- ---------------------------------------------------------------------------
+
+grant execute on DB.DBA.dump_one_graph to cr3user;
+
 -- -------------------------------------------------------------------------------------
 -- Define CR's default inference rule set.
 -- -------------------------------------------------------------------------------------
