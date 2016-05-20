@@ -64,20 +64,23 @@
 
         <c:if test="${not empty actionBean.packages}">
 
-            <div style="width:75%;padding-top:10px">
+            <div style="width:100%;padding-top:10px">
             
                 <stripes:form id="packagesForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <display:table name="${actionBean.packages}" class="sortable" id="pack" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
-                        <display:column style="width:5%">
-                            <stripes:checkbox name="selectedPackages" value="${pack.name}" />
+                        <display:column style="width:4%">
+                            <stripes:checkbox name="selectedPackages" value="${pack.identifier}" />
                         </display:column>
-                        <display:column title="Package" property="name" sortable="true" style="width:50%"/>
-                        <display:column title="Started" sortable="true" sortProperty="started" style="width:25%">
-                            <fmt:formatDate value="${pack.started}" pattern="yyyy-MM-dd HH:mm:ss" />
+                        <display:column title="Package" property="identifier" sortable="true" style="width:60%"/>
+                        <display:column title="Started" sortable="true" sortProperty="started" style="width:18%">
+                            <fmt:formatDate value="${pack.started}" pattern="yy-MM-dd HH:mm:ss" />
                         </display:column>
-                        <display:column title="Finished" sortable="true" sortProperty="finished" style="width:25%">
-                            <fmt:formatDate value="${pack.finished}" pattern="yyyy-MM-dd HH:mm:ss" />
+                        <display:column title="Finished" sortable="true" sortProperty="finished" style="width:18%">
+                            <fmt:formatDate value="${pack.finished}" pattern="yy-MM-dd HH:mm:ss" />
+                            <c:if test="${not empty pack.finishedErrorMessage}">
+                                <img src="${pageContext.request.contextPath}/images/exclamation.png" alt="Errors" title="${fn:escapeXml(pack.finishedErrorMessage)}"/>
+                            </c:if>
                         </display:column>
                     </display:table>
 
@@ -101,17 +104,12 @@
         <div id="createNewDialog" title="Create new dataset migration package">
 
             <p>
-                Select the dataset to migrate and give a meaningful package name that will help you to distinguish it from other packages.<br/>
-                Package name will be used as corresponding directory name in CR file system, so it must only contain Latin characters,<br/>
-                digits, underscores, dashes or periods. An example name format: "dataset-user-datetime".
+                Select the dataset to migrate.<br/>
+                Migration package identifier will be generated from dataset identifier, username and current datetime.
             </p>        
-            <stripes:form beanclass="${actionBean['class'].name}" method="post">
+            <stripes:form id="createNewForm" beanclass="${actionBean['class'].name}" method="post">
 
                 <table>
-                    <tr>
-                        <td><stripes:label for="txtName" class="question required" title="Meaningful package name to help you distinguish it from others. Use only characters allowed in file names!">Name:</stripes:label></td>
-                        <td><stripes:text name="newPackage.name" id="txtName" size="75"/></td>
-                    </tr>
                     <tr>
                         <td><stripes:label for="selDataset" class="question required">Dataset:</stripes:label></td>
                         <td>
@@ -132,7 +130,7 @@
                     <tr>
                         <td>&nbsp;</td>
                         <td style="padding-top:10px">
-                            <stripes:submit name="createNewPackage" value="Create"/>
+                            <stripes:submit id="createNewSubmit" name="createNewPackage" value="Create"/>
                             <input type="button" id="closeCreateNewDialog" value="Cancel"/>
                         </td>
                     </tr>
@@ -140,6 +138,6 @@
 
             </stripes:form>
         </div>
-
+        
     </stripes:layout-component>
 </stripes:layout-render>

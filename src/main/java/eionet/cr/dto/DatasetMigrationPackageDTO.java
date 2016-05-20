@@ -5,6 +5,9 @@ import java.util.Date;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
+import org.apache.commons.lang.time.DateFormatUtils;
+
+import eionet.cr.util.URIUtil;
 
 /**
  * Simple DTO for dataset migration packages.
@@ -13,57 +16,33 @@ import org.apache.commons.lang.builder.ToStringStyle;
  */
 public class DatasetMigrationPackageDTO {
 
-    /** The package's name helping to distinguish it from others. */
-    private String name;
+    /** */
+    private String identifier;
 
-    /**  */
+    /** */
     private String datasetUri;
 
-    /**  */
-    private String datasetTitle;
-
-    /**  */
+    /** */
     private Date started;
 
-    /**  */
+    /** */
     private Date finished;
 
-    // /**
-    // * @param name
-    // * @param datasetUri
-    // * @param datasetTitle
-    // */
-    // public DatasetMigrationPackageDTO(String name, String datasetUri, String datasetTitle) {
-    // this(name, datasetUri, datasetTitle, null);
-    // }
-    //
-    // /**
-    // * @param name
-    // * @param datasetUri
-    // * @param datasetTitle
-    // * @param started
-    // */
-    // public DatasetMigrationPackageDTO(String name, String datasetUri, String datasetTitle, Date started) {
-    //
-    // if (StringUtils.isBlank(name) || StringUtils.isBlank(datasetUri) || StringUtils.isBlank(datasetTitle)) {
-    // throw new IllegalArgumentException("Package name, dataset URI and dataset title must not be blank!");
-    // }
-    //
-    // this.name = name;
-    // this.datasetUri = datasetUri;
-    // this.datasetTitle = datasetTitle;
-    // this.started = started;
-    //
-    // // Identifier is dataset title with only [a-zA-Z0-9_] characters.
-    // //this.identifier = datasetTitle.replaceAll("\\W+", " ").trim().replaceAll("\\W+", "_").replaceAll("[_]+",
-    // "_").toLowerCase();
-    // }
+    /** */
+    private String finishedErrorMessage;
 
     /**
-     * @return the name
+     * @return the identifier
      */
-    public String getName() {
-        return name;
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    /**
+     * @param identifier the identifier to set
+     */
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     /**
@@ -74,10 +53,10 @@ public class DatasetMigrationPackageDTO {
     }
 
     /**
-     * @return the datasetTitle
+     * @param datasetUri the datasetUri to set
      */
-    public String getDatasetTitle() {
-        return datasetTitle;
+    public void setDatasetUri(String datasetUri) {
+        this.datasetUri = datasetUri;
     }
 
     /**
@@ -88,10 +67,58 @@ public class DatasetMigrationPackageDTO {
     }
 
     /**
+     * @param started the started to set
+     */
+    public void setStarted(Date started) {
+        this.started = started;
+    }
+
+    /**
      * @return the finished
      */
     public Date getFinished() {
         return finished;
+    }
+
+    /**
+     * @param finished the finished to set
+     */
+    public void setFinished(Date finished) {
+        this.finished = finished;
+    }
+
+    /**
+     * @return the finishedErrorMessage
+     */
+    public String getFinishedErrorMessage() {
+        return finishedErrorMessage;
+    }
+
+    /**
+     * @param finishedErrorMessage the finishedErrorMessage to set
+     */
+    public void setFinishedErrorMessage(String finishedErrorMessage) {
+        this.finishedErrorMessage = finishedErrorMessage;
+    }
+
+    /**
+     *
+     * @param datasetUri
+     * @param username
+     * @param date
+     * @return
+     */
+    public static String buildPackageIdentifier(String datasetUri, String username, Date date) {
+
+        if (StringUtils.isBlank(datasetUri) || StringUtils.isBlank(username) || date == null) {
+            throw new IllegalArgumentException("Dataset URI, username and date must not be blank!");
+        }
+
+        String datasetIdentifier = URIUtil.extractURILabel(datasetUri);
+        StringBuilder sb = new StringBuilder();
+        sb = sb.append(datasetIdentifier.replaceAll("[^a-zA-Z0-9-._]+", " ").trim().replaceAll("\\s+", " ").toLowerCase());
+        sb = sb.append("_").append(username).append("_").append(DateFormatUtils.format(date, "MMdd'_'HHmmss"));
+        return sb.toString();
     }
 
     /*
@@ -105,51 +132,12 @@ public class DatasetMigrationPackageDTO {
     }
 
     /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * @param datasetUri the datasetUri to set
-     */
-    public void setDatasetUri(String datasetUri) {
-        this.datasetUri = datasetUri;
-    }
-
-    /**
-     * @param datasetTitle the datasetTitle to set
-     */
-    public void setDatasetTitle(String datasetTitle) {
-        this.datasetTitle = datasetTitle;
-    }
-
-    /**
-     * @param started the started to set
-     */
-    public void setStarted(Date started) {
-        this.started = started;
-    }
-
-    /**
-     * @param finished the finished to set
-     */
-    public void setFinished(Date finished) {
-        this.finished = finished;
-    }
-
-    /**
      *
      */
     public void validateForNew() {
 
-        if (StringUtils.isBlank(name) || StringUtils.isBlank(datasetUri)) {
-            throw new IllegalArgumentException("Migration package name and dataset URI must not be blank!");
-        }
-
-        if (!name.replaceAll("[^a-zA-Z0-9-._]+", "").equals(name)) {
-            throw new IllegalArgumentException("Only latin characters, underscore, dash and period allowed in package name!");
+        if (StringUtils.isBlank(datasetUri)) {
+            throw new IllegalArgumentException("Dataset URI must not be blank!");
         }
     }
 }

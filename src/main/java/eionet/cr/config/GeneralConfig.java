@@ -122,7 +122,11 @@ public final class GeneralConfig {
     /** */
     public static final String STAGING_FILES_DIR = "stagingFilesDir";
 
+    /** */
     public static final String APP_HOME_DIR = "application.homeDir";
+
+    /** */
+    public static final String SELF_SPARQL_ENDPOINT_URL = "self.sparqlEndpointUrl";
 
     /** */
     public static final int SEVERITY_INFO = 1;

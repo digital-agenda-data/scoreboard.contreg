@@ -1,5 +1,6 @@
 package eionet.cr.web.action.admin.migration;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -65,8 +66,19 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
 
         LOGGER.debug("Creating new package: " + newPackage + " ...");
 
+        newPackage.setIdentifier(DatasetMigrationPackageDTO.buildPackageIdentifier(newPackage.getDatasetUri(), getUserName(), new Date()));
         DatasetMigrationPackageService.newInstance().createNew(newPackage);
         addSystemMessage("New package being created! Refresh this page to check if it's finished.");
+        return new RedirectResolution(getClass());
+    }
+
+    /**
+     *
+     * @return
+     * @throws ServiceException
+     */
+    public Resolution delete() throws ServiceException {
+        addCautionMessage("Deletion not implemented yet!");
         return new RedirectResolution(getClass());
     }
 
@@ -83,7 +95,7 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
         try {
             newPackage.validateForNew();
         } catch (IllegalArgumentException e) {
-            addGlobalValidationError("Package name and dataset URI must not be blank!");
+            addGlobalValidationError(e.getMessage());
             getContext().setSourcePageResolution(
                     new ForwardResolution(DATASET_MIGRATION_PACKAGES_JSP).addParameter("createNewValidationErrors", Boolean.TRUE));
         }
