@@ -3,6 +3,7 @@ package eionet.cr.web.action.admin.migration;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
@@ -47,6 +48,9 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
     /** */
     private DatasetMigrationPackageDTO newPackage;
 
+    /** */
+    private List<String> selectedPackages;
+
     /**
      *
      * @return
@@ -78,7 +82,14 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
      * @throws ServiceException
      */
     public Resolution delete() throws ServiceException {
-        addCautionMessage("Deletion not implemented yet!");
+
+        if (CollectionUtils.isEmpty(selectedPackages)) {
+            addCautionMessage("No packages selected!");
+        } else {
+            DatasetMigrationPackageService.newInstance().delete(selectedPackages);
+            addSystemMessage("Selected packages deleted!");
+        }
+
         return new RedirectResolution(getClass());
     }
 
@@ -155,5 +166,19 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
      */
     public DatasetMigrationPackageDTO getNewPackage() {
         return newPackage;
+    }
+
+    /**
+     * @return the selectedPackages
+     */
+    public List<String> getSelectedPackages() {
+        return selectedPackages;
+    }
+
+    /**
+     * @param selectedPackages the selectedPackages to set
+     */
+    public void setSelectedPackages(List<String> selectedPackages) {
+        this.selectedPackages = selectedPackages;
     }
 }

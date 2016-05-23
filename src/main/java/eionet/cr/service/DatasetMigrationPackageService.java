@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -102,18 +103,38 @@ public class DatasetMigrationPackageService {
             dto.validateForNew();
         }
 
-        String packageIdentifier = dto.getIdentifier();
-        String datasetUri = dto.getDatasetUri();
-
         try {
             // Create package directory.
-             File packageDir = createPackageDirectory(packageIdentifier);
+             File packageDir = createPackageDirectory(dto);
 
             // Fill package directory (will be done in a separate thread).
-            DatasetMigrationPackageFiller filler = new DatasetMigrationPackageFiller(packageDir, datasetUri);
+            DatasetMigrationPackageFiller filler = new DatasetMigrationPackageFiller(packageDir, dto.getDatasetUri());
             filler.start();
         } catch (IOException ioe) {
             throw new ServiceException("Error when creating migration package directory", ioe);
+        }
+    }
+
+    /**
+     *
+     * @param packageIdentifiers
+     * @throws ServiceException
+     */
+    public void delete(List<String> packageIdentifiers) throws ServiceException {
+
+        if (CollectionUtils.isEmpty(packageIdentifiers)) {
+            return;
+        }
+
+        for (String identifier : packageIdentifiers) {
+
+            File packageDir = getPackageDir(identifier);
+            try {
+                LOGGER.debug("Attempting to delete package directory: " + packageDir.getAbsolutePath());
+                FileUtils.deleteDirectory(packageDir);
+            } catch (IOException e) {
+                throw new ServiceException("Error when attmepting to delete package directory: " + packageDir.getAbsolutePath(), e);
+            }
         }
     }
 
@@ -149,13 +170,13 @@ public class DatasetMigrationPackageService {
 
     /**
      *
-     * @param packageIdentifier
+     * @param dto
      * @return
      * @throws IOException
      */
-    private File createPackageDirectory(String packageIdentifier) throws IOException {
+    private File createPackageDirectory(DatasetMigrationPackageDTO dto) throws IOException {
 
-        File packageDir = new File(MIGRATION_PACKAGES_DIR, packageIdentifier);
+        File packageDir = getPackageDir(dto.getIdentifier());
         if (packageDir.exists() && packageDir.isDirectory()) {
             throw new IllegalArgumentException("Package with such a name already exists!");
         }
@@ -174,6 +195,15 @@ public class DatasetMigrationPackageService {
      */
     public static DatasetMigrationPackageService newInstance() {
         return new DatasetMigrationPackageService();
+    }
+
+    /**
+     *
+     * @param packageIdentifier
+     * @return
+     */
+    private File getPackageDir(String packageIdentifier) {
+        return new File(MIGRATION_PACKAGES_DIR, packageIdentifier);
     }
 
     /**
