@@ -13,6 +13,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.config.GeneralConfig;
+import eionet.cr.service.DatasetMigrationPackageService;
+import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.sql.SQLUtil;
 
@@ -41,23 +43,10 @@ public class DatasetMigrationPackageFiller extends Thread {
      * @param packageDir
      * @param datasetUri
      */
-    protected DatasetMigrationPackageFiller(File packageDir, String datasetUri) {
+    public DatasetMigrationPackageFiller(File packageDir, String datasetUri) {
         super();
         this.packageDir = packageDir;
         this.datasetUri = datasetUri;
-    }
-
-    /**
-     *
-     * @param packageDir
-     * @param datasetUri
-     * @return
-     */
-    public static DatasetMigrationPackageFiller start(File packageDir, String datasetUri) {
-
-        DatasetMigrationPackageFiller filler = new DatasetMigrationPackageFiller(packageDir, datasetUri);
-        filler.start();
-        return filler;
     }
 
     /*
@@ -68,12 +57,17 @@ public class DatasetMigrationPackageFiller extends Thread {
     @Override
     public void run() {
 
-        LOGGER.debug(String.format("Migration package filler started for dataset [%s] in package [%s]", datasetUri, packageDir));
+        LOGGER.debug(String.format("Migration package filler STARTED for dataset [%s] in package [%s]", datasetUri, packageDir));
 
+        Exception exception = null;
         try {
             runInternal();
+            LOGGER.debug(String.format("Migration package filler SUCCEEDED for dataset [%s] in package [%s]", datasetUri, packageDir));
         } catch (Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            exception = e;
+            LOGGER.error(String.format("Migration package filler FAILED for dataset [%s] in package [%s]", datasetUri, packageDir), e);
+        } finally {
+            createFinishedFile(exception);
         }
     }
 
@@ -164,9 +158,29 @@ public class DatasetMigrationPackageFiller extends Thread {
                 return name.endsWith(extension.startsWith(".") ? extension : "." + extension);
             }
         });
+
         for (File file : files) {
             LOGGER.debug("Deleting file: " + file.getAbsolutePath());
             file.delete();
         }
     }
+
+    /**
+     *
+     * @param exception
+     */
+    private void createFinishedFile(Exception exception) {
+        try {
+            if (packageDir != null && packageDir.exists()) {
+                File finishedFile = new File(packageDir, DatasetMigrationPackageService.FINISHED_FILENAME);
+                finishedFile.createNewFile();
+                if (exception != null) {
+                    FileUtils.writeStringToFile(finishedFile, Util.getStackTrace(exception));
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to create the finished file!");
+        }
+    }
+
 }

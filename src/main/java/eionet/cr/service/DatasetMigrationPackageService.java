@@ -2,13 +2,7 @@ package eionet.cr.service;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,8 +16,7 @@ import org.apache.log4j.Logger;
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.config.GeneralConfig;
 import eionet.cr.dto.DatasetMigrationPackageDTO;
-import eionet.cr.util.sesame.SesameUtil;
-import eionet.cr.util.sql.SQLUtil;
+import eionet.cr.migration.DatasetMigrationPackageFiller;
 
 /**
  * A service for CRUD operations with dataset migration packages.
@@ -35,23 +28,17 @@ public class DatasetMigrationPackageService {
     /** */
     private static final Logger LOGGER = Logger.getLogger(DatasetMigrationPackageService.class);
 
-    /** Maximum dump file size in bytes. */
-    private static final int MAX_DUMP_FILE_SIZE = 1000000000;
+    /** */
+    public static final String STARTED_FILENAME = "started";
 
     /** */
-    private static final String STARTED_FILENAME = "started";
+    public static final String FINISHED_FILENAME = "finished";
 
     /** */
-    private static final String FINISHED_FILENAME = "finished";
+    public static final String MIGRATION_PACKAGES_DIR_NAME = "migrations";
 
     /** */
-    private static final String MIGRATION_PACKAGES_DIR_NAME = "migrations";
-
-    /** */
-    private static final File MIGRATION_PACKAGES_DIR = initMigrationsDirectory();
-
-    /** */
-    private static final String SELF_SPARQL_ENDPOINT_URL = GeneralConfig.getRequiredProperty(GeneralConfig.SELF_SPARQL_ENDPOINT_URL);
+    public static final File MIGRATION_PACKAGES_DIR = initMigrationsDirectory();
 
     /**
      *
@@ -72,7 +59,7 @@ public class DatasetMigrationPackageService {
 
             for (File packageDir : packageDirectories) {
 
-                DatasetMigrationPackageDTO dto = createPackageDTO(packageDir);
+                DatasetMigrationPackageDTO dto = readPackageDTO(packageDir);
                 resultList.add(dto);
             }
         } catch (IOException e) {
@@ -118,39 +105,15 @@ public class DatasetMigrationPackageService {
         String packageIdentifier = dto.getIdentifier();
         String datasetUri = dto.getDatasetUri();
 
-        String errorStackTrace = null;
-        File packageDir = null;
         try {
             // Create package directory.
-            packageDir = createPackageDirectory(packageIdentifier);
+             File packageDir = createPackageDirectory(packageIdentifier);
 
-            // Fill package directory.
-            fillPackageDirectory(packageDir, datasetUri);
-        } catch (Exception e) {
-            errorStackTrace = e.toString();
-            throw new ServiceException(e.getMessage(), e);
-        } finally {
-            // Create the "finished" file.
-            createFinishedFile(errorStackTrace, packageDir);
-        }
-    }
-
-    /**
-     *
-     * @param errorStackTrace
-     * @param packageDir
-     */
-    private void createFinishedFile(String errorStackTrace, File packageDir) {
-        try {
-            if (packageDir != null && packageDir.exists()) {
-                File finishedFile = new File(packageDir, FINISHED_FILENAME);
-                finishedFile.createNewFile();
-                if (StringUtils.isNotBlank(errorStackTrace)) {
-                    FileUtils.writeStringToFile(finishedFile, errorStackTrace);
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to create the finished file!");
+            // Fill package directory (will be done in a separate thread).
+            DatasetMigrationPackageFiller filler = new DatasetMigrationPackageFiller(packageDir, datasetUri);
+            filler.start();
+        } catch (IOException ioe) {
+            throw new ServiceException("Error when creating migration package directory", ioe);
         }
     }
 
@@ -160,7 +123,7 @@ public class DatasetMigrationPackageService {
      * @return
      * @throws IOException
      */
-    private DatasetMigrationPackageDTO createPackageDTO(File packageDir) throws IOException {
+    private DatasetMigrationPackageDTO readPackageDTO(File packageDir) throws IOException {
 
         DatasetMigrationPackageDTO dto = new DatasetMigrationPackageDTO();
         dto.setIdentifier(packageDir.getName());
@@ -203,101 +166,6 @@ public class DatasetMigrationPackageService {
         new File(packageDir, STARTED_FILENAME).createNewFile();
 
         return packageDir;
-    }
-
-    /**
-     *
-     * @param packageDir
-     * @throws IOException
-     * @throws SQLException
-     */
-    private void fillPackageDirectory(File packageDir, String datasetUri) throws IOException, SQLException {
-
-        // Dump the dataset's metadata.
-        dumpMetadataGraph(packageDir, datasetUri);
-
-        // Dump the dataset's data.
-        dumpDataGraph(packageDir, datasetUri);
-
-        // Remove all *.graph files.
-        removeFilesWithExtension(packageDir, ".graph");
-    }
-
-    /**
-     *
-     * @param dir
-     * @param extension
-     */
-    private void removeFilesWithExtension(File dir, final String extension) {
-
-        File[] files = dir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File file, String name) {
-                return name.endsWith(extension.startsWith(".") ? extension : "." + extension);
-            }
-        });
-        for (File file : files) {
-            LOGGER.debug("Deleting file: " + file.getAbsolutePath());
-            file.delete();
-        }
-    }
-
-    /**
-     *
-     * @param packageDir
-     * @param datasetUri
-     * @throws IOException
-     */
-    private void dumpMetadataGraph(File packageDir, String datasetUri) throws IOException {
-
-        File dumpFile = new File(packageDir, packageDir.getName() + "_metadata.ttl");
-
-        String metadataQuery = String.format("CONSTRUCT {?s ?p ?o } WHERE {?s ?p ?o filter (?s = <%s>)}", datasetUri);
-        String metadataQueryURL = String.format("%s?query=%s&format=%s", SELF_SPARQL_ENDPOINT_URL, URLEncoder.encode(metadataQuery , "UTF-8"),
-                URLEncoder.encode("text/turtle", "UTF-8"));
-
-        LOGGER.debug(String.format("Dumping %s metadata to %s", datasetUri, packageDir));
-        FileUtils.copyURLToFile(new URL(metadataQueryURL), dumpFile);
-    }
-
-    /**
-     *
-     * @param packageDir
-     * @param datasetUri
-     * @throws SQLException
-     * @throws SQLException
-     */
-    private void dumpDataGraph(File packageDir, String datasetUri) throws SQLException {
-
-        File dumpFile = new File(packageDir, packageDir.getName() + "_data_");
-        String dumpFilePath = dumpFile.getAbsolutePath().replace('\\', '/');
-
-        String dataGraphUri = datasetUri.replace("/dataset/", "/data/");
-        // String dataDumpSQL = String.format("DB.DBA.dump_one_graph('%s', '%s', %d)", dataGraphUri, dumpFilePath,
-        // MAX_DUMP_FILE_SIZE);
-        String dataDumpSQL = "DB.DBA.dump_one_graph(?, ?, ?)";
-
-        LOGGER.debug(String.format("Dumping graph [%s] into [%s]", dataGraphUri, dumpFilePath));
-
-        Connection sqlConn = null;
-        PreparedStatement pstmt = null;
-        try {
-            sqlConn = SesameUtil.getSQLConnection();
-            pstmt = sqlConn.prepareStatement("log_enable(2,1)");
-            pstmt.execute();
-            SQLUtil.close(pstmt);
-
-            LOGGER.debug(String.format("Executing statement [%s] with parameters: [%s], [%s], [%d]", dataDumpSQL, dataGraphUri, dumpFile,
-                    MAX_DUMP_FILE_SIZE));
-            pstmt = sqlConn.prepareStatement(dataDumpSQL);
-            pstmt.setString(1, dataGraphUri);
-            pstmt.setString(2, dumpFilePath);
-            pstmt.setInt(3, MAX_DUMP_FILE_SIZE);
-            pstmt.execute();
-        } finally {
-            SQLUtil.close(pstmt);
-            SQLUtil.close(sqlConn);
-        }
     }
 
     /**
