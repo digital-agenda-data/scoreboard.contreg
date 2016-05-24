@@ -57,15 +57,15 @@ public class DatasetMigrationPackageFiller extends Thread {
     @Override
     public void run() {
 
-        LOGGER.debug(String.format("Migration package filler STARTED for dataset [%s] in package [%s]", datasetUri, packageDir));
+        LOGGER.debug(String.format("STARTED package filler package [%s] for dataset [%s]", packageDir, datasetUri));
 
         Exception exception = null;
         try {
             runInternal();
-            LOGGER.debug(String.format("Migration package filler SUCCEEDED for dataset [%s] in package [%s]", datasetUri, packageDir));
+            LOGGER.debug(String.format("SUCCESS package filler package [%s] for dataset [%s]", packageDir, datasetUri));
         } catch (Exception e) {
             exception = e;
-            LOGGER.error(String.format("Migration package filler FAILED for dataset [%s] in package [%s]", datasetUri, packageDir), e);
+            LOGGER.error(String.format("FAILURE package filler package [%s] for dataset [%s]", packageDir, datasetUri), e);
         } finally {
             createFinishedFile(exception);
         }

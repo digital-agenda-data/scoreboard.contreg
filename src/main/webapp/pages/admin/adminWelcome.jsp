@@ -28,7 +28,8 @@
                 <li><stripes:link href="/admin/obsDelete.action">Delete observations of specified indicators</stripes:link></li>
             </ul>
             <ul style="padding-top:10px">
-                <li><stripes:link href="/admin/migrationPackages.action">Prepared migration packages</stripes:link></li>
+                <li><stripes:link href="/admin/migrationPackages.action">Dataset migration packages prepared in this CR</stripes:link></li>
+                <li><stripes:link href="/admin/migrations.action">Import dataset migration packages prepared in other CR</stripes:link></li>
             </ul>
         </c:when>
         <c:otherwise>

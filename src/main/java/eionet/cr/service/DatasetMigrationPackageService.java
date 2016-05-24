@@ -16,8 +16,13 @@ import org.apache.log4j.Logger;
 
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.config.GeneralConfig;
+import eionet.cr.config.MigratableCR;
 import eionet.cr.dto.DatasetMigrationPackageDTO;
 import eionet.cr.migration.DatasetMigrationPackageFiller;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+import net.sf.json.JsonConfig;
 
 /**
  * A service for CRUD operations with dataset migration packages.
@@ -36,22 +41,59 @@ public class DatasetMigrationPackageService {
     public static final String FINISHED_FILENAME = "finished";
 
     /** */
-    public static final String MIGRATION_PACKAGES_DIR_NAME = "migrations";
+    public static final String MIGRATION_PACKAGES_DIR_NAME = "migration_packages";
 
     /** */
     public static final File MIGRATION_PACKAGES_DIR = initMigrationsDirectory();
+
+    /** */
+    private static final List<MigratableCR> MIGRATABLE_CRS = initMigratableCrsConf();
 
     /**
      *
      * @return
      */
-    public List<DatasetMigrationPackageDTO> listAll() throws ServiceException {
+    public List<DatasetMigrationPackageDTO> listLocal() throws ServiceException {
 
-        // Create the result list.
+        return listPackages(MIGRATION_PACKAGES_DIR);
+    }
+
+    /**
+     *
+     * @param migratableCR
+     * @return
+     * @throws ServiceException
+     */
+    public List<DatasetMigrationPackageDTO> listRemote(MigratableCR migratableCR) throws ServiceException {
+
+        if (migratableCR == null || StringUtils.isBlank(migratableCR.getMigrationPackagesDir())) {
+            throw new IllegalArgumentException("Migratable CR and its migration packages directory property must not be blank!");
+        }
+
+
+        File packagesDir = new File(migratableCR.getMigrationPackagesDir());
+        return listPackages(packagesDir);
+    }
+
+    /**
+     *
+     * @param packagesDir
+     * @return
+     * @throws ServiceException
+     */
+    private List<DatasetMigrationPackageDTO> listPackages(File packagesDir) throws ServiceException {
+
+        if (packagesDir == null) {
+            throw new IllegalArgumentException("Packages directory must not be null!");
+        }
 
         ArrayList<DatasetMigrationPackageDTO> resultList = new ArrayList<DatasetMigrationPackageDTO>();
+        if (!packagesDir.exists() || !packagesDir.isDirectory()) {
+            return resultList;
+        }
+
         try {
-            File[] packageDirectories = MIGRATION_PACKAGES_DIR.listFiles(new FileFilter() {
+            File[] packageDirectories = packagesDir.listFiles(new FileFilter() {
                 @Override
                 public boolean accept(File file) {
                     return file.isDirectory();
@@ -105,7 +147,7 @@ public class DatasetMigrationPackageService {
 
         try {
             // Create package directory.
-             File packageDir = createPackageDirectory(dto);
+            File packageDir = createPackageDirectory(dto);
 
             // Fill package directory (will be done in a separate thread).
             DatasetMigrationPackageFiller filler = new DatasetMigrationPackageFiller(packageDir, dto.getDatasetUri());
@@ -136,6 +178,14 @@ public class DatasetMigrationPackageService {
                 throw new ServiceException("Error when attmepting to delete package directory: " + packageDir.getAbsolutePath(), e);
             }
         }
+    }
+
+    /**
+     *
+     * @return
+     */
+    public List<MigratableCR> listMigratableCRInstances() {
+        return MIGRATABLE_CRS;
     }
 
     /**
@@ -226,5 +276,33 @@ public class DatasetMigrationPackageService {
         }
 
         return migrationPackagesDir;
+    }
+
+    /**
+     *
+     * @return
+     */
+    private static List<MigratableCR> initMigratableCrsConf() {
+
+        ArrayList<MigratableCR> resultList = new ArrayList<MigratableCR>();
+        String jsonArrayString = GeneralConfig.getProperty(GeneralConfig.MIGRATABLE_CR_INSTANCES);
+        if (StringUtils.isNotBlank(jsonArrayString)) {
+
+            JsonConfig jsonConfig = new JsonConfig();
+            jsonConfig.setRootClass(MigratableCR.class);
+
+            try {
+                JSONArray jsonArray = JSONArray.fromObject(jsonArrayString);
+                for (Object object : jsonArray) {
+                    MigratableCR migratableCR = (MigratableCR) JSONSerializer.toJava((JSONObject) object, jsonConfig);
+                    resultList.add(migratableCR);
+                }
+            } catch (Exception e) {
+                LOGGER.warn(
+                        String.format("Failed to parse '%s' property, assuming no migratable CRs available", GeneralConfig.MIGRATABLE_CR_INSTANCES),
+                        e);
+            }
+        }
+        return resultList;
     }
 }

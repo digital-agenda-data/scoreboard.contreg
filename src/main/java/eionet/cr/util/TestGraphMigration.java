@@ -161,6 +161,69 @@ public class TestGraphMigration {
         System.out.println("Finished!");
     }
 
+    private void testLoadGraph1() throws SQLException, ResultSetReaderException, OpenRDFException {
+
+        System.out.println("Starting ...");
+
+        Connection sqlConn = null;
+        Statement stmt = null;
+        try {
+            sqlConn = getSourceSQLConnection();
+            stmt = sqlConn.createStatement();
+
+            System.out.println("Attempting ld_dir ...");
+            stmt.execute("log_enable(2,1)");
+            stmt.execute("DB.DBA.ld_dir('C:/dev/projects/scoreboard/apphome3/migration_packages/digital-agenda-scoreboard-key-indicators_heinlja_0523_153149', '%.ttl', 'http://mygraph.lt')");
+
+            SQLUtil.close(stmt);
+            stmt = sqlConn.createStatement();
+
+            System.out.println("Attempting loader_run ...");
+            stmt.execute("log_enable(2,1)");
+            stmt.execute("DB.DBA.rdf_loader_run()");
+        } catch (Throwable t) {
+            t.printStackTrace();
+        } finally {
+            SQLUtil.close(stmt);
+            SQLUtil.close(sqlConn);
+        }
+
+        System.out.println("Finished!");
+    }
+
+    /**
+     *
+     * @throws SQLException
+     * @throws ResultSetReaderException
+     * @throws OpenRDFException
+     */
+    private void testLoadGraph2() throws SQLException, ResultSetReaderException, OpenRDFException {
+
+        System.out.println("Starting ...");
+        long startTime = System.currentTimeMillis();
+
+        Connection sqlConn = null;
+        Statement stmt = null;
+        try {
+            sqlConn = getTargetSQLConnection();
+            stmt = sqlConn.createStatement();
+
+            int mask = 1+2+4+8+16+32+64+128;
+            stmt.execute("log_enable(2,1)");
+            stmt.execute(String.format("DB.DBA.TTLP(file_to_string_output('C:/dev/projects/scoreboard/apphome3/migration_packages/lead-indicators_heinlja_0523_163154/lead-indicators_heinlja_0523_163154_data_000001.ttl'), '', 'http://mygraph.se', %d)", mask));
+            //stmt.execute(String.format("DB.DBA.TTLP(file_to_string_output('C:/dev/projects/scoreboard/apphome3/migration_packages/digital-agenda-scoreboard-key-indicators_heinlja_0523_153149/digital-agenda-scoreboard-key-indicators_heinlja_0523_153149_data_000001.ttl'), '', 'http://mygraph.fi', %d)", mask));
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+        } finally {
+            SQLUtil.close(stmt);
+            SQLUtil.close(sqlConn);
+        }
+
+        long durationSeconds = (System.currentTimeMillis() - startTime) / 1000;
+        System.out.println("Finished! Time: " + durationSeconds + " sec");
+    }
+
     public static RepositoryConnection getSourceRepositoryConnection() throws RepositoryException {
 
         String url = "jdbc:virtuoso://localhost:1117/charset=UTF-8/log_enable=2/DATABASE=CR";
@@ -234,7 +297,8 @@ public class TestGraphMigration {
         TestGraphMigration test = new TestGraphMigration();
         //test.testGraphMigration();
         //test.testGraphDump();
-        test.testLoadGraph();
+        //test.testLoadGraph2();
+        //test.testLoadGraph1();
     }
 
     public class ResultSetReader implements SPARQLResultSetReader<String> {

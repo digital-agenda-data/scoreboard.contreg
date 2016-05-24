@@ -131,7 +131,7 @@ public class DatasetMigrationPackageBean extends AbstractActionBean {
     public List<DatasetMigrationPackageDTO> getPackages() throws ServiceException {
 
         if (packages == null) {
-            packages = DatasetMigrationPackageService.newInstance().listAll();
+            packages = DatasetMigrationPackageService.newInstance().listLocal();
         }
         return packages;
     }

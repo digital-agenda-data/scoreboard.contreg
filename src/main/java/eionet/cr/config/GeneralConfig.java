@@ -129,6 +129,9 @@ public final class GeneralConfig {
     public static final String SELF_SPARQL_ENDPOINT_URL = "self.sparqlEndpointUrl";
 
     /** */
+    public static final String MIGRATABLE_CR_INSTANCES = "migratable.cr.instances";
+
+    /** */
     public static final int SEVERITY_INFO = 1;
     public static final int SEVERITY_CAUTION = 2;
     public static final int SEVERITY_WARNING = 3;
