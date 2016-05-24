@@ -329,4 +329,24 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liqui
         </sql>
     </changeSet>
 -->
+
+    <changeSet author="heinlja" id="rev-18">
+        <comment>Create the table of where the performed dataset migrations will be stored.</comment>
+        <sql>
+            create table "dataset_migration"
+            (
+              "id" INTEGER IDENTITY,
+              "source_cr_url" VARCHAR(255),
+              "source_package_name" VARCHAR(255),
+              "target_dataset_uri" VARCHAR(255),
+              "pre_purge" SMALLINT,
+              "user_name" VARCHAR(80),
+              "started_time" DATETIME,
+              "finished_time" DATETIME,
+              "failed" SMALLINT,
+              "messages" LONG VARCHAR,
+              PRIMARY KEY ("id")
+            )
+        </sql>
+    </changeSet>
 </databaseChangeLog>
