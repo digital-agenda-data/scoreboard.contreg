@@ -10,6 +10,9 @@
             ( function($) {
                 $(document).ready(
                     function(){
+                    	
+                    	var temp = {"1" : "string1","2" : "string2"};
+                    	var temp2 = {'kalad' : ['kala1','kala2'],'http://127.0.0.1:8080/cr-das-test' : ['lind1','lind2']}
 
                         $("#startNewLink").click(function() {
                             $('#startNewDialog').dialog('option','width', 800);
@@ -28,6 +31,15 @@
                         });
 
                         ////////////////////////////////////////////
+                        
+                        $("#selSourceCr").change(function() {
+                        	
+                        	var $select = $('#jama'); 
+                        	$select.find('option').remove();  
+                        	$.each(temp2[$(this).val()],function() {
+                    			    $select.append('<option value=' + this + '>' + this + '</option>');
+                    	    });
+                        });
                         
                     });
             }) ( jQuery );
@@ -119,7 +131,10 @@
 	                                    <stripes:option value="${sourceCr.url}" label="${sourceCr.name} (${sourceCr.url})" title="${sourceCr.url}"/>
 	                                </c:forEach>
 	                            </c:if>
-	                        </stripes:select>
+	                        </stripes:select><br/>
+	                        <select name="jama" id="jama">
+	                           <option value="">midagi</option>
+	                        </select>
                         </td>
                     </tr>
                     <tr>
