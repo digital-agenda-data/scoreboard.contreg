@@ -104,7 +104,7 @@
         <div id="createNewDialog" title="Create new dataset migration package">
 
             <p>
-                Select the dataset to migrate.<br/>
+                Select the dataset to create a migration package from.<br/>
                 Migration package identifier will be generated from dataset identifier, username and current datetime.
             </p>        
             <stripes:form id="createNewForm" beanclass="${actionBean['class'].name}" method="post">

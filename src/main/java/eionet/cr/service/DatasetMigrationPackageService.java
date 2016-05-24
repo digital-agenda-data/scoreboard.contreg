@@ -19,10 +19,6 @@ import eionet.cr.config.GeneralConfig;
 import eionet.cr.config.MigratableCR;
 import eionet.cr.dto.DatasetMigrationPackageDTO;
 import eionet.cr.migration.DatasetMigrationPackageFiller;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import net.sf.json.JsonConfig;
 
 /**
  * A service for CRUD operations with dataset migration packages.
@@ -45,9 +41,6 @@ public class DatasetMigrationPackageService {
 
     /** */
     public static final File MIGRATION_PACKAGES_DIR = initMigrationsDirectory();
-
-    /** */
-    private static final List<MigratableCR> MIGRATABLE_CRS = initMigratableCrsConf();
 
     /**
      *
@@ -182,14 +175,6 @@ public class DatasetMigrationPackageService {
 
     /**
      *
-     * @return
-     */
-    public List<MigratableCR> listMigratableCRInstances() {
-        return MIGRATABLE_CRS;
-    }
-
-    /**
-     *
      * @param packageDir
      * @return
      * @throws IOException
@@ -278,31 +263,4 @@ public class DatasetMigrationPackageService {
         return migrationPackagesDir;
     }
 
-    /**
-     *
-     * @return
-     */
-    private static List<MigratableCR> initMigratableCrsConf() {
-
-        ArrayList<MigratableCR> resultList = new ArrayList<MigratableCR>();
-        String jsonArrayString = GeneralConfig.getProperty(GeneralConfig.MIGRATABLE_CR_INSTANCES);
-        if (StringUtils.isNotBlank(jsonArrayString)) {
-
-            JsonConfig jsonConfig = new JsonConfig();
-            jsonConfig.setRootClass(MigratableCR.class);
-
-            try {
-                JSONArray jsonArray = JSONArray.fromObject(jsonArrayString);
-                for (Object object : jsonArray) {
-                    MigratableCR migratableCR = (MigratableCR) JSONSerializer.toJava((JSONObject) object, jsonConfig);
-                    resultList.add(migratableCR);
-                }
-            } catch (Exception e) {
-                LOGGER.warn(
-                        String.format("Failed to parse '%s' property, assuming no migratable CRs available", GeneralConfig.MIGRATABLE_CR_INSTANCES),
-                        e);
-            }
-        }
-        return resultList;
-    }
 }

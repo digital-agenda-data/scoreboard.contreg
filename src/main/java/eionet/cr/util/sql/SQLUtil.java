@@ -213,6 +213,7 @@ public final class SQLUtil {
         try {
             pstmt = prepareStatement(parameterizedSQL, values, conn, true);
             pstmt.executeUpdate();
+            SQLUtil.close(pstmt);
             pstmt = conn.prepareStatement("select identity_value()");
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {

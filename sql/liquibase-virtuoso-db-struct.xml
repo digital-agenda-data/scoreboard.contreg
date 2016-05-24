@@ -339,11 +339,11 @@ xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liqui
               "source_cr_url" VARCHAR(255),
               "source_package_name" VARCHAR(255),
               "target_dataset_uri" VARCHAR(255),
-              "pre_purge" SMALLINT,
+              "pre_purge" SMALLINT DEFAULT 0,
               "user_name" VARCHAR(80),
               "started_time" DATETIME,
               "finished_time" DATETIME,
-              "failed" SMALLINT,
+              "failed" SMALLINT DEFAULT 0,
               "messages" LONG VARCHAR,
               PRIMARY KEY ("id")
             )

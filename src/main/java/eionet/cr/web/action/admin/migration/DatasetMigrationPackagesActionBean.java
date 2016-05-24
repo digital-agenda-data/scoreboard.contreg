@@ -31,10 +31,10 @@ import net.sourceforge.stripes.validation.ValidationMethod;
  * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
  */
 @UrlBinding("/admin/migrationPackages.action")
-public class DatasetMigrationPackageBean extends AbstractActionBean {
+public class DatasetMigrationPackagesActionBean extends AbstractActionBean {
 
     /** */
-    private static final Logger LOGGER = Logger.getLogger(DatasetMigrationPackageBean.class);
+    private static final Logger LOGGER = Logger.getLogger(DatasetMigrationPackagesActionBean.class);
 
     /** */
     private static final String DATASET_MIGRATION_PACKAGES_JSP = "/pages/admin/migration/dataset_migration_packages.jsp";
