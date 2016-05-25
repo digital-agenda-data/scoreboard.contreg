@@ -210,8 +210,8 @@ public class TestGraphMigration {
 
             int mask = 1+2+4+8+16+32+64+128;
             stmt.execute("log_enable(2,1)");
-            stmt.execute(String.format("DB.DBA.TTLP(file_to_string_output('C:/dev/projects/scoreboard/apphome3/migration_packages/lead-indicators_heinlja_0523_163154/lead-indicators_heinlja_0523_163154_data_000001.ttl'), '', 'http://mygraph.se', %d)", mask));
-            //stmt.execute(String.format("DB.DBA.TTLP(file_to_string_output('C:/dev/projects/scoreboard/apphome3/migration_packages/digital-agenda-scoreboard-key-indicators_heinlja_0523_153149/digital-agenda-scoreboard-key-indicators_heinlja_0523_153149_data_000001.ttl'), '', 'http://mygraph.fi', %d)", mask));
+            stmt.execute(String.format("DB.DBA.TTLP(file_to_string_output('C:/dev/projects/scoreboard/apphome3/migration_packages"
+                    + "/lead-indicators_heinlja_0525_174633/lead-indicators_heinlja_0525_174633_[DATA]_000001.ttl'), '', 'http://mygraph.se', %d)", mask));
 
         } catch (Throwable t) {
             t.printStackTrace();
@@ -297,7 +297,7 @@ public class TestGraphMigration {
         TestGraphMigration test = new TestGraphMigration();
         //test.testGraphMigration();
         //test.testGraphDump();
-        //test.testLoadGraph2();
+        test.testLoadGraph2();
         //test.testLoadGraph1();
     }
 

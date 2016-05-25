@@ -64,6 +64,8 @@ grant execute on DB.DBA.TTLP_RL_NEW_GRAPH to cr3test;
 -- ---------------------------------------------------------------------------
 
 grant execute on DB.DBA.dump_one_graph to cr3user;
+grant execute on file_to_string_output to cr3user;
+grant execute on file_to_string_session to cr3user;
 
 -- -------------------------------------------------------------------------------------
 -- Define CR's default inference rule set.
