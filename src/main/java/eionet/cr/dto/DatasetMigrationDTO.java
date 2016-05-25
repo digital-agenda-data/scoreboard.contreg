@@ -16,7 +16,7 @@ public class DatasetMigrationDTO {
     /** */
     private int id;
     private String sourceCrUrl;
-    private String sourcePackageName;
+    private String sourcePackageIdentifier;
     private String targetDatasetUri;
     private boolean prePurge;
     private String userName;
@@ -54,17 +54,17 @@ public class DatasetMigrationDTO {
     }
 
     /**
-     * @return the sourcePackageName
+     * @return the sourcePackageIdentifier
      */
-    public String getSourcePackageName() {
-        return sourcePackageName;
+    public String getSourcePackageIdentifier() {
+        return sourcePackageIdentifier;
     }
 
     /**
-     * @param sourcePackageName the sourcePackageName to set
+     * @param sourcePackageIdentifier the sourcePackageIdentifier to set
      */
-    public void setSourcePackageName(String sourcePackageName) {
-        this.sourcePackageName = sourcePackageName;
+    public void setSourcePackageIdentifier(String sourcePackageIdentifier) {
+        this.sourcePackageIdentifier = sourcePackageIdentifier;
     }
 
     /**
@@ -170,7 +170,7 @@ public class DatasetMigrationDTO {
      */
     public void validateForStart() {
 
-        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageName) || StringUtils.isBlank(targetDatasetUri) || StringUtils.isBlank(userName)) {
+        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageIdentifier) || StringUtils.isBlank(targetDatasetUri) || StringUtils.isBlank(userName)) {
             throw new IllegalArgumentException("Source CR, package name, target dataset and username must all be specified!");
         }
     }

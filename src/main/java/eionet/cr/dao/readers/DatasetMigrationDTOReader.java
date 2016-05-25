@@ -24,7 +24,7 @@ public class DatasetMigrationDTOReader extends SQLResultSetBaseReader<DatasetMig
         DatasetMigrationDTO dto = new DatasetMigrationDTO();
         dto.setId(rs.getInt("ID"));
         dto.setSourceCrUrl(rs.getString("SOURCE_CR_URL"));
-        dto.setSourcePackageName(rs.getString("SOURCE_PACKAGE_NAME"));
+        dto.setSourcePackageIdentifier(rs.getString("SOURCE_PACKAGE_IDENTIFIER"));
         dto.setTargetDatasetUri(rs.getString("TARGET_DATASET_URI"));
         dto.setPrePurge(BooleanUtils.toBoolean(rs.getInt("PRE_PURGE")));
         dto.setUserName(rs.getString("USER_NAME"));

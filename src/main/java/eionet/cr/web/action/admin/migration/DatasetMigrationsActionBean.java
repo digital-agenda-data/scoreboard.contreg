@@ -1,16 +1,24 @@
 package eionet.cr.web.action.admin.migration;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import eionet.cr.common.Predicates;
+import eionet.cr.common.Subjects;
 import eionet.cr.config.MigratableCR;
 import eionet.cr.dao.DAOException;
+import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.HelperDAO;
 import eionet.cr.dto.DatasetMigrationDTO;
+import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.DatasetMigrationsService;
 import eionet.cr.service.ServiceException;
+import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
+import net.sf.json.JSONObject;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -38,6 +46,12 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
     /** */
     private DatasetMigrationDTO newMigration;
 
+    /** */
+    private Map<String, List<String>> migratablePackagesMap;
+
+    /** */
+    private List<Pair<String, String>> datasets;
+
     /**
      *
      * @return
@@ -57,7 +71,7 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
 
         LOGGER.debug("Starting new migration: " + newMigration);
 
-        DatasetMigrationsService.newInstance().startNewMigration(newMigration.getSourceCrUrl(), newMigration.getSourcePackageName(),
+        DatasetMigrationsService.newInstance().startNewMigration(newMigration.getSourceCrUrl(), newMigration.getSourcePackageIdentifier(),
                 newMigration.getTargetDatasetUri(), newMigration.isPrePurge(), newMigration.getUserName());
 
         addSystemMessage("Migration started, refresh this page to monitor progress!");
@@ -73,6 +87,7 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
         if (newMigration == null) {
             newMigration = new DatasetMigrationDTO();
         }
+        newMigration.setUserName(getUserName());
 
         try {
             newMigration.validateForStart();
@@ -122,5 +137,49 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
      */
     public void setNewMigration(DatasetMigrationDTO newMigration) {
         this.newMigration = newMigration;
+    }
+
+    /**
+     * @return the migratablePackagesMap
+     * @throws ServiceException
+     */
+    public Map<String, List<String>> getMigratablePackagesMap() throws ServiceException {
+
+        if (migratablePackagesMap == null) {
+            migratablePackagesMap = DatasetMigrationsService.newInstance().getMigratablePackagesMap();
+        }
+
+        return migratablePackagesMap;
+    }
+
+    /**
+     *
+     * @return
+     * @throws ServiceException
+     */
+    public String getMigratablePackagesJSON() throws ServiceException {
+
+        JSONObject jsonObject = JSONObject.fromObject(getMigratablePackagesMap());
+        return jsonObject == null ? "" : jsonObject.toString();
+    }
+
+    /**
+     *
+     * @return
+     * @throws DAOException
+     */
+    public List<Pair<String, String>> getDatasets() throws DAOException {
+
+        if (datasets == null) {
+
+            String[] labels = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.FOAF_NAME};
+            HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
+            SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DATACUBE_DATA_SET, null, null, labels);
+            if (searchResult != null) {
+                datasets = searchResult.getItems();
+            }
+        }
+
+        return datasets;
     }
 }

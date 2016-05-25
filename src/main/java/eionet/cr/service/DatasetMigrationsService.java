@@ -3,7 +3,9 @@ package eionet.cr.service;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -13,6 +15,8 @@ import eionet.cr.config.GeneralConfig;
 import eionet.cr.config.MigratableCR;
 import eionet.cr.dao.readers.DatasetMigrationDTOReader;
 import eionet.cr.dto.DatasetMigrationDTO;
+import eionet.cr.dto.DatasetMigrationPackageDTO;
+import eionet.cr.migration.DatasetMigrationRunner;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.sql.SQLUtil;
 import net.sf.json.JSONArray;
@@ -42,11 +46,11 @@ public class DatasetMigrationsService {
     // "messages" LONG VARCHAR,
 
     /** */
-    public static final String CREATE_MIGRATION_SQL = "INSERT INTO dataset_migrations ("
-            + "source_cr_url, source_package_name, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, now())";
+    public static final String CREATE_MIGRATION_SQL = "INSERT INTO dataset_migration ("
+            + "source_cr_url, source_package_identifier, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, now())";
 
     /** */
-    public static final String GET_MIGRATION_SQL = "SELECT * FROM dataset_migrations WHERE id=?";
+    public static final String GET_MIGRATION_SQL = "SELECT * FROM dataset_migration WHERE id=?";
 
     /** */
     private static final List<MigratableCR> MIGRATABLE_CRS = initMigratableCrsConf();
@@ -75,6 +79,9 @@ public class DatasetMigrationsService {
         try {
             conn = SesameUtil.getSQLConnection();
             int id = SQLUtil.executeUpdateReturnAutoID(CREATE_MIGRATION_SQL, params, conn);
+
+            DatasetMigrationRunner migrationRunner = new DatasetMigrationRunner(id);
+            migrationRunner.start();
             return id;
         } catch (Exception e) {
             throw new ServiceException("Failure when creating a dataset migration record", e);
@@ -113,6 +120,41 @@ public class DatasetMigrationsService {
      */
     public List<MigratableCR> listMigratableCRInstances() {
         return DatasetMigrationsService.MIGRATABLE_CRS;
+    }
+
+    /**
+     * Create and return a map of available remote migration packages.
+     * key = remote CR URL
+     * value = list of identifiers of packages in that remote CR
+     *
+     * @return
+     * @throws ServiceException
+     */
+    public Map<String, List<String>> getMigratablePackagesMap() throws ServiceException {
+
+        HashMap<String, List<String>> resultMap = new HashMap<String, List<String>>();
+
+        DatasetMigrationPackageService packagesService = DatasetMigrationPackageService.newInstance();
+        for (MigratableCR migratableCR : MIGRATABLE_CRS) {
+
+            String crUrl = migratableCR.getUrl();
+            if (StringUtils.isNotBlank(crUrl)) {
+
+                ArrayList<String> packageIdentifiers = new ArrayList<String>();
+                List<DatasetMigrationPackageDTO> packages = packagesService.listRemote(migratableCR);
+                for (DatasetMigrationPackageDTO packageDTO : packages) {
+
+                    String identifier = packageDTO.getIdentifier();
+                    if (StringUtils.isNotBlank(identifier)) {
+                        packageIdentifiers.add(identifier);
+                    }
+                }
+
+                resultMap.put(crUrl, packageIdentifiers);
+            }
+        }
+
+        return resultMap;
     }
 
     /**

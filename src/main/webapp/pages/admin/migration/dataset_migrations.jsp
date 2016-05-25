@@ -10,9 +10,8 @@
             ( function($) {
                 $(document).ready(
                     function(){
-                    	
-                    	var temp = {"1" : "string1","2" : "string2"};
-                    	var temp2 = {'kalad' : ['kala1','kala2'],'http://127.0.0.1:8080/cr-das-test' : ['lind1','lind2']}
+                        
+                        var migratablePackagesJSON = ${actionBean.migratablePackagesJSON};
 
                         $("#startNewLink").click(function() {
                             $('#startNewDialog').dialog('option','width', 800);
@@ -33,12 +32,20 @@
                         ////////////////////////////////////////////
                         
                         $("#selSourceCr").change(function() {
-                        	
-                        	var $select = $('#jama'); 
-                        	$select.find('option').remove();  
-                        	$.each(temp2[$(this).val()],function() {
-                    			    $select.append('<option value=' + this + '>' + this + '</option>');
-                    	    });
+                            
+                            var $select = $('#selSourcePackage'); 
+                            $select.find('option').remove();
+                            
+                            var packages = migratablePackagesJSON[$(this).val()];
+                            if (packages == undefined || packages == null || packages.length == 0) {
+                                $select.append('<option value="">-- no packages found in this CR --</option>');
+                            } else {
+                                $.each(packages, function() {
+                                        $select.append('<option value="' + this + '">' + this + '</option>');
+                                });
+                            }
+                            $select.trigger("chosen:updated");
+                            $select.removeAttr("disabled");
                         });
                         
                     });
@@ -117,33 +124,57 @@
 
             <stripes:form id="startNewForm" beanclass="${actionBean['class'].name}" method="post">
 
-                <table>
-                    <tr>
-                        <td>
-	                        <stripes:label for="selSourceCr" class="question required">Select source CR to migrate from:</stripes:label><br/>
-	                        <stripes:select name="newPackage.sourceCrUrl" id="selSourceCr" value="${actionBean.newMigration.sourceCrUrl}">
-	                            <c:if test="${empty actionBean.sourceCrs}">
-	                                <stripes:option value="" label=" - none found - "/>
-	                            </c:if>
-	                            <c:if test="${not empty actionBean.sourceCrs}">
-	                                <stripes:option value="" label=""/>
-	                                <c:forEach items="${actionBean.sourceCrs}" var="sourceCr">
-	                                    <stripes:option value="${sourceCr.url}" label="${sourceCr.name} (${sourceCr.url})" title="${sourceCr.url}"/>
-	                                </c:forEach>
-	                            </c:if>
-	                        </stripes:select><br/>
-	                        <select name="jama" id="jama">
-	                           <option value="">midagi</option>
-	                        </select>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding-top:10px">
-                            <stripes:submit id="startNewSubmit" name="startNewPackage" value="Create"/>
-                            <input type="button" id="closeStartNewDialog" value="Cancel"/>
-                        </td>
-                    </tr>
-                </table>
+                <div style="padding-top:10px;">
+                    <stripes:label for="selSourceCr" class="question required">Select source CR to migrate from:</stripes:label><br/>
+                    <stripes:select name="newMigration.sourceCrUrl" id="selSourceCr" value="${actionBean.newMigration.sourceCrUrl}">
+                        <c:if test="${empty actionBean.sourceCrs}">
+                            <stripes:option value="" label=" - none found - "/>
+                        </c:if>
+                        <c:if test="${not empty actionBean.sourceCrs}">
+                            <stripes:option value="" label=""/>
+                                <c:forEach items="${actionBean.sourceCrs}" var="sourceCr">
+                                    <stripes:option value="${sourceCr.url}" label="${sourceCr.name} (${sourceCr.url})" title="${sourceCr.url}"/>
+                                </c:forEach>
+                        </c:if>
+                    </stripes:select>
+                </div>
+                     
+                <div style="padding-top:10px;">
+                 
+                    <stripes:label for="selSourcePackage" class="question required">Select source package to migrate from:</stripes:label><br/>
+                    <stripes:select name="newMigration.sourcePackageIdentifier" id="selSourcePackage" value="${actionBean.newMigration.sourcePackageIdentifier}" disabled="${empty actionBean.newMigration.sourceCrUrl}">
+                      
+                        <c:choose>
+                            <c:when test="${not empty actionBean.newMigration.sourceCrUrl && not empty actionBean.migratablePackagesMap[actionBean.newMigration.sourceCrUrl]}">
+                                <c:forEach items="${actionBean.migratablePackagesMap[actionBean.newMigration.sourceCrUrl]}" var="packageIdentifier">
+                                    <stripes:option value="${packageIdentifier}" label="${packageIdentifier}" />
+                                </c:forEach>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:option value="" label=" -- no packages to select from -- " style="font-size:0.8em;"/>
+                            </c:otherwise>
+                        </c:choose>
+                       
+                    </stripes:select>
+                </div>
+                
+                <div style="padding-top:10px;">
+                 
+                    <stripes:label for="selTargetDataset" class="question required">Select target dataset to migrate into:</stripes:label><br/>
+                    <stripes:select name="newMigration.targetDatasetUri" id="selTargetDataset" value="${actionBean.newMigration.targetDatasetUri}">
+                    
+                        <stripes:option value="" label=""/>
+                        <c:forEach items="${actionBean.datasets}" var="dataset">
+                            <stripes:option value="${dataset.left}" label="${dataset.right}" title="${dataset.left}"/>
+                        </c:forEach>
+                       
+                    </stripes:select>
+                </div>
+                                                 
+                <div style="padding-top:20px">
+                    <stripes:submit id="startNewSubmit" name="startNewMigration" value="Start"/>
+                    <input type="button" id="closeStartNewDialog" value="Cancel"/>
+                </div>
 
             </stripes:form>
         </div>
