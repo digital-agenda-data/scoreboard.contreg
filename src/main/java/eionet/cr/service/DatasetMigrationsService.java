@@ -3,6 +3,7 @@ package eionet.cr.service;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +54,10 @@ public class DatasetMigrationsService {
     public static final String GET_MIGRATION_SQL = "SELECT * FROM dataset_migration WHERE id=?";
 
     /** */
+    public static final String SET_MIGRATION_FINISHED_SQL =
+            "" + "UPDATE dataset_migration SET finished_time=?, failed=?, messages=COALESCE(?, messages) WHERE id=?";
+
+    /** */
     private static final List<MigratableCR> MIGRATABLE_CRS = initMigratableCrsConf();
 
     /**
@@ -80,11 +85,42 @@ public class DatasetMigrationsService {
             conn = SesameUtil.getSQLConnection();
             int id = SQLUtil.executeUpdateReturnAutoID(CREATE_MIGRATION_SQL, params, conn);
 
-            DatasetMigrationRunner migrationRunner = new DatasetMigrationRunner(id);
+            DatasetMigrationRunner migrationRunner = new DatasetMigrationRunner(id, this);
             migrationRunner.start();
             return id;
         } catch (Exception e) {
             throw new ServiceException("Failure when creating a dataset migration record", e);
+        } finally {
+            SQLUtil.close(conn);
+        }
+    }
+
+    /**
+     *
+     * @param migrationId
+     * @param finishedTime
+     * @param failed
+     * @param messages
+     * @throws ServiceException
+     */
+    public void setMigrationFinished(int migrationId, Date finishedTime, boolean failed, String messages) throws ServiceException {
+
+        if (finishedTime == null) {
+            throw new IllegalArgumentException("Finish-time must not be null!");
+        }
+
+        ArrayList<Object> values = new ArrayList<Object>();
+        values.add(finishedTime);
+        values.add(BooleanUtils.toInteger(failed));
+        values.add(StringUtils.trim(messages));
+        values.add(migrationId);
+
+        Connection conn = null;
+        try {
+            conn = SesameUtil.getSQLConnection();
+            SQLUtil.executeUpdate(SET_MIGRATION_FINISHED_SQL, values, conn);
+        } catch (Exception e) {
+            throw new ServiceException("Failure when setting migration finished", e);
         } finally {
             SQLUtil.close(conn);
         }
@@ -120,6 +156,26 @@ public class DatasetMigrationsService {
      */
     public List<MigratableCR> listMigratableCRInstances() {
         return DatasetMigrationsService.MIGRATABLE_CRS;
+    }
+
+    /**
+     *
+     * @param crUrl
+     * @return
+     */
+    public MigratableCR getMigratableCRByUrl(String crUrl) {
+
+        if (StringUtils.isBlank(crUrl)) {
+            throw new IllegalArgumentException("Given URL argument must not be blank!");
+        }
+
+        for (MigratableCR migratableCR : DatasetMigrationsService.MIGRATABLE_CRS) {
+            if (crUrl.equals(migratableCR.getUrl())) {
+                return migratableCR;
+            }
+        }
+
+        return null;
     }
 
     /**

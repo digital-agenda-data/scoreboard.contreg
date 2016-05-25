@@ -25,6 +25,12 @@ import eionet.cr.util.sql.SQLUtil;
 public class DatasetMigrationPackageFiller extends Thread {
 
     /** */
+    public static final String DATA_FILE_SUFFIX = "_[DATA]_";
+
+    /** */
+    public static final String METADATA_FILE_SUFFIX = "_[METADATA].ttl";
+
+    /** */
     private static final Logger LOGGER = Logger.getLogger(DatasetMigrationPackageFiller.class);
 
     /** */
@@ -96,7 +102,7 @@ public class DatasetMigrationPackageFiller extends Thread {
      */
     private void dumpMetadataGraph(File packageDir, String datasetUri) throws IOException {
 
-        File dumpFile = new File(packageDir, packageDir.getName() + "_metadata.ttl");
+        File dumpFile = new File(packageDir, packageDir.getName() + METADATA_FILE_SUFFIX);
 
         String metadataQuery = String.format("CONSTRUCT {?s ?p ?o } WHERE {?s ?p ?o filter (?s = <%s>)}", datasetUri);
         String metadataQueryURL = String.format("%s?query=%s&format=%s", SELF_SPARQL_ENDPOINT_URL, URLEncoder.encode(metadataQuery, "UTF-8"),
@@ -114,7 +120,7 @@ public class DatasetMigrationPackageFiller extends Thread {
      */
     private void dumpDataGraph(File packageDir, String datasetUri) throws SQLException {
 
-        File dumpFile = new File(packageDir, packageDir.getName() + "_data_");
+        File dumpFile = new File(packageDir, packageDir.getName() + DATA_FILE_SUFFIX);
         String dumpFilePath = dumpFile.getAbsolutePath().replace('\\', '/');
 
         String dataGraphUri = datasetUri.replace("/dataset/", "/data/");

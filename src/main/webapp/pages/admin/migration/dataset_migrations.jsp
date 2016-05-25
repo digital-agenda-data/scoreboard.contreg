@@ -162,13 +162,13 @@
                  
                     <stripes:label for="selTargetDataset" class="question required">Select target dataset to migrate into:</stripes:label><br/>
                     <stripes:select name="newMigration.targetDatasetUri" id="selTargetDataset" value="${actionBean.newMigration.targetDatasetUri}">
-                    
                         <stripes:option value="" label=""/>
                         <c:forEach items="${actionBean.datasets}" var="dataset">
                             <stripes:option value="${dataset.left}" label="${dataset.right}" title="${dataset.left}"/>
                         </c:forEach>
-                       
                     </stripes:select>
+                    <br/>
+                    <stripes:label for="chkPurge">Purge dataset before migration:</stripes:label><stripes:checkbox id="chkPurge" name="newMigration.prePurge"/>
                 </div>
                                                  
                 <div style="padding-top:20px">
