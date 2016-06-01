@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,17 +35,6 @@ public class DatasetMigrationsService {
     /** */
     private static final Logger LOGGER = Logger.getLogger(DatasetMigrationsService.class);
 
-    // "id" INTEGER IDENTITY,
-    // "source_cr_url" VARCHAR(255),
-    // "source_package_name" VARCHAR(255),
-    // "target_dataset_uri" VARCHAR(255),
-    // "pre_purge" SMALLINT,
-    // "user_name" VARCHAR(80),
-    // "started_time" DATETIME,
-    // "finished_time" DATETIME,
-    // "failed" SMALLINT,
-    // "messages" LONG VARCHAR,
-
     /** */
     public static final String CREATE_MIGRATION_SQL = "INSERT INTO dataset_migration ("
             + "source_cr_url, source_package_identifier, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, now())";
@@ -63,19 +52,47 @@ public class DatasetMigrationsService {
     /**
      *
      * @param sourceCrUrl
-     * @param sourcePackageName
+     * @param sourcePackageIdentifier
+     * @param prePurge
+     * @param userName
+     * @return
+     * @throws ServiceException
+     */
+    public int startNewMigration(String sourceCrUrl, String sourcePackageIdentifier, boolean prePurge, String userName) throws ServiceException {
+
+        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageIdentifier) || StringUtils.isBlank(userName)) {
+            throw new IllegalArgumentException("Source CR, package identifier and user name must not be blank!");
+        }
+
+        DatasetMigrationPackageDTO packageDTO = findMigratablePackage(sourceCrUrl, sourcePackageIdentifier);
+        if (packageDTO == null) {
+            throw new ServiceException("Failed to find package by this identifier: " + sourcePackageIdentifier);
+        }
+
+        String targetDatasetUri = packageDTO.getDatasetUri();
+        if (StringUtils.isBlank(targetDatasetUri)) {
+            throw new ServiceException("Failed to detect dataset URI of this package: " + sourcePackageIdentifier);
+        }
+
+        return 0;
+    }
+
+    /**
+     *
+     * @param sourceCrUrl
+     * @param sourcePackageIdentifier
      * @param targetDatasetUri
      * @param prePurge
      * @param userName
      * @return
      * @throws ServiceException
      */
-    public int startNewMigration(String sourceCrUrl, String sourcePackageName, String targetDatasetUri, boolean prePurge, String userName)
+    public int startNewMigration(String sourceCrUrl, String sourcePackageIdentifier, String targetDatasetUri, boolean prePurge, String userName)
             throws ServiceException {
 
         ArrayList<Object> params = new ArrayList<Object>();
         params.add(sourceCrUrl);
-        params.add(sourcePackageName);
+        params.add(sourcePackageIdentifier);
         params.add(targetDatasetUri);
         params.add(BooleanUtils.toInteger(prePurge));
         params.add(userName);
@@ -93,6 +110,29 @@ public class DatasetMigrationsService {
         } finally {
             SQLUtil.close(conn);
         }
+    }
+
+    /**
+     *
+     * @param sourceCrUrl
+     * @param sourcePackageIdentifier
+     * @return
+     * @throws ServiceException
+     */
+    private DatasetMigrationPackageDTO findMigratablePackage(String sourceCrUrl, String sourcePackageIdentifier) throws ServiceException {
+
+        MigratableCR migratableCR = getMigratableCRByUrl(sourceCrUrl);
+        if (migratableCR == null) {
+            throw new ServiceException("Failed to find source CR by this URL: " + sourceCrUrl);
+        }
+
+        for (DatasetMigrationPackageDTO datasetMigrationPackageDTO : DatasetMigrationPackageService.newInstance().listRemote(migratableCR)) {
+            if (sourcePackageIdentifier.equals(datasetMigrationPackageDTO.getIdentifier())) {
+                return datasetMigrationPackageDTO;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -186,9 +226,9 @@ public class DatasetMigrationsService {
      * @return
      * @throws ServiceException
      */
-    public Map<String, List<String>> getMigratablePackagesMap() throws ServiceException {
+    public Map<String, List<DatasetMigrationPackageDTO>> getMigratablePackagesMap() throws ServiceException {
 
-        HashMap<String, List<String>> resultMap = new HashMap<String, List<String>>();
+        LinkedHashMap<String, List<DatasetMigrationPackageDTO>> resultMap = new LinkedHashMap<String, List<DatasetMigrationPackageDTO>>();
 
         DatasetMigrationPackageService packagesService = DatasetMigrationPackageService.newInstance();
         for (MigratableCR migratableCR : MIGRATABLE_CRS) {
@@ -196,17 +236,8 @@ public class DatasetMigrationsService {
             String crUrl = migratableCR.getUrl();
             if (StringUtils.isNotBlank(crUrl)) {
 
-                ArrayList<String> packageIdentifiers = new ArrayList<String>();
                 List<DatasetMigrationPackageDTO> packages = packagesService.listRemote(migratableCR);
-                for (DatasetMigrationPackageDTO packageDTO : packages) {
-
-                    String identifier = packageDTO.getIdentifier();
-                    if (StringUtils.isNotBlank(identifier)) {
-                        packageIdentifiers.add(identifier);
-                    }
-                }
-
-                resultMap.put(crUrl, packageIdentifiers);
+                resultMap.put(crUrl, packages);
             }
         }
 

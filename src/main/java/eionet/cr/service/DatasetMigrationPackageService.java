@@ -1,8 +1,9 @@
 package eionet.cr.service;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -185,6 +186,10 @@ public class DatasetMigrationPackageService {
         }
     }
 
+    public void getPackageDatasetUri(String sourceCrUrl, String sourcePackageIdentifier) {
+        ;
+    }
+
     /**
      *
      * @param packageDir
@@ -254,20 +259,24 @@ public class DatasetMigrationPackageService {
      */
     private void readDatasetUri(File metadataFile, final DatasetMigrationPackageDTO packageDTO) throws IOException, OpenRDFException {
 
+        LOGGER.debug("Attmepting to read dataset URI from " + metadataFile);
+
         RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
         rdfParser.setRDFHandler(new RDFHandler() {
 
             @Override
             public void startRDF() throws RDFHandlerException {
-                // Not interested in this part.
+                LOGGER.debug("Turtle file started ...");
             }
 
             @Override
             public void handleStatement(Statement statement) throws RDFHandlerException {
 
+                LOGGER.debug("Hanlding statement: " + statement);
+
                 URI predicate = statement.getPredicate();
                 Value object = statement.getObject();
-                if (Predicates.RDF_TYPE.equals(predicate) && Subjects.DATACUBE_DATA_SET.equals(object.stringValue())) {
+                if (Predicates.RDF_TYPE.equals(predicate.stringValue()) && Subjects.DATACUBE_DATA_SET.equals(object.stringValue())) {
                     packageDTO.setDatasetUri(statement.getSubject().stringValue());
                     throw new CRRuntimeException();
                 }
@@ -285,18 +294,19 @@ public class DatasetMigrationPackageService {
 
             @Override
             public void endRDF() throws RDFHandlerException {
-                // Not interested in this part.
+                LOGGER.debug("Turtle file finished!");
             }
         });
 
-        FileInputStream fis = null;
+        BufferedReader reader = null;
         try {
-            fis = new FileInputStream(metadataFile);
-            rdfParser.parse(fis, StringUtils.EMPTY);
+            reader = new BufferedReader(new FileReader(metadataFile));
+            rdfParser.parse(reader, StringUtils.EMPTY);
         } catch (CRRuntimeException cre) {
             // CRRuntimeException here means we found the dataset URI, no need to parse the file any further.
+            LOGGER.debug("Dataset URI found: " + packageDTO.getDatasetUri());
         } finally {
-            IOUtils.closeQuietly(fis);
+            IOUtils.closeQuietly(reader);
         }
     }
 

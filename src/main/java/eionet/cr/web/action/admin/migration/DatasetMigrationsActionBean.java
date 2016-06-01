@@ -12,6 +12,7 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dto.DatasetMigrationDTO;
+import eionet.cr.dto.DatasetMigrationPackageDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.DatasetMigrationsService;
 import eionet.cr.service.ServiceException;
@@ -47,7 +48,7 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
     private DatasetMigrationDTO newMigration;
 
     /** */
-    private Map<String, List<String>> migratablePackagesMap;
+    private Map<String, List<DatasetMigrationPackageDTO>> migratablePackagesMap;
 
     /** */
     private List<Pair<String, String>> datasets;
@@ -143,7 +144,7 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
      * @return the migratablePackagesMap
      * @throws ServiceException
      */
-    public Map<String, List<String>> getMigratablePackagesMap() throws ServiceException {
+    public Map<String, List<DatasetMigrationPackageDTO>> getMigratablePackagesMap() throws ServiceException {
 
         if (migratablePackagesMap == null) {
             migratablePackagesMap = DatasetMigrationsService.newInstance().getMigratablePackagesMap();

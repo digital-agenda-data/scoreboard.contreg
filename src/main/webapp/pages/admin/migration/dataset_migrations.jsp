@@ -40,12 +40,28 @@
                             if (packages == undefined || packages == null || packages.length == 0) {
                                 $select.append('<option value="">-- no packages found in this CR --</option>');
                             } else {
+                            	var i = 0;
                                 $.each(packages, function() {
-                                        $select.append('<option value="' + this + '">' + this + '</option>');
+                                	i++;
+                                	if (i == 1) {
+                                		$select.append('<option selected="selected" value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
+                                		$select.prop('title', this['datasetUri']);
+                                		$('#targetDatasetUriHidden').val(this['datasetUri']);
+                                		$('#targetDatasetUriHidden').prop('title', this['datasetUri']);
+                                	} else {
+                                		$select.append('<option value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
+                                	}
                                 });
                             }
                             $select.trigger("chosen:updated");
                             $select.removeAttr("disabled");
+                        });
+                        
+                        $("#selSourcePackage").change(function() {
+                            $(this).attr("title", $("option:selected",this).attr('title'));
+                            $('#targetDatasetUriHidden').val($(this).attr('title'));
+                            $('#targetDatasetUriHidden').prop('title', $(this).attr('title'));
+                            return true;
                         });
                         
                     });
@@ -142,12 +158,12 @@
                 <div style="padding-top:10px;">
                  
                     <stripes:label for="selSourcePackage" class="question required">Select source package to migrate from:</stripes:label><br/>
-                    <stripes:select name="newMigration.sourcePackageIdentifier" id="selSourcePackage" value="${actionBean.newMigration.sourcePackageIdentifier}" disabled="${empty actionBean.newMigration.sourceCrUrl}">
+                    <stripes:select name="newMigration.sourcePackageIdentifier" id="selSourcePackage" value="${actionBean.newMigration.sourcePackageIdentifier}" disabled="${empty actionBean.newMigration.sourceCrUrl}" title="${actionBean.newMigration.targetDatasetUri}">
                       
                         <c:choose>
                             <c:when test="${not empty actionBean.newMigration.sourceCrUrl && not empty actionBean.migratablePackagesMap[actionBean.newMigration.sourceCrUrl]}">
-                                <c:forEach items="${actionBean.migratablePackagesMap[actionBean.newMigration.sourceCrUrl]}" var="packageIdentifier">
-                                    <stripes:option value="${packageIdentifier}" label="${packageIdentifier}" />
+                                <c:forEach items="${actionBean.migratablePackagesMap[actionBean.newMigration.sourceCrUrl]}" var="packageDTO">
+                                    <stripes:option value="${packageDTO.identifier}" label="${packageDTO.identifier}" title="${packageDTO.datasetUri}"/>
                                 </c:forEach>
                             </c:when>
                             <c:otherwise>
@@ -159,14 +175,17 @@
                 </div>
                 
                 <div style="padding-top:10px;">
+                
+                    <stripes:label for="targetDatasetUriHidden" class="question required">Selected package will be migrated into this dataset:</stripes:label><br/>
+                    <stripes:text id="targetDatasetUriHidden" name="newMigration.targetDatasetUri" disabled="disabled" value="${actionBean.newMigration.targetDatasetUri}" size="100" style="font-size:0.75em" title="${actionBean.newMigration.targetDatasetUri}"/>
                  
-                    <stripes:label for="selTargetDataset" class="question required">Select target dataset to migrate into:</stripes:label><br/>
+<%--                    
                     <stripes:select name="newMigration.targetDatasetUri" id="selTargetDataset" value="${actionBean.newMigration.targetDatasetUri}">
                         <stripes:option value="" label=""/>
                         <c:forEach items="${actionBean.datasets}" var="dataset">
                             <stripes:option value="${dataset.left}" label="${dataset.right}" title="${dataset.left}"/>
                         </c:forEach>
-                    </stripes:select>
+                    </stripes:select> --%>
                     <br/>
                     <stripes:label for="chkPurge">Purge dataset before migration:</stripes:label><stripes:checkbox id="chkPurge" name="newMigration.prePurge"/>
                 </div>
