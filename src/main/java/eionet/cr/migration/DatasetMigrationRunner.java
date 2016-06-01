@@ -231,26 +231,32 @@ public class DatasetMigrationRunner extends Thread {
         }
 
         // Gunzip all gzipped files.
-        ArrayList<File> unzippedFiles = new ArrayList<File>();
-        ArrayList<File> finalFiles = new ArrayList<File>();
+        ArrayList<File> filesToImport = new ArrayList<File>();
+        ArrayList<File> filesToDeleteAfter = new ArrayList<File>();
         for (File file : files) {
-            if (file.getName().toLowerCase().endsWith(".gz")) {
+
+            File fileToImport = file;
+
+            boolean isGzippedFile = file.getName().toLowerCase().endsWith(".gz");
+            if (isGzippedFile) {
                 File gunzippedFile = gunzipFile(file);
-                unzippedFiles.add(gunzippedFile);
-                finalFiles.add(gunzippedFile);
-            } else {
-                finalFiles.add(file);
+                if (gunzippedFile != null && gunzippedFile.exists()) {
+                    filesToDeleteAfter.add(gunzippedFile);
+                    fileToImport = gunzippedFile;
+                }
             }
+
+            filesToImport.add(fileToImport);
         }
 
         PreparedStatement pstmt = null;
         try {
-            for (File file : finalFiles) {
+            for (File fileToImport : filesToImport) {
 
-                LOGGER.debug(String.format("Importing [%s] into [%s]", file, targetGraphUri));
+                LOGGER.debug(String.format("Importing [%s] into [%s]", fileToImport, targetGraphUri));
 
                 // String sql = "DB.DBA.TTLP(file_to_string_output(?), '', ?, ?)";
-                String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", file.getAbsolutePath().replace('\\', '/'),
+                String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", fileToImport.getAbsolutePath().replace('\\', '/'),
                         targetGraphUri, TTLP_MASK);
 
                 LOGGER.debug("Executing SQL: " + sql);
@@ -271,9 +277,9 @@ public class DatasetMigrationRunner extends Thread {
         }
 
         // Remove unzipped files.
-        for (File unzippedFile : unzippedFiles) {
-            LOGGER.debug("Quietly deleting " + unzippedFile);
-            FileUtils.deleteQuietly(unzippedFile);
+        for (File fileToDelete : filesToDeleteAfter) {
+            LOGGER.debug("Quietly deleting " + fileToDelete);
+            FileUtils.deleteQuietly(fileToDelete);
         }
     }
 

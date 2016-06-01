@@ -104,7 +104,8 @@ public class DatasetMigrationPackageFiller extends Thread {
 
         File dumpFile = new File(packageDir, packageDir.getName() + METADATA_FILE_SUFFIX);
 
-        String metadataQuery = String.format("CONSTRUCT {?s ?p ?o } WHERE {?s ?p ?o filter (?s = <%s>)}", datasetUri);
+        String metadataQuery =
+                String.format("CONSTRUCT {?s ?p ?o } WHERE {graph ?g {?s ?p ?o .} filter (?s = <%s> OR ?g = <%s>)}", datasetUri, datasetUri);
         String metadataQueryURL = String.format("%s?query=%s&format=%s", SELF_SPARQL_ENDPOINT_URL, URLEncoder.encode(metadataQuery, "UTF-8"),
                 URLEncoder.encode("text/turtle", "UTF-8"));
 

@@ -2,6 +2,7 @@ package eionet.cr.service;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,10 +12,22 @@ import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.openrdf.OpenRDFException;
+import org.openrdf.model.Statement;
+import org.openrdf.model.URI;
+import org.openrdf.model.Value;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
 
 import eionet.cr.common.CRRuntimeException;
+import eionet.cr.common.Predicates;
+import eionet.cr.common.Subjects;
 import eionet.cr.config.GeneralConfig;
 import eionet.cr.config.MigratableCR;
 import eionet.cr.dto.DatasetMigrationPackageDTO;
@@ -63,7 +76,6 @@ public class DatasetMigrationPackageService {
             throw new IllegalArgumentException("Migratable CR and its migration packages directory property must not be blank!");
         }
 
-
         File packagesDir = new File(migratableCR.getMigrationPackagesDir());
         return listPackages(packagesDir);
     }
@@ -98,7 +110,7 @@ public class DatasetMigrationPackageService {
                 DatasetMigrationPackageDTO dto = readPackageDTO(packageDir);
                 resultList.add(dto);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new ServiceException(e.getMessage(), e);
         }
 
@@ -178,8 +190,10 @@ public class DatasetMigrationPackageService {
      * @param packageDir
      * @return
      * @throws IOException
+     * @throws OpenRDFException
+     * @throws ServiceException
      */
-    private DatasetMigrationPackageDTO readPackageDTO(File packageDir) throws IOException {
+    private DatasetMigrationPackageDTO readPackageDTO(File packageDir) throws IOException, ServiceException, OpenRDFException {
 
         DatasetMigrationPackageDTO dto = new DatasetMigrationPackageDTO();
         dto.setIdentifier(packageDir.getName());
@@ -200,7 +214,90 @@ public class DatasetMigrationPackageService {
             }
         }
 
+        readDatasetMetadata(packageDir, dto);
+        LOGGER.debug("Dataset URI of the read package: " + dto.getDatasetUri());
+
         return dto;
+    }
+
+    /**
+     *
+     * @param packageDir
+     * @param packageDTO
+     * @throws ServiceException
+     * @throws OpenRDFException
+     * @throws IOException
+     */
+    private void readDatasetMetadata(File packageDir, final DatasetMigrationPackageDTO packageDTO)
+            throws ServiceException, IOException, OpenRDFException {
+
+        File[] metadataFiles = packageDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().endsWith(DatasetMigrationPackageFiller.METADATA_FILE_SUFFIX);
+            }
+        });
+
+        if (metadataFiles.length == 0) {
+            throw new ServiceException("Was unable to find metadata file in package directory: " + packageDir);
+        }
+
+        readDatasetUri(metadataFiles[0], packageDTO);
+    }
+
+    /**
+     *
+     * @param metadataFile
+     * @param packageDTO
+     * @throws IOException
+     * @throws OpenRDFException
+     */
+    private void readDatasetUri(File metadataFile, final DatasetMigrationPackageDTO packageDTO) throws IOException, OpenRDFException {
+
+        RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
+        rdfParser.setRDFHandler(new RDFHandler() {
+
+            @Override
+            public void startRDF() throws RDFHandlerException {
+                // Not interested in this part.
+            }
+
+            @Override
+            public void handleStatement(Statement statement) throws RDFHandlerException {
+
+                URI predicate = statement.getPredicate();
+                Value object = statement.getObject();
+                if (Predicates.RDF_TYPE.equals(predicate) && Subjects.DATACUBE_DATA_SET.equals(object.stringValue())) {
+                    packageDTO.setDatasetUri(statement.getSubject().stringValue());
+                    throw new CRRuntimeException();
+                }
+            }
+
+            @Override
+            public void handleNamespace(String str1, String str2) throws RDFHandlerException {
+                // Not interested in this part.
+            }
+
+            @Override
+            public void handleComment(String str) throws RDFHandlerException {
+                // Not interested in this part.
+            }
+
+            @Override
+            public void endRDF() throws RDFHandlerException {
+                // Not interested in this part.
+            }
+        });
+
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(metadataFile);
+            rdfParser.parse(fis, StringUtils.EMPTY);
+        } catch (CRRuntimeException cre) {
+            // CRRuntimeException here means we found the dataset URI, no need to parse the file any further.
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
     }
 
     /**
