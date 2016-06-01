@@ -40,17 +40,18 @@
                             if (packages == undefined || packages == null || packages.length == 0) {
                                 $select.append('<option value="">-- no packages found in this CR --</option>');
                             } else {
-                            	var i = 0;
+                                var i = 0;
                                 $.each(packages, function() {
-                                	i++;
-                                	if (i == 1) {
-                                		$select.append('<option selected="selected" value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
-                                		$select.prop('title', this['datasetUri']);
-                                		$('#targetDatasetUriHidden').val(this['datasetUri']);
-                                		$('#targetDatasetUriHidden').prop('title', this['datasetUri']);
-                                	} else {
-                                		$select.append('<option value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
-                                	}
+                                    i++;
+                                    if (i == 1) {
+                                        $select.append('<option selected="selected" value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
+                                        $select.prop('title', this['datasetUri']);
+                                        $('#txtTargetDatasetUri').val(this['datasetUri']);
+                                        $('#txtTargetDatasetUri').prop('title', this['datasetUri']);
+                                        $('#hiddenTargetDatasetUri').val(this['datasetUri']);
+                                    } else {
+                                        $select.append('<option value="' + this['identifier'] + '" title="' + this['datasetUri'] + '">' + this['identifier'] + '</option>');
+                                    }
                                 });
                             }
                             $select.trigger("chosen:updated");
@@ -59,8 +60,9 @@
                         
                         $("#selSourcePackage").change(function() {
                             $(this).attr("title", $("option:selected",this).attr('title'));
-                            $('#targetDatasetUriHidden').val($(this).attr('title'));
-                            $('#targetDatasetUriHidden').prop('title', $(this).attr('title'));
+                            $('#txtTargetDatasetUri').val($(this).attr('title'));
+                            $('#txtTargetDatasetUri').prop('title', $(this).attr('title'));
+                            $('#hiddenTargetDatasetUri').val($(this).attr('title'));
                             return true;
                         });
                         
@@ -104,14 +106,16 @@
                 <stripes:form id="migrationsForm" method="post" beanclass="${actionBean['class'].name}">
 
                     <display:table name="${actionBean.migrations}" class="sortable" id="migration" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
-                        <display:column style="width:5%">
-                            <stripes:checkbox name="selectedPackages" value="${migration.id}" />
+                        <display:column style="width:3%">
+                            <stripes:checkbox name="selectedMigrations" value="${migration.id}" />
                         </display:column>
-                        <display:column title="User" property="userName" sortable="true" style="width:40%"/>
-                        <display:column title="Started" sortable="true" sortProperty="startedTime" style="width:27%">
+                        <display:column title="Package identifier" property="sourcePackageIdentifier" sortable="true" style="width:30%;font-size:0.8em"/>
+                        <display:column title="Target dataset" property="targetDatasetUri" sortable="true" style="width:34%;font-size:0.8em"/>                       
+                        <display:column title="User" property="userName" sortable="true" style="width:9%;font-size:0.8em"/>
+                        <display:column title="Started" sortable="true" sortProperty="startedTime" style="width:12%;font-size:0.8em">
                             <fmt:formatDate value="${migration.startedTime}" pattern="yy-MM-dd HH:mm:ss" />
                         </display:column>
-                        <display:column title="Finished" sortable="true" sortProperty="finishedTime" style="width:18%">
+                        <display:column title="Finished" sortable="true" sortProperty="finishedTime" style="width:12%;font-size:0.8em">
                             <fmt:formatDate value="${migration.finishedTime}" pattern="yy-MM-dd HH:mm:ss" />
                             <c:if test="${migration.failed}">
                                 <img src="${pageContext.request.contextPath}/images/exclamation.png" alt="Failure" title="${fn:escapeXml(migration.messages)}"/>
@@ -176,18 +180,12 @@
                 
                 <div style="padding-top:10px;">
                 
-                    <stripes:label for="targetDatasetUriHidden" class="question required">Selected package will be migrated into this dataset:</stripes:label><br/>
-                    <stripes:text id="targetDatasetUriHidden" name="newMigration.targetDatasetUri" disabled="disabled" value="${actionBean.newMigration.targetDatasetUri}" size="100" style="font-size:0.75em" title="${actionBean.newMigration.targetDatasetUri}"/>
+                    <stripes:label for="txtTargetDatasetUri" class="question required">Selected package will be migrated into this dataset:</stripes:label><br/>
+                    <input type="text" id="txtTargetDatasetUri" name="dummy" disabled="disabled" size="100" style="font-size:0.75em" value="${actionBean.newMigration.targetDatasetUri}" title="${actionBean.newMigration.targetDatasetUri}"/>
+                    <input type="hidden" id="hiddenTargetDatasetUri" name="newMigration.targetDatasetUri" value="${actionBean.newMigration.targetDatasetUri}"/>
                  
-<%--                    
-                    <stripes:select name="newMigration.targetDatasetUri" id="selTargetDataset" value="${actionBean.newMigration.targetDatasetUri}">
-                        <stripes:option value="" label=""/>
-                        <c:forEach items="${actionBean.datasets}" var="dataset">
-                            <stripes:option value="${dataset.left}" label="${dataset.right}" title="${dataset.left}"/>
-                        </c:forEach>
-                    </stripes:select> --%>
                     <br/>
-                    <stripes:label for="chkPurge">Purge dataset before migration:</stripes:label><stripes:checkbox id="chkPurge" name="newMigration.prePurge"/>
+                    <stripes:label for="chkPurge">Purge dataset if it already exists:</stripes:label><stripes:checkbox id="chkPurge" name="newMigration.prePurge"/>
                 </div>
                                                  
                 <div style="padding-top:20px">

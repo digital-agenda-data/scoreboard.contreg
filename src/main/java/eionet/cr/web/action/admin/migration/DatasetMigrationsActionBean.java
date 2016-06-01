@@ -3,6 +3,8 @@ package eionet.cr.web.action.admin.migration;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
@@ -11,6 +13,7 @@ import eionet.cr.config.MigratableCR;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
+import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.DatasetMigrationDTO;
 import eionet.cr.dto.DatasetMigrationPackageDTO;
 import eionet.cr.dto.SearchResultDTO;
@@ -53,6 +56,9 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
     /** */
     private List<Pair<String, String>> datasets;
 
+    /** */
+    private List<Integer> selectedMigrations;
+
     /**
      *
      * @return
@@ -60,6 +66,7 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
      */
     @DefaultHandler
     public Resolution defaultHandler() {
+
         return new ForwardResolution(DATASET_MIGRATIONS_JSP);
     }
 
@@ -80,10 +87,11 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
     }
 
     /**
-    *
-    */
+     * @throws DAOException
+     *
+     */
     @ValidationMethod(on = "startNewMigration")
-    public void validateStartNewMigration() {
+    public void validateStartNewMigration() throws DAOException {
 
         if (newMigration == null) {
             newMigration = new DatasetMigrationDTO();
@@ -96,7 +104,37 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
             addGlobalValidationError(e.getMessage());
             getContext()
                     .setSourcePageResolution(new ForwardResolution(DATASET_MIGRATIONS_JSP).addParameter("startNewValidationErrors", Boolean.TRUE));
+            return;
         }
+
+        String targetDatasetUri = newMigration.getTargetDatasetUri();
+        if (StringUtils.isNotBlank(targetDatasetUri)) {
+            List<String> datasetUris = DAOFactory.get().getDao(ScoreboardSparqlDAO.class).getDistinctDatasetUris();
+            boolean datasetExists = datasetUris.contains(targetDatasetUri);
+            if (datasetExists && !newMigration.isPrePurge()) {
+                addGlobalValidationError("Such a dataset already exists, but no pre-purge requested!");
+                getContext().setSourcePageResolution(
+                        new ForwardResolution(DATASET_MIGRATIONS_JSP).addParameter("startNewValidationErrors", Boolean.TRUE));
+                return;
+            }
+        }
+    }
+
+    /**
+     *
+     * @return
+     * @throws ServiceException
+     */
+    public Resolution delete() throws ServiceException {
+
+        if (CollectionUtils.isEmpty(selectedMigrations)) {
+            addCautionMessage("No migrations selected!");
+        } else {
+            DatasetMigrationsService.newInstance().deleteMigrations(selectedMigrations);
+            addSystemMessage("Selected migrations deleted!");
+        }
+
+        return new RedirectResolution(getClass());
     }
 
     /**
@@ -121,8 +159,14 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
 
     /**
      * @return the migrations
+     * @throws ServiceException
      */
-    public List<DatasetMigrationDTO> getMigrations() {
+    public List<DatasetMigrationDTO> getMigrations() throws ServiceException {
+
+        if (migrations == null) {
+            migrations = DatasetMigrationsService.newInstance().listMigrations();
+        }
+
         return migrations;
     }
 
@@ -182,5 +226,19 @@ public class DatasetMigrationsActionBean extends AbstractActionBean {
         }
 
         return datasets;
+    }
+
+    /**
+     * @return the selectedMigrations
+     */
+    public List<Integer> getSelectedMigrations() {
+        return selectedMigrations;
+    }
+
+    /**
+     * @param selectedMigrations the selectedMigrations to set
+     */
+    public void setSelectedMigrations(List<Integer> selectedMigrations) {
+        this.selectedMigrations = selectedMigrations;
     }
 }

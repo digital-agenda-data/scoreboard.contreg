@@ -1,6 +1,7 @@
 package eionet.cr.service;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -8,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -36,6 +38,9 @@ public class DatasetMigrationsService {
     private static final Logger LOGGER = Logger.getLogger(DatasetMigrationsService.class);
 
     /** */
+    public static final String GET_MIGRATIONS_SQL = "SELECT * FROM dataset_migration ORDER BY started_time desc";
+
+    /** */
     public static final String CREATE_MIGRATION_SQL = "INSERT INTO dataset_migration ("
             + "source_cr_url, source_package_identifier, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, now())";
 
@@ -51,30 +56,25 @@ public class DatasetMigrationsService {
 
     /**
      *
-     * @param sourceCrUrl
-     * @param sourcePackageIdentifier
-     * @param prePurge
-     * @param userName
      * @return
      * @throws ServiceException
      */
-    public int startNewMigration(String sourceCrUrl, String sourcePackageIdentifier, boolean prePurge, String userName) throws ServiceException {
+    public List<DatasetMigrationDTO> listMigrations() throws ServiceException {
 
-        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageIdentifier) || StringUtils.isBlank(userName)) {
-            throw new IllegalArgumentException("Source CR, package identifier and user name must not be blank!");
+        Connection conn = null;
+        try {
+            conn = SesameUtil.getSQLConnection();
+
+            DatasetMigrationDTOReader reader = new DatasetMigrationDTOReader();
+            SQLUtil.executeQuery(GET_MIGRATIONS_SQL, reader, conn);
+
+            List<DatasetMigrationDTO> resultList = reader.getResultList();
+            return resultList;
+        } catch (Exception e) {
+            throw new ServiceException("Failure reading dataset migrations from database", e);
+        } finally {
+            SQLUtil.close(conn);
         }
-
-        DatasetMigrationPackageDTO packageDTO = findMigratablePackage(sourceCrUrl, sourcePackageIdentifier);
-        if (packageDTO == null) {
-            throw new ServiceException("Failed to find package by this identifier: " + sourcePackageIdentifier);
-        }
-
-        String targetDatasetUri = packageDTO.getDatasetUri();
-        if (StringUtils.isBlank(targetDatasetUri)) {
-            throw new ServiceException("Failed to detect dataset URI of this package: " + sourcePackageIdentifier);
-        }
-
-        return 0;
     }
 
     /**
@@ -242,6 +242,37 @@ public class DatasetMigrationsService {
         }
 
         return resultMap;
+    }
+
+    /**
+     *
+     * @param migrationIds
+     * @throws ServiceException
+     */
+    public void deleteMigrations(List<Integer> migrationIds) throws ServiceException {
+
+        if (CollectionUtils.isEmpty(migrationIds)) {
+            return;
+        }
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = SesameUtil.getSQLConnection();
+            pstmt = conn.prepareStatement("DELETE FROM dataset_migration where ID=?");
+
+            for (Integer migrationId : migrationIds) {
+                pstmt.setInt(1, migrationId);
+                pstmt.addBatch();
+            }
+
+            pstmt.executeBatch();
+        } catch (Exception e) {
+            throw new ServiceException("Failure when deleting migrations", e);
+        } finally {
+            SQLUtil.close(pstmt);
+            SQLUtil.close(conn);
+        }
     }
 
     /**

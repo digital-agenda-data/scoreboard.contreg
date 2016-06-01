@@ -262,17 +262,13 @@ public class DatasetMigrationRunner extends Thread {
                 LOGGER.debug("Executing SQL: " + sql);
                 pstmt = sqlConn.prepareStatement(sql);
 
-
-
 //                pstmt.setString(1, file.getAbsolutePath().replace('\\', '/'));
 //                pstmt.setString(2, targetGraphUri);
 //                pstmt.setInt(3, TTLP_MASK);
                 pstmt.execute();
-                LOGGER.debug("Closing pstmt...");
                 SQLUtil.close(pstmt);
             }
         } finally {
-            LOGGER.debug("Closing pstmt finally ...");
             SQLUtil.close(pstmt);
         }
 

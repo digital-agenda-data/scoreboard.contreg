@@ -266,13 +266,10 @@ public class DatasetMigrationPackageService {
 
             @Override
             public void startRDF() throws RDFHandlerException {
-                LOGGER.debug("Turtle file started ...");
             }
 
             @Override
             public void handleStatement(Statement statement) throws RDFHandlerException {
-
-                LOGGER.debug("Hanlding statement: " + statement);
 
                 URI predicate = statement.getPredicate();
                 Value object = statement.getObject();
@@ -294,7 +291,6 @@ public class DatasetMigrationPackageService {
 
             @Override
             public void endRDF() throws RDFHandlerException {
-                LOGGER.debug("Turtle file finished!");
             }
         });
 
