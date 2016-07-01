@@ -126,6 +126,28 @@ public class FileDeletionJob implements ServletContextListener, StatefulJob {
 
     /**
      *
+     * @param files
+     */
+    public static synchronized void register(File[] files) {
+
+        for (File file : files) {
+            FileDeletionJob.register(file);
+        }
+    }
+
+    /**
+     *
+     * @param files
+     */
+    public static synchronized void register(Collection<File> files) {
+
+        for (File file : files) {
+            FileDeletionJob.register(file);
+        }
+    }
+
+    /**
+     *
      * @param file
      * @param marker
      */

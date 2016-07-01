@@ -23,6 +23,7 @@ import eionet.cr.config.MigratableCR;
 import eionet.cr.dto.DatasetMigrationDTO;
 import eionet.cr.service.DatasetMigrationsService;
 import eionet.cr.service.ServiceException;
+import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.sql.SQLUtil;
@@ -187,6 +188,74 @@ public class DatasetMigrationRunner extends Thread {
         }
 
         importFiles(dataFiles, dataGraphUri);
+    }
+
+    /**
+     *
+     * @param dataFiles
+     * @param dataGraphUri
+     * @param prePurge
+     * @throws IOException
+     */
+    private void importDataFiles(File[] dataFiles, String dataGraphUri, boolean prePurge) throws IOException {
+
+        if (StringUtils.isBlank(dataGraphUri)) {
+            throw new IllegalArgumentException("Data graph URI must not be blank!");
+        }
+
+        // Gunzip all gzipped files.
+
+        ArrayList<File> filesToImport = new ArrayList<File>();
+        ArrayList<File> filesToDeleteAfterwards = new ArrayList<File>();
+
+        try {
+            for (File file : dataFiles) {
+
+                File fileToImport = file;
+
+                boolean isGzippedFile = file.getName().toLowerCase().endsWith(".gz");
+                if (isGzippedFile) {
+                    File gunzippedFile = gunzipFile(file);
+                    if (gunzippedFile != null && gunzippedFile.exists()) {
+                        filesToDeleteAfterwards.add(gunzippedFile);
+                        fileToImport = gunzippedFile;
+                    }
+                }
+
+                filesToImport.add(fileToImport);
+            }
+
+            for (File fileToImport : filesToImport) {
+                importDataFile(fileToImport, dataGraphUri, prePurge);
+            }
+        } finally {
+            FileDeletionJob.register(filesToDeleteAfterwards);
+        }
+    }
+
+    /**
+     *
+     * @param fileToImport
+     * @param dataGraphUri
+     * @param prePurge
+     */
+    private void importDataFile(File fileToImport, String dataGraphUri, boolean prePurge) {
+
+//        LOGGER.debug(String.format("Importing [%s] into [%s]", fileToImport, targetGraphUri));
+//
+//        // String sql = "DB.DBA.TTLP(file_to_string_output(?), '', ?, ?)";
+//        String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", fileToImport.getAbsolutePath().replace('\\', '/'),
+//                targetGraphUri, TTLP_MASK);
+//
+//        LOGGER.debug("Executing SQL: " + sql);
+//        pstmt = sqlConn.prepareStatement(sql);
+
+
+
+        // clear temporary graph
+        // import into temp graph
+        // delete original graph
+        // rename temp to original
     }
 
     /**
