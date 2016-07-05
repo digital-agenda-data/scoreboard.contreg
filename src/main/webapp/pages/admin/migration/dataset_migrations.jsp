@@ -104,7 +104,28 @@
             <div style="width:100%;padding-top:10px">
             
                 <stripes:form id="migrationsForm" method="post" beanclass="${actionBean['class'].name}">
-
+                
+                    <display:table name="${actionBean.migrations}" class="sortable" id="migration" sort="list" pagesize="9" requestURI="${actionBean.urlBinding}" style="width:100%">
+                        <display:column style="width:3%">
+                            <stripes:checkbox name="selectedMigrations" value="${migration.id}" />
+                        </display:column>
+                        <display:column title="Package &amp; target dataset" sortProperty="sourcePackageIdentifier" sortable="true" style="width:74%;font-size:0.85em">
+                            <ul style="list-style:none; display: inline-block; padding: 0; margin: 0;">
+                                <li title="Source: ${migration.sourceCrUrl}">Package: <strong><c:out value="${migration.sourcePackageIdentifier}"/></strong></li>
+                                <li>Dataset: <strong><c:out value="${migration.targetDatasetUri}"/></strong></li>
+                            </ul>
+                        </display:column>
+                        <display:column title="Started" sortProperty="startedTime" sortable="true" style="width:15%;font-size:0.85em">
+                            <ul style="list-style:none; display: inline-block; padding: 0; margin: 0;">
+                                <li><fmt:formatDate value="${migration.startedTime}" pattern="yy-MM-dd HH:mm:ss" /></li>
+                                <li>by <i><c:out value="${migration.userName}"/></i></li>
+                            </ul>
+                        </display:column>
+                        <display:column title="Status" sortProperty="status" sortable="true" style="width:8%;font-size:0.85em;text-align:center;">
+                            <img src="${pageContext.request.contextPath}/images/status_${fn:toLowerCase(migration.status)}.png" alt="_${migration.status}" title="${fn:escapeXml(migration.messages)}"/>
+                        </display:column>
+                    </display:table>
+<%--
                     <display:table name="${actionBean.migrations}" class="sortable" id="migration" sort="list" requestURI="${actionBean.urlBinding}" style="width:100%">
                         <display:column style="width:3%">
                             <stripes:checkbox name="selectedMigrations" value="${migration.id}" />
@@ -121,7 +142,7 @@
                                 <img src="${pageContext.request.contextPath}/images/exclamation.png" alt="Failure" title="${fn:escapeXml(migration.messages)}"/>
                             </c:if>
                         </display:column>
-                    </display:table>
+                    </display:table> --%>
 
                     <stripes:submit name="delete" value="Delete" />
                     <input type="button" onclick="toggleSelectAll('migrationsForm');return false" value="Select all" name="selectAll">

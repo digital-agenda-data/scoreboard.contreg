@@ -167,10 +167,26 @@ public class DatasetMigrationDTO {
 
     /**
      *
+     * @return
+     */
+    public Status getStatus() {
+
+        if (failed) {
+            return Status.ERROR;
+        } else if (finishedTime != null && !failed) {
+            return Status.OK;
+        } else {
+            return Status.UNKNOWN;
+        }
+    }
+
+    /**
+     *
      */
     public void validateForStart() {
 
-        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageIdentifier) || StringUtils.isBlank(targetDatasetUri) || StringUtils.isBlank(userName)) {
+        if (StringUtils.isBlank(sourceCrUrl) || StringUtils.isBlank(sourcePackageIdentifier) || StringUtils.isBlank(targetDatasetUri)
+                || StringUtils.isBlank(userName)) {
             throw new IllegalArgumentException("Source CR, package name, target dataset and username must all be specified!");
         }
     }
@@ -183,5 +199,12 @@ public class DatasetMigrationDTO {
     @Override
     public String toString() {
         return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+    }
+
+    /**
+     * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
+     */
+    public static enum Status {
+        OK, UNKNOWN, ERROR
     }
 }

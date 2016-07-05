@@ -6,14 +6,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -40,6 +39,9 @@ public class DatasetMigrationRunner extends Thread {
 
     /** */
     private static final int TTLP_MASK = 1 + 2 + 4 + 8 + 16 + 32 + 64 + 128;
+
+    /** */
+    private static final String TEMP_GRAPH_SUFFIX = "_TEMP";
 
     /** */
     private int migrationId;
@@ -86,6 +88,7 @@ public class DatasetMigrationRunner extends Thread {
 
         Exception exception = null;
         try {
+            LOGGER.debug("Obtaining SQL connection ...");
             sqlConn = SesameUtil.getSQLConnection();
             runInternal();
             LOGGER.debug("SUCCESS when running dataset migration by this id: " + migrationId);
@@ -95,19 +98,6 @@ public class DatasetMigrationRunner extends Thread {
         } finally {
             setMigrationFinished(exception);
             SQLUtil.close(sqlConn);
-        }
-    }
-
-    /**
-     *
-     * @param exception
-     */
-    private void setMigrationFinished(Exception exception) {
-        try {
-            String messages = exception == null ? null : Util.getStackTrace(exception);
-            migrationsService.setMigrationFinished(migrationId, new Date(), exception != null, messages);
-        } catch (Exception e) {
-            LOGGER.error("Failed to set migration finished", e);
         }
     }
 
@@ -128,19 +118,13 @@ public class DatasetMigrationRunner extends Thread {
         String metadataGraphUri = migrationDTO.getTargetDatasetUri();
         String dataGraphUri = metadataGraphUri.replace("/dataset/", "/data/");
 
-        Statement stmt = null;
-        try {
-            stmt = sqlConn.createStatement();
-            stmt.execute("log_enable(2,1)");
+        setAutoCommit(false);
 
-            // Import data.
-            importData(dataGraphUri, packageDir, migrationDTO.isPrePurge());
+        // Import data.
+        importData(dataGraphUri, packageDir, migrationDTO.isPrePurge());
 
-            // Import metadata.
-            importMetadata(metadataGraphUri, packageDir, migrationDTO.isPrePurge());
-        } finally {
-            SQLUtil.close(stmt);
-        }
+        // Import metadata.
+        importMetadata(metadataGraphUri, packageDir, migrationDTO.isPrePurge());
     }
 
     /**
@@ -181,81 +165,11 @@ public class DatasetMigrationRunner extends Thread {
 
         if (dataFiles == null || dataFiles.length == 0) {
             LOGGER.warn("Found no data files in " + packageDir);
+            return;
         }
 
-        if (prePurge) {
-            purgeGraphs(dataGraphUri);
-        }
-
-        importFiles(dataFiles, dataGraphUri);
-    }
-
-    /**
-     *
-     * @param dataFiles
-     * @param dataGraphUri
-     * @param prePurge
-     * @throws IOException
-     */
-    private void importDataFiles(File[] dataFiles, String dataGraphUri, boolean prePurge) throws IOException {
-
-        if (StringUtils.isBlank(dataGraphUri)) {
-            throw new IllegalArgumentException("Data graph URI must not be blank!");
-        }
-
-        // Gunzip all gzipped files.
-
-        ArrayList<File> filesToImport = new ArrayList<File>();
-        ArrayList<File> filesToDeleteAfterwards = new ArrayList<File>();
-
-        try {
-            for (File file : dataFiles) {
-
-                File fileToImport = file;
-
-                boolean isGzippedFile = file.getName().toLowerCase().endsWith(".gz");
-                if (isGzippedFile) {
-                    File gunzippedFile = gunzipFile(file);
-                    if (gunzippedFile != null && gunzippedFile.exists()) {
-                        filesToDeleteAfterwards.add(gunzippedFile);
-                        fileToImport = gunzippedFile;
-                    }
-                }
-
-                filesToImport.add(fileToImport);
-            }
-
-            for (File fileToImport : filesToImport) {
-                importDataFile(fileToImport, dataGraphUri, prePurge);
-            }
-        } finally {
-            FileDeletionJob.register(filesToDeleteAfterwards);
-        }
-    }
-
-    /**
-     *
-     * @param fileToImport
-     * @param dataGraphUri
-     * @param prePurge
-     */
-    private void importDataFile(File fileToImport, String dataGraphUri, boolean prePurge) {
-
-//        LOGGER.debug(String.format("Importing [%s] into [%s]", fileToImport, targetGraphUri));
-//
-//        // String sql = "DB.DBA.TTLP(file_to_string_output(?), '', ?, ?)";
-//        String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", fileToImport.getAbsolutePath().replace('\\', '/'),
-//                targetGraphUri, TTLP_MASK);
-//
-//        LOGGER.debug("Executing SQL: " + sql);
-//        pstmt = sqlConn.prepareStatement(sql);
-
-
-
-        // clear temporary graph
-        // import into temp graph
-        // delete original graph
-        // rename temp to original
+        LOGGER.debug(String.format("Importing data files from [%s] into [%s]", packageDir, dataGraphUri));
+        importFiles(dataFiles, dataGraphUri, prePurge);
     }
 
     /**
@@ -277,31 +191,163 @@ public class DatasetMigrationRunner extends Thread {
 
         if (metadataFiles == null || metadataFiles.length == 0) {
             LOGGER.warn("Found no metadata files in " + packageDir);
+            return;
         }
 
-        if (prePurge) {
-            purgeGraphs(metadataGraphUri);
+        LOGGER.debug(String.format("Importing metadata files from [%s] into [%s]", packageDir, metadataGraphUri));
+        importFiles(metadataFiles, metadataGraphUri, prePurge);
+    }
+
+    /**
+     *
+     * @param dataFiles
+     * @param graphUri
+     * @param prePurge
+     * @throws IOException
+     * @throws SQLException
+     */
+    private void importFiles(File[] dataFiles, String graphUri, boolean prePurge) throws IOException, SQLException {
+
+        // TODO: do something with prepUrge!
+
+        if (StringUtils.isBlank(graphUri)) {
+            throw new IllegalArgumentException("Data graph URI must not be blank!");
         }
 
-        importFiles(metadataFiles, metadataGraphUri);
+        // Unzip all zipped files (remember to delete the unzipped ones afterwards).
+
+        ArrayList<File> filesToDeleteFinally = new ArrayList<File>();
+        List<File> filesToImport = prepareFiles(dataFiles, filesToDeleteFinally);
+
+        // Ensure temporary graph is clear.
+        String tempGraphUri = graphUri + TEMP_GRAPH_SUFFIX;
+        clearGraphs(tempGraphUri);
+
+        // Import files into temporary graph.
+        try {
+            for (File file : filesToImport) {
+                importFile(file, tempGraphUri);
+            }
+        } finally {
+            FileDeletionJob.register(filesToDeleteFinally);
+        }
+
+        // Delete the real graph.
+        clearGraphs(graphUri);
+
+        // Rename temporary graph to real one.
+        renameGraph(tempGraphUri, graphUri);
+    }
+
+    /**
+     *
+     * @param file
+     * @param graphUri
+     * @throws SQLException
+     */
+    private void importFile(File file, String graphUri) throws SQLException {
+
+        LOGGER.debug(String.format("Importing file [%s] into graph [%s]", file.getAbsolutePath(), graphUri));
+
+        String filePath = file.getAbsolutePath().replace('\\', '/');
+        String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", filePath, graphUri, TTLP_MASK);
+
+        Statement stmt = null;
+        try {
+            stmt = sqlConn.createStatement();
+            stmt.execute(sql);
+        } finally {
+            SQLUtil.close(stmt);
+        }
+    }
+
+
+
+//    /**
+//     *
+//     * @param files
+//     * @param targetGraphUri
+//     * @throws SQLException
+//     * @throws IOException
+//     */
+//    private void importFiles(File[] files, String targetGraphUri) throws SQLException, IOException {
+//
+//        if (StringUtils.isBlank(targetGraphUri)) {
+//            throw new IllegalArgumentException("Target graph URI must not be blank!");
+//        }
+//
+//        // Gunzip all gzipped files.
+//        ArrayList<File> filesToImport = new ArrayList<File>();
+//        ArrayList<File> filesToDeleteAfter = new ArrayList<File>();
+//        for (File file : files) {
+//
+//            File fileToImport = file;
+//
+//            boolean isGzippedFile = file.getName().toLowerCase().endsWith(".gz");
+//            if (isGzippedFile) {
+//                File gunzippedFile = gunzipFile(file);
+//                if (gunzippedFile != null && gunzippedFile.exists()) {
+//                    filesToDeleteAfter.add(gunzippedFile);
+//                    fileToImport = gunzippedFile;
+//                }
+//            }
+//
+//            filesToImport.add(fileToImport);
+//        }
+//
+//        PreparedStatement pstmt = null;
+//        try {
+//            for (File fileToImport : filesToImport) {
+//
+//                LOGGER.debug(String.format("Importing [%s] into [%s]", fileToImport, targetGraphUri));
+//
+//                // String sql = "DB.DBA.TTLP(file_to_string_output(?), '', ?, ?)";
+//                String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)",
+//                        fileToImport.getAbsolutePath().replace('\\', '/'), targetGraphUri, TTLP_MASK);
+//
+//                LOGGER.debug("Executing SQL: " + sql);
+//                pstmt = sqlConn.prepareStatement(sql);
+//
+//                // pstmt.setString(1, file.getAbsolutePath().replace('\\', '/'));
+//                // pstmt.setString(2, targetGraphUri);
+//                // pstmt.setInt(3, TTLP_MASK);
+//                pstmt.execute();
+//                SQLUtil.close(pstmt);
+//            }
+//        } finally {
+//            SQLUtil.close(pstmt);
+//        }
+//
+//        // Remove unzipped files.
+//        for (File fileToDelete : filesToDeleteAfter) {
+//            LOGGER.debug("Quietly deleting " + fileToDelete);
+//            FileUtils.deleteQuietly(fileToDelete);
+//        }
+//    }
+
+    /**
+     *
+     * @param exception
+     */
+    private void setMigrationFinished(Exception exception) {
+        try {
+            String messages = exception == null ? null : Util.getStackTrace(exception);
+            migrationsService.setMigrationFinished(migrationId, new Date(), exception != null, messages);
+        } catch (Exception e) {
+            LOGGER.error("Failed to set migration finished", e);
+        }
     }
 
     /**
      *
      * @param files
-     * @param targetGraphUri
-     * @throws SQLException
+     * @param filesToDeleteAfterwards
+     * @return
      * @throws IOException
      */
-    private void importFiles(File[] files, String targetGraphUri) throws SQLException, IOException {
+    private List<File> prepareFiles(File[] files, ArrayList<File> filesToDeleteAfterwards) throws IOException {
 
-        if (StringUtils.isBlank(targetGraphUri)) {
-            throw new IllegalArgumentException("Target graph URI must not be blank!");
-        }
-
-        // Gunzip all gzipped files.
         ArrayList<File> filesToImport = new ArrayList<File>();
-        ArrayList<File> filesToDeleteAfter = new ArrayList<File>();
         for (File file : files) {
 
             File fileToImport = file;
@@ -310,7 +356,7 @@ public class DatasetMigrationRunner extends Thread {
             if (isGzippedFile) {
                 File gunzippedFile = gunzipFile(file);
                 if (gunzippedFile != null && gunzippedFile.exists()) {
-                    filesToDeleteAfter.add(gunzippedFile);
+                    filesToDeleteAfterwards.add(gunzippedFile);
                     fileToImport = gunzippedFile;
                 }
             }
@@ -318,34 +364,7 @@ public class DatasetMigrationRunner extends Thread {
             filesToImport.add(fileToImport);
         }
 
-        PreparedStatement pstmt = null;
-        try {
-            for (File fileToImport : filesToImport) {
-
-                LOGGER.debug(String.format("Importing [%s] into [%s]", fileToImport, targetGraphUri));
-
-                // String sql = "DB.DBA.TTLP(file_to_string_output(?), '', ?, ?)";
-                String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", fileToImport.getAbsolutePath().replace('\\', '/'),
-                        targetGraphUri, TTLP_MASK);
-
-                LOGGER.debug("Executing SQL: " + sql);
-                pstmt = sqlConn.prepareStatement(sql);
-
-//                pstmt.setString(1, file.getAbsolutePath().replace('\\', '/'));
-//                pstmt.setString(2, targetGraphUri);
-//                pstmt.setInt(3, TTLP_MASK);
-                pstmt.execute();
-                SQLUtil.close(pstmt);
-            }
-        } finally {
-            SQLUtil.close(pstmt);
-        }
-
-        // Remove unzipped files.
-        for (File fileToDelete : filesToDeleteAfter) {
-            LOGGER.debug("Quietly deleting " + fileToDelete);
-            FileUtils.deleteQuietly(fileToDelete);
-        }
+        return filesToImport;
     }
 
     /**
@@ -353,7 +372,7 @@ public class DatasetMigrationRunner extends Thread {
      * @param graphUris
      * @throws SQLException
      */
-    private void purgeGraphs(String... graphUris) throws SQLException {
+    private void clearGraphs(String... graphUris) throws SQLException {
 
         if (ArrayUtils.isEmpty(graphUris)) {
             return;
@@ -363,9 +382,32 @@ public class DatasetMigrationRunner extends Thread {
         try {
             stmt = sqlConn.createStatement();
             for (String graphUri : graphUris) {
-                LOGGER.debug("Purging graph: " + graphUri);
-                stmt.execute("sparql clear graph <" + graphUri + ">");
+                LOGGER.debug("Clearing graph: " + graphUri);
+                stmt.execute(String.format("SPARQL CLEAR GRAPH <%s>", graphUri));
             }
+        } finally {
+            SQLUtil.close(stmt);
+        }
+    }
+
+    /**
+     *
+     * @param oldUri
+     * @param newUri
+     * @throws SQLException
+     */
+    private void renameGraph(String oldUri, String newUri) throws SQLException {
+
+        LOGGER.debug(String.format("Renaming graph [%s] to [%s]", oldUri, newUri));
+
+        // We're not using prepared statement here, because its imply does not with graph rename query for some reason.
+        String sql = String.format("UPDATE DB.DBA.RDF_QUAD TABLE OPTION (index RDF_QUAD_GS) SET g = iri_to_id ('%s') WHERE g = iri_to_id ('%s',0)",
+                newUri, oldUri);
+
+        Statement stmt = null;
+        try {
+            stmt = sqlConn.createStatement();
+            stmt.execute(sql);
         } finally {
             SQLUtil.close(stmt);
         }
@@ -399,5 +441,36 @@ public class DatasetMigrationRunner extends Thread {
         }
 
         return outFile;
+    }
+
+    /**
+     *
+     * @param flag
+     * @throws SQLException
+     */
+    private void setAutoCommit(boolean flag) throws SQLException {
+
+        if (flag == true) {
+            logEnable(1, 1); // TODO Not sure about this actually...
+        } else {
+            logEnable(2, 1);
+        }
+    }
+
+    /**
+     *
+     * @param mode
+     * @param quietly
+     * @throws SQLException
+     */
+    private void logEnable(int mode, int quietly) throws SQLException {
+
+        Statement stmt = null;
+        try {
+            stmt = sqlConn.createStatement();
+            stmt.execute(String.format("log_enable(%d,%d)", mode, quietly));
+        } finally {
+            SQLUtil.close(stmt);
+        }
     }
 }

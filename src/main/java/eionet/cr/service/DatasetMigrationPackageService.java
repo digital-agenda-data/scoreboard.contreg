@@ -220,8 +220,6 @@ public class DatasetMigrationPackageService {
         }
 
         readDatasetMetadata(packageDir, dto);
-        LOGGER.debug("Dataset URI of the read package: " + dto.getDatasetUri());
-
         return dto;
     }
 
@@ -258,8 +256,6 @@ public class DatasetMigrationPackageService {
      * @throws OpenRDFException
      */
     private void readDatasetUri(File metadataFile, final DatasetMigrationPackageDTO packageDTO) throws IOException, OpenRDFException {
-
-        LOGGER.debug("Attmepting to read dataset URI from " + metadataFile);
 
         RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
         rdfParser.setRDFHandler(new RDFHandler() {
@@ -300,7 +296,7 @@ public class DatasetMigrationPackageService {
             rdfParser.parse(reader, StringUtils.EMPTY);
         } catch (CRRuntimeException cre) {
             // CRRuntimeException here means we found the dataset URI, no need to parse the file any further.
-            LOGGER.debug("Dataset URI found: " + packageDTO.getDatasetUri());
+            // LOGGER.debug("Dataset URI found: " + packageDTO.getDatasetUri());
         } finally {
             IOUtils.closeQuietly(reader);
         }
