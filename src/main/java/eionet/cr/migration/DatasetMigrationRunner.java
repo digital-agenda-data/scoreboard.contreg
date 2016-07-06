@@ -118,13 +118,18 @@ public class DatasetMigrationRunner extends Thread {
         String metadataGraphUri = migrationDTO.getTargetDatasetUri();
         String dataGraphUri = metadataGraphUri.replace("/dataset/", "/data/");
 
-        setAutoCommit(false);
+        makeCheckpoint();
 
         // Import data.
+        setAutoCommit(false);
         importData(dataGraphUri, packageDir, migrationDTO.isPrePurge());
 
         // Import metadata.
+        setAutoCommit(false);
         importMetadata(metadataGraphUri, packageDir, migrationDTO.isPrePurge());
+
+        // If we have reached this point without any exceptions, make a checkpoint.
+        makeCheckpoint();
     }
 
     /**
@@ -469,6 +474,23 @@ public class DatasetMigrationRunner extends Thread {
         try {
             stmt = sqlConn.createStatement();
             stmt.execute(String.format("log_enable(%d,%d)", mode, quietly));
+        } finally {
+            SQLUtil.close(stmt);
+        }
+    }
+
+    /**
+     *
+     * @throws SQLException
+     */
+    private void makeCheckpoint() throws SQLException {
+
+        LOGGER.debug("Making checkpoint ...");
+
+        Statement stmt = null;
+        try {
+            stmt = sqlConn.createStatement();
+            stmt.execute("checkpoint");
         } finally {
             SQLUtil.close(stmt);
         }

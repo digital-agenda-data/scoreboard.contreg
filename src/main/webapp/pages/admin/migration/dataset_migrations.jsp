@@ -90,10 +90,8 @@
 
         <div style="margin-top:20px">
                 <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.<br/>
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.<br/>
-                    Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.<br/>
-                    Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    This page lists dataset migrations executed on this CR instance. To start a new migration, use the <em>Operations</em> menu.<br/>
+                    A question mark in migration status indicates an unfinished migration. Refresh the page to check if it's finished.
                 </p>
         </div>
 
@@ -109,7 +107,7 @@
                         <display:column style="width:3%">
                             <stripes:checkbox name="selectedMigrations" value="${migration.id}" />
                         </display:column>
-                        <display:column title="Package &amp; target dataset" sortProperty="sourcePackageIdentifier" sortable="true" style="width:74%;font-size:0.85em">
+                        <display:column title="Migration package &amp; target dataset" sortProperty="sourcePackageIdentifier" sortable="true" style="width:74%;font-size:0.85em">
                             <ul style="list-style:none; display: inline-block; padding: 0; margin: 0;">
                                 <li title="Source: ${migration.sourceCrUrl}">Package: <strong><c:out value="${migration.sourcePackageIdentifier}"/></strong></li>
                                 <li>Dataset: <strong><c:out value="${migration.targetDatasetUri}"/></strong></li>
@@ -122,7 +120,7 @@
                             </ul>
                         </display:column>
                         <display:column title="Status" sortProperty="status" sortable="true" style="width:8%;font-size:0.85em;text-align:center;">
-                            <img src="${pageContext.request.contextPath}/images/status_${fn:toLowerCase(migration.status)}.png" alt="_${migration.status}" title="${fn:escapeXml(migration.messages)}"/>
+                            <img src="${pageContext.request.contextPath}/images/status_${fn:toLowerCase(migration.status)}.png" alt="${migration.status}" title="${migration.failed ? fn:escapeXml(migration.messages) : migration.status}"/>
                         </display:column>
                     </display:table>
 <%--
@@ -206,7 +204,7 @@
                     <input type="hidden" id="hiddenTargetDatasetUri" name="newMigration.targetDatasetUri" value="${actionBean.newMigration.targetDatasetUri}"/>
                  
                     <br/>
-                    <stripes:label for="chkPurge">Purge dataset if it already exists:</stripes:label><stripes:checkbox id="chkPurge" name="newMigration.prePurge"/>
+                    <input type="hidden" name="newMigration.prePurge" value="true"/>
                 </div>
                                                  
                 <div style="padding-top:20px">
