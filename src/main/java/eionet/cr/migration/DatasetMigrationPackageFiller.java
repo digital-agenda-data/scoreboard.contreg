@@ -37,7 +37,7 @@ public class DatasetMigrationPackageFiller extends Thread {
     private static final String SELF_SPARQL_ENDPOINT_URL = GeneralConfig.getRequiredProperty(GeneralConfig.SELF_SPARQL_ENDPOINT_URL);
 
     /** Maximum dump file size in bytes. */
-    private static final int MAX_DUMP_FILE_SIZE = 1000000000;
+    private static final int MAX_DUMP_FILE_SIZE = 10000;
 
     /** */
     private File packageDir;

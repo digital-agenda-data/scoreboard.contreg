@@ -242,7 +242,8 @@ public class DatasetMigrationPackageService {
         });
 
         if (metadataFiles.length == 0) {
-            throw new ServiceException("Was unable to find metadata file in package directory: " + packageDir);
+            LOGGER.warn("Could not find metadata file in package directory: " + packageDir);
+            return;
         }
 
         readDatasetUri(metadataFiles[0], packageDTO);

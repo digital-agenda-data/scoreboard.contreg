@@ -3,6 +3,7 @@ package eionet.cr.service;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -12,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.config.GeneralConfig;
@@ -42,7 +44,7 @@ public class DatasetMigrationsService {
 
     /** */
     public static final String CREATE_MIGRATION_SQL = "INSERT INTO dataset_migration ("
-            + "source_cr_url, source_package_identifier, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, now())";
+            + "source_cr_url, source_package_identifier, target_dataset_uri, pre_purge, user_name, started_time) VALUES (?, ?, ?, ?, ?, ?)";
 
     /** */
     public static final String GET_MIGRATION_SQL = "SELECT * FROM dataset_migration WHERE id=?";
@@ -96,6 +98,7 @@ public class DatasetMigrationsService {
         params.add(targetDatasetUri);
         params.add(BooleanUtils.toInteger(prePurge));
         params.add(userName);
+        params.add(DateUtils.truncate(new Date(), Calendar.SECOND));
 
         Connection conn = null;
         try {
@@ -150,7 +153,7 @@ public class DatasetMigrationsService {
         }
 
         ArrayList<Object> values = new ArrayList<Object>();
-        values.add(finishedTime);
+        values.add(DateUtils.truncate(finishedTime, Calendar.SECOND));
         values.add(BooleanUtils.toInteger(failed));
         values.add(StringUtils.trim(messages));
         values.add(migrationId);

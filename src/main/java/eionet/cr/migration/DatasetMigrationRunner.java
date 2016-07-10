@@ -121,7 +121,6 @@ public class DatasetMigrationRunner extends Thread {
         makeCheckpoint();
 
         // Import data.
-        setAutoCommit(false);
         importData(dataGraphUri, packageDir, migrationDTO.isPrePurge());
 
         // Import metadata.
@@ -224,24 +223,30 @@ public class DatasetMigrationRunner extends Thread {
         ArrayList<File> filesToDeleteFinally = new ArrayList<File>();
         List<File> filesToImport = prepareFiles(dataFiles, filesToDeleteFinally);
 
-        // Ensure temporary graph is clear.
         String tempGraphUri = graphUri + TEMP_GRAPH_SUFFIX;
-        clearGraphs(tempGraphUri);
-
-        // Import files into temporary graph.
         try {
+            // Ensure temporary graph is clear.
+            setAutoCommit(false);
+            clearGraphs(tempGraphUri);
+
+            // Import files into temporary graph.
             for (File file : filesToImport) {
+                setAutoCommit(false);
                 importFile(file, tempGraphUri);
             }
+
+            // Delete the real graph.
+            setAutoCommit(false);
+            clearGraphs(graphUri);
+
+            // Rename temporary graph to real one.
+            setAutoCommit(false);
+            renameGraph(tempGraphUri, graphUri);
         } finally {
             FileDeletionJob.register(filesToDeleteFinally);
+            setAutoCommit(false);
+            clearGraphsQuietly(tempGraphUri);
         }
-
-        // Delete the real graph.
-        clearGraphs(graphUri);
-
-        // Rename temporary graph to real one.
-        renameGraph(tempGraphUri, graphUri);
     }
 
     /**
@@ -253,6 +258,16 @@ public class DatasetMigrationRunner extends Thread {
     private void importFile(File file, String graphUri) throws SQLException {
 
         LOGGER.debug(String.format("Importing file [%s] into graph [%s]", file.getAbsolutePath(), graphUri));
+
+//        RDFFormatLoader loader = new RDFFormatLoader(RDFFormat.TURTLE);
+//        HarvestSourceDAO dao = DAOFactory.get().getDao(HarvestSourceDAO.class);
+//        try {
+//            LOGGER.debug("Here we go...");
+//            dao.loadContent(file, loader, graphUri);
+//        } catch (DAOException e) {
+//            throw new CRRuntimeException(e);
+//        }
+
 
         String filePath = file.getAbsolutePath().replace('\\', '/');
         String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", filePath, graphUri, TTLP_MASK);
@@ -392,6 +407,20 @@ public class DatasetMigrationRunner extends Thread {
             }
         } finally {
             SQLUtil.close(stmt);
+        }
+    }
+
+    /**
+     *
+     * @param graphUris
+     * @throws SQLException
+     */
+    private void clearGraphsQuietly(String... graphUris) throws SQLException {
+
+        try {
+            clearGraphs(graphUris);
+        } catch (Exception e) {
+            // Ignore deliberately.
         }
     }
 

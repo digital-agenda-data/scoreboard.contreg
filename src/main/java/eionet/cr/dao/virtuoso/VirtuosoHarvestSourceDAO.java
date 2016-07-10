@@ -1494,7 +1494,7 @@ public class VirtuosoHarvestSourceDAO extends VirtuosoBaseDAO implements Harvest
                 SesameUtil.rollback(repoConn);
                 SQLUtil.rollback(sqlConn);
 
-                // Clean-up attempt
+                // Exception clean-up attempt.
                 boolean cleanupSuccess = false;
                 try {
                     // Drop original graph.

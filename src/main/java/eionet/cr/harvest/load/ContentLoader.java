@@ -29,7 +29,7 @@ import org.openrdf.OpenRDFException;
 import org.openrdf.repository.RepositoryConnection;
 
 /**
- * The callback method(s) of this interface allow to load a given content into a given repository connection.
+ * The callback methods of this interface allow to load a given content into a given repository connection.
  *
  * @author Jaanus Heinlaid
  */

@@ -33,7 +33,6 @@ import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
-import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 
@@ -140,6 +139,14 @@ public class RDFContentHandler implements RDFHandler {
     @Override
     public void handleStatement(Statement rdfStatement) throws RDFHandlerException {
 
+        if ("http://semantic.digital-agenda-data.eu/data/lead-indicators/e_itspvac2/ent_sm_xfin/pc_ent/FR/2012".equals(rdfStatement.getSubject().stringValue())) {
+            System.out.println("--- " + rdfStatement);
+        }
+
+        if ("http://semantic.digital-agenda-data.eu/data/lead-indicators/i_bfeu/cc_ext_eu/pc_ind/IT/2014".equals(rdfStatement.getSubject().stringValue())) {
+            System.out.println("--- " + rdfStatement);
+        }
+
         // Pre-process the statement.
         rdfStatement = preProcess(rdfStatement);
 
@@ -158,7 +165,8 @@ public class RDFContentHandler implements RDFHandler {
                 LOGGER.trace("Statement counter = " + triplesSaved);
             }
 
-        } catch (RepositoryException e) {
+        } catch (Exception e) {
+            LOGGER.debug("Exception when handling this statement: " + rdfStatement);
             throw new RDFHandlerException(e.getMessage(), e);
         }
     }
