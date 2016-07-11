@@ -208,7 +208,7 @@
                 </div>
                                                  
                 <div style="padding-top:20px">
-                    <stripes:submit id="startNewSubmit" name="startNewMigration" value="Start"/>
+                    <stripes:submit id="startNewSubmit" name="startNewMigration" value="Start" onclick="return confirm('This will completely overwrite the same dataset in this CR!\nPress OK if you want to continue, press Cancel if you have doubts.');"/>
                     <input type="button" id="closeStartNewDialog" value="Cancel"/>
                 </div>
 
