@@ -102,7 +102,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  filter (?type = ?typeValue)\n" +
             "  optional {filter (?p = prop:membership) \n" +
             "            ?o prop:member-of ?memberOf . \n" +
-            "            ?o prop:order ?order} \n" +
+            "            optional {?o prop:order ?order}} \n" +
             "} \n" +
             "order by ?s ?p";
 
