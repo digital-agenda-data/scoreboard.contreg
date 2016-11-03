@@ -65,7 +65,7 @@
             You have chosen to run an RDF export from database <stripes:link beanclass="${actionBean.databaseActionBeanClass.name}"><c:out value="${actionBean.dbName}"/><stripes:param name="dbName" value="${actionBean.dbName}"/></stripes:link>.<br/>
             As the first step, please type the SQL query whose results will be exported, and select the type of objects that the query returns.<br/>
             Also please give this RDF export a descriptive name that will help you to distinguish it from others later.<br/>
-            Mandatory inputs are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.
+            Mandatory inputs are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>.
         </div>
 
         <%-- The form --%>

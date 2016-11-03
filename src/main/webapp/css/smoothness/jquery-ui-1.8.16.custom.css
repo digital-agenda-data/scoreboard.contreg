@@ -1539,7 +1539,7 @@ button.ui-button::-moz-focus-inner {
 /* position: relative prevents IE scroll bug (element with position: relative inside container with overflow: auto appear as "fixed") */
 .ui-tabs .ui-tabs-nav {
     background:
-        url("http://www.eionet.europa.eu/styles/eionet2007/tab_bg.png")
+        url('../eionet2007/tab_bg.png')
         repeat-x scroll center bottom transparent;
     float: left;
     font-size: 0.9em;
@@ -1556,7 +1556,7 @@ button.ui-button::-moz-focus-inner {
     position: relative;
     white-space: nowrap;
     background:
-        url("http://www.eionet.europa.eu/styles/eionet2007/tab_left.png")
+        url("../eionet2007/tab_left.png")
         no-repeat scroll left top transparent;
     border-bottom: 3px solid #315076;
     float: left;
@@ -1568,7 +1568,7 @@ button.ui-button::-moz-focus-inner {
 .ui-tabs .ui-tabs-nav li a {
     float: left;
     background:
-        url("http://www.eionet.europa.eu/styles/eionet2007/tab_right.png")
+        url("../eionet2007/tab_right.png")
         no-repeat scroll right top transparent;
     color: black;
     display: block;
@@ -1579,14 +1579,14 @@ button.ui-button::-moz-focus-inner {
 
 .ui-tabs .ui-tabs-nav li.ui-tabs-selected {
     background-image:
-        url("http://www.eionet.europa.eu/styles/eionet2007/tab_left_on.png");
+        url("../eionet2007/tab_left_on.png");
     border-bottom: 3px solid #CEDC32;
 }
 
 .ui-tabs .ui-tabs-nav li.ui-tabs-selected a,.ui-tabs .ui-tabs-nav li.ui-state-disabled a,.ui-tabs .ui-tabs-nav li.ui-state-processing a
     { /*     cursor: text; */
     background:
-        url("http://www.eionet.europa.eu/styles/eionet2007/tab_right.png")
+        url("../eionet2007/tab_right.png")
         no-repeat scroll right top transparent;
     color: black;
     display: block;

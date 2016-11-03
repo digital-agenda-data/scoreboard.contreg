@@ -31,7 +31,7 @@
 	        <a class="link-external" href="http://en.wikipedia.org/wiki/Social_bookmarking">social bookmarking</a> websites.
 	    </p>
 	
-	    <crfn:form action="/registerUrl.action" method="post" focus="url">
+	    <crfn:form action="/admin/registerUrl.action" method="post" focus="url">
 	
 	        <stripes:label for="urlText">URL to register:</stripes:label>
 	        <br/>

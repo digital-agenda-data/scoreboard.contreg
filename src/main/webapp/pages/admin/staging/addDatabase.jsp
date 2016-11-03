@@ -12,7 +12,7 @@
 
         <div style="margin-top:20px">
             This page enables you to create a new staging database from the file noted below.<br/>
-            Please enter the new database's properties below and click 'Submit'. Mandatory properties are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.
+            Please enter the new database's properties below and click 'Submit'. Mandatory properties are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>.
         </div>
 
         <%-- The form --%>

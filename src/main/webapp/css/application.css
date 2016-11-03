@@ -8,7 +8,7 @@ span.shadowHover:hover {
 #tabbedmenu {
     float:left;
     width:100%;
-    background: url("http://www.eionet.europa.eu/styles/eionet2007/tab_bg.png") bottom repeat-x;
+    background: url("eionet2007/tab_bg.png") bottom repeat-x;
     font-size: 0.9em;
     line-height:normal;
 }
@@ -19,7 +19,7 @@ span.shadowHover:hover {
 }
 #tabbedmenu li {
     float:left;
-    background:url("http://www.eionet.europa.eu/styles/eionet2007/tab_left.png") no-repeat left top;
+    background:url("eionet2007/tab_left.png") no-repeat left top;
 border-bottom: 3px solid #315076;
     margin:0;
     padding:0 0 0 6px;
@@ -30,7 +30,7 @@ border-bottom: 3px solid #315076;
     text-decoration: none;
     font-weight: bold;
     color: black;
-    background:url("http://www.eionet.europa.eu/styles/eionet2007/tab_right.png") no-repeat right top;
+    background:url("eionet2007/tab_right.png") no-repeat right top;
     padding:3px 8px 2px 0px;
 }
 
@@ -40,7 +40,7 @@ border-bottom: 3px solid #315076;
 }
 
 #tabbedmenu #currenttab {
-    background-image:url("http://www.eionet.europa.eu/styles/eionet2007/tab_left_on.png");
+    background-image:url("eionet2007/tab_left_on.png");
 border-bottom: 3px solid #cedc32;
 }
 
@@ -48,7 +48,7 @@ border-bottom: 3px solid #cedc32;
     display:block;
     text-decoration: none;
     font-weight: bold;
-    background:url("http://www.eionet.europa.eu/styles/eionet2007/tab_right_on.png") no-repeat right top;
+    background:url("eionet2007/tab_right_on.png") no-repeat right top;
     padding:3px 8px 2px 0px;
 }
 
@@ -68,7 +68,7 @@ div.databox {
 }
 
 label.required {
-    background: url(http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif) center right no-repeat;
+    background: url(eionet2007/mandatory.gif) center right no-repeat;
     padding-right: 12px;
 }
 
@@ -144,7 +144,7 @@ table.formtable {
 }
 
 .quickjumps ul {
-    list-style-image: url(http://www.eionet.europa.eu/styles/eionet2007/bullet.gif);
+    list-style-image: url(eionet2007/bullet.gif);
     list-style-type: square;
     margin-left: 0;
     padding-left: 1.5em;
@@ -207,7 +207,7 @@ table.formtable {
     font-weight: bold;
     color: #455b6b;
     text-decoration: none;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
     padding: 5px 0px 0px 10px;
     border-bottom: none;
     width: 170px;
@@ -219,14 +219,14 @@ table.formtable {
 }
 .operations li a:active {
     color: #b20d00;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 
 .operations li.help a {
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 .operations li.help a:active {
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 
 /* The .operations is for the buttons to the right of the page */
@@ -265,7 +265,7 @@ table.formtable {
     font-weight: bold;
     color: #455b6b;
     text-decoration: none;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
     padding: 5px 0px 0px 10px;
     border-bottom: none;
     width: 170px;
@@ -277,14 +277,14 @@ table.formtable {
 }
 #operations li a:active {
     color: #b20d00;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 
 #operations li.help a {
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 #operations li.help a:active {
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/button_right.gif') no-repeat;
+    background: url('eionet2007/button_right.gif') no-repeat;
 }
 
 
@@ -335,32 +335,32 @@ table.formtable {
 .tip-msg {
     border: 1px dotted #6c8ec0;
     color: #315076;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/tip_ea.gif') 3px 3px no-repeat;
+    background: url('eionet2007/tip_ea.gif') 3px 3px no-repeat;
 }
 
 .note-msg {
     border: 1px dashed black;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/note_ea.gif') 3px 3px no-repeat;
+    background: url('eionet2007/note_ea.gif') 3px 3px no-repeat;
 }
 
 .important-msg {
     border: 1px solid #aaaaaa;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/important_ea.gif') 3px 3px no-repeat;
+    background: url('eionet2007/important_ea.gif') 3px 3px no-repeat;
 }
 
 .caution-msg {
     border: 1px dashed black;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/caution_ea.gif') 3px 3px no-repeat;
+    background: url('eionet2007/caution_ea.gif') 3px 3px no-repeat;
 }
 
 .warning-msg {
     border: 1px dashed red;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/warning_ea.gif') 3px 3px no-repeat;
+    background: url('eionet2007/warning_ea.gif') 3px 3px no-repeat;
 }
 
 .error-msg {
     border: 2px dashed red;
-    background: url('http://www.eionet.europa.eu/styles/eionet2007/admonitions/error.gif') 5px 5px no-repeat;
+    background: url('eionet2007/error.gif') 5px 5px no-repeat;
     color: #800000;
     font-size: 110%;
     font-weight: bold;
@@ -382,7 +382,7 @@ table.formtable {
 .popup #popuphead {
         height: 50px;
         width: 100%;
-        background: #a5ced1 url('http://www.eionet.europa.eu/styles/eionet2007/top_01.png') repeat-y;
+        background: #a5ced1 url('eionet2007/top_01.png') repeat-y;
         border-top: 4px solid #6f7072;
         border-bottom: 1px solid #315076;
 }

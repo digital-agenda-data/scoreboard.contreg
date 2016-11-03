@@ -9,7 +9,7 @@
     <div class="action-box">
         <c:choose>
             <c:when test='${crfn:userHasPermission(pageContext.session, "/registrations", "u")}'>
-                <stripes:link href="/registerUrl.action" style="font-weight:bold">Suggest a URL!</stripes:link>
+                <stripes:link href="/admin/registerUrl.action" style="font-weight:bold">Suggest a URL!</stripes:link>
             </c:when>
             <c:otherwise>
                 <stripes:link title="Login" href="${pageContext.request.contextPath}/login.action" event="login" style="font-weight:bold">Login to suggest a URL!</stripes:link>

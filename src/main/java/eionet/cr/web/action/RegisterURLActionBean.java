@@ -20,6 +20,13 @@
  * Jaanus Heinlaid, Tieto Eesti*/
 package eionet.cr.web.action;
 
+import org.apache.commons.lang.StringUtils;
+
+import eionet.cr.dao.DAOException;
+import eionet.cr.harvest.HarvestException;
+import eionet.cr.util.URLUtil;
+import eionet.cr.web.action.factsheet.FactsheetActionBean;
+import eionet.cr.web.util.RegisterUrl;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -28,20 +35,12 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationMethod;
 
-import org.apache.commons.lang.StringUtils;
-
-import eionet.cr.dao.DAOException;
-import eionet.cr.harvest.HarvestException;
-import eionet.cr.util.URLUtil;
-import eionet.cr.web.action.factsheet.FactsheetActionBean;
-import eionet.cr.web.util.RegisterUrl;
-
 /**
  *
  * @author <a href="mailto:jaanus.heinlaid@tietoenator.com">Jaanus Heinlaid</a>
  *
  */
-@UrlBinding("/registerUrl.action")
+@UrlBinding("/admin/registerUrl.action")
 public class RegisterURLActionBean extends AbstractActionBean {
 
     private String url;

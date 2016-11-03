@@ -15,10 +15,10 @@
 
             <title>${initParam.appDispName} - ${pageTitle}</title>
 
-            <link rel="stylesheet" type="text/css" href="http://www.eionet.europa.eu/styles/eionet2007/print.css" media="print" />
-            <link rel="stylesheet" type="text/css" href="http://www.eionet.europa.eu/styles/eionet2007/handheld.css" media="handheld" />
-            <link rel="stylesheet" type="text/css" href="http://www.eionet.europa.eu/styles/eionet2007/screen.css" media="screen" title="Eionet 2007 style" />
-            <link rel="stylesheet" type="text/css" href="<c:url value="/css/eionet2007.css"/>" media="screen" title="Eionet 2007 style"/>
+            <link rel="stylesheet" type="text/css" href="<c:url value="/css/eionet2007/print.css"/>" media="print" />
+            <link rel="stylesheet" type="text/css" href="<c:url value="/css/eionet2007/handheld.css"/>" media="handheld" />
+            <link rel="stylesheet" type="text/css" href="<c:url value="/css/eionet2007/screen.css"/>" media="screen" title="Eionet 2007 style"/>
+            <link rel="stylesheet" type="text/css" href="<c:url value="/css/eionet2007.css"/>" media="screen"/>
             <link rel="stylesheet" type="text/css" href="<c:url value="/css/application.css"/>" media="screen"/>
             <link rel="stylesheet" type="text/css" href="<c:url value="/css/scoreboard.css"/>" media="screen"/>
             

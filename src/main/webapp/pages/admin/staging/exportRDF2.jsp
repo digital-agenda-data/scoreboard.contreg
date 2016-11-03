@@ -69,7 +69,7 @@
                 If none of the selected columns is mapped to the "Indicator (code)" property, please also select an indicator from picklist.<br/>
                 It is also mandatory to select the dataset where the query's returned objects will go into.<br/>
                 Defaults have been selected by the system where possible.
-                Mandatory inputs are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>. Conditional inputs are marked with <img src="${pageContext.request.contextPath}/images/conditional.gif"/>.
+                Mandatory inputs are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>. Conditional inputs are marked with <img src="${pageContext.request.contextPath}/images/conditional.gif"/>.
             </p>
             <p>
                 <strong>NB!</strong>
@@ -256,7 +256,7 @@
             <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
                 <p>
-                    The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="http://www.eionet.europa.eu/styles/eionet2007/mandatory.gif"/>.<br/>
+                    The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>.<br/>
                     More information is displayed when placing the mouse over properties' labels.<br/>
                     Once the dataset is created, you can add more properties on the dataset's detailed view page.
                 </p>
