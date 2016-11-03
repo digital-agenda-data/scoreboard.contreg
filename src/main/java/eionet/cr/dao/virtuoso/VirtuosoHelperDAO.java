@@ -1517,17 +1517,24 @@ public class VirtuosoHelperDAO extends VirtuosoBaseDAO implements HelperDAO {
     }
 
     /** */
-    private static final String GET_FACTSHEET_ROWS =
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-                    + "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n"
-                    + "select ?pred min(xsd:int(isBlank(?s))) as ?anonSubj "
-                    + "min(bif:either(isLiteral(?o),"
-                    + "bif:concat(bif:substring(str(?o),1,LEN),'<|>',lang(?o),'<|>',str(datatype(?o)),'<|><|>0<|>',str(?g),'<|>',str(bif:length(str(?o))),'<|>',bif:md5(str(?o))),"
-                    + "bif:concat(bif:coalesce(str(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation)),bif:left(str(?o),LEN)),'<|>',lang(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation)),'<|>',str(datatype(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation))),'<|>',bif:left(str(?o),LEN),'<|>',str(isBlank(?o)),'<|>',str(?g),'<|><|>')"
-                    + ")) as ?objData " + "count(distinct ?o) as ?objCount " + "where {" + "graph ?g {"
-                    + "?s ?pred ?o. filter(?s=iri(?subjectUri))}. " + "optional {?o rdfs:label ?rdfsLabel} "
-                    + "optional {?o skos:prefLabel ?prefLabel} " + "optional {?o skos:altLabel ?altLabel} "
-                    + "optional {?o skos:notation ?notation} " + "} group by ?pred";
+    // @formatter:off
+    private static final String GET_FACTSHEET_ROWS = ""
+            + "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            + "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n"
+            + "select ?pred min(xsd:int(isBlank(?s))) as ?anonSubj "
+            + "min(bif:either(isLiteral(?o),"
+            + "bif:concat(bif:substring(str(?o),1,LEN),'<|>',lang(?o),'<|>',str(datatype(?o)),'<|><|>0<|>',str(?g),'<|>',str(bif:length(str(?o))),'<|>',bif:md5(str(?o))),"
+            + "bif:concat(bif:coalesce(str(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation)),bif:left(str(?o),LEN)),'<|>',lang(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation)),'<|>',str(datatype(coalesce(?rdfsLabel,?prefLabel,?altLabel,?notation))),'<|>',bif:left(str(?o),LEN),'<|>',str(isBlank(?o)),'<|>',str(?g),'<|><|>')"
+            + ")) as ?objData "
+            + "count(distinct ?o) as ?objCount "
+            + "where {"
+            + "graph ?g {"
+            + "?s ?pred ?o. filter(?s=iri(?subjectUri)) filter(!isLiteral(?o) || bif:starts_with(lang(?o),'en')=1 || lang(?o)='')}. "
+            + "optional {?o rdfs:label ?rdfsLabel. filter(bif:starts_with(lang(?rdfsLabel),'en')=1 || lang(?rdfsLabel)='')} "
+            + "optional {?o skos:prefLabel ?prefLabel. filter(bif:starts_with(lang(?prefLabel),'en')=1 || lang(?prefLabel)='')} "
+            + "optional {?o skos:altLabel ?altLabel. filter(bif:starts_with(lang(?altLabel),'en')=1 || lang(?altLabel)='')} "
+            + "optional {?o skos:notation ?notation. filter(bif:starts_with(lang(?notation),'en')=1 || lang(?notation)='')} "
+            + "} group by ?pred";
 
     /** */
     private static final String GET_PREDICATE_LABELS = "select distinct ?pred ?label where " + "{" + "?pred <"
@@ -1539,6 +1546,7 @@ public class VirtuosoHelperDAO extends VirtuosoBaseDAO implements HelperDAO {
             + "?s ?p ?obj. filter(?s=iri(?subjectUri) and ?p=iri(?predicateUri))}" + ". optional {?obj <" + Predicates.RDFS_LABEL
             + "> ?objLabel}" + "} order by str(bif:either(isLiteral(?obj),?obj,bif:coalesce(?objLabel,str(?obj)))) " + "limit "
             + PredicateObjectsReader.PREDICATE_PAGE_SIZE + " offset ";
+    // @formatter:on
 
     /*
      * (non-Javadoc)
