@@ -183,7 +183,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             return new ForwardResolution(STEP2_JSP);
         } catch (DAOException e) {
             Throwable cause = e.getCause();
-            if (cause != null && cause.getClass().getSimpleName().startsWith("VirtuosoException") && cause instanceof SQLException) {
+            if (cause != null && cause.getClass().getSimpleName().startsWith("VirtuosoException")
+                    && cause instanceof SQLException) {
                 SQLException sqlE = (SQLException) cause;
                 if (sqlE.getErrorCode() == VIRTUOSO_SQL_ERROR) {
                     addGlobalValidationError("An SQL error occurred:\n" + sqlE.getMessage());
@@ -231,7 +232,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             return new ForwardResolution(STEP2_JSP);
         }
 
-        addSystemMessage("RDF export successfully started! " + "Use operations menu to list ongoing and finished RDF exports from this database.");
+        addSystemMessage("RDF export successfully started! "
+                + "Use operations menu to list ongoing and finished RDF exports from this database.");
         return new RedirectResolution(StagingDatabaseActionBean.class).addParameter("dbName", dbName);
     }
 
@@ -240,6 +242,11 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      * @return
      */
     public Resolution test() {
+
+        if (1 == 1) {
+            addSystemMessage("No real test run yet!");
+            return new ForwardResolution(STEP2_JSP);
+        }
 
         try {
             StagingDatabaseDTO dto = DAOFactory.get().getDao(StagingDatabaseDAO.class).getDatabaseByName(dbName);
@@ -353,42 +360,28 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     @ValidationMethod(on = {"step2", "run", "test"})
     public void validateStep2AndRun() {
 
-        boolean hasDatasetMapping = false;
-        // Ensure that all selected columns have been mapped to a property.
-        Map<ObjectProperty, String> propertyMappings = queryConf == null ? null : queryConf.getPropertyMappings();
-        if (propertyMappings == null || propertyMappings.isEmpty()) {
-            addGlobalValidationError("Found no property mappings!");
-        } else {
-
-            Set<ObjectProperty> mappedProperties = propertyMappings.keySet();
-            for (Entry<ObjectProperty, String> entry : propertyMappings.entrySet()) {
-
-                ObjectProperty property = entry.getKey();
-                String column = entry.getValue();
-                if (StringUtils.isBlank(column)) {
-                    addGlobalValidationError("Missing selection for this property: " + property.getLabel());
-                } else {
-                    mappedProperties.add(property);
-                    if (property.getId().equalsIgnoreCase("dataSet")) {
-                        hasDatasetMapping = true;
-                    }
-                }
-            }
-
-            // Ensure that all required properties have a mapping.
-            HashSet<ObjectProperty> requiredProperties = getObjectType().getRequiredProperties();
-            for (ObjectProperty requiredProperty : requiredProperties) {
-                if (!mappedProperties.contains(requiredProperty)) {
-                    addGlobalValidationError("Missing a mapping for this required property: " + requiredProperty.getLabel());
-                }
-            }
+        ObjectType objectType = getObjectType();
+        if (objectType == null) {
+            addGlobalValidationError("No target object type selected yet!");
+            return;
         }
 
-        try {
-            // Ensure that dataset is specified, either in the column mappings or fixed value (but not both!).
-            queryConf.validateDatasetPresence();
-        } catch (IllegalArgumentException e) {
-            addGlobalValidationError(e.getMessage());
+        Map<ObjectProperty, String> propertyMappings = queryConf == null ? null : queryConf.getPropertyMappings();
+
+        HashSet<ObjectProperty> requiredProperties = objectType.getRequiredProperties();
+        if (requiredProperties != null && !requiredProperties.isEmpty()) {
+            if (propertyMappings == null || propertyMappings.isEmpty()) {
+                addGlobalValidationError("No property mappings chosen!");
+                return;
+            }
+
+            for (ObjectProperty requiredProperty : requiredProperties) {
+
+                String mappedColumn = propertyMappings.get(requiredProperty);
+                if (StringUtils.isBlank(mappedColumn)) {
+                    addGlobalValidationError("No column mapped for required property \"" + requiredProperty.getLabel() + "\"");
+                }
+            }
         }
 
         getContext().setSourcePageResolution(new ForwardResolution(STEP2_JSP));
@@ -783,7 +776,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         if (indicators == null) {
 
-            String[] labels = {Predicates.SKOS_PREF_LABEL, Predicates.SKOS_ALT_LABEL, Predicates.RDFS_LABEL, Predicates.SKOS_NOTATION};
+            String[] labels =
+                    {Predicates.SKOS_PREF_LABEL, Predicates.SKOS_ALT_LABEL, Predicates.RDFS_LABEL, Predicates.SKOS_NOTATION};
             HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
             SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DAS_INDICATOR, null, null, labels);
             if (searchResult != null) {
@@ -857,5 +851,25 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      */
     public Set<String> getSelectedColumns() {
         return selectedColumns;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Map<String, ObjectProperty> getRequiredProperties() {
+
+        HashMap<String, ObjectProperty> resultMap = new HashMap<>();
+        ObjectType objectType = getObjectType();
+        if (objectType != null) {
+            HashSet<ObjectProperty> requiredProperties = objectType.getRequiredProperties();
+            if (requiredProperties != null) {
+                for (ObjectProperty requiredProperty : requiredProperties) {
+                    resultMap.put(requiredProperty.getPredicate(), requiredProperty);
+                }
+            }
+        }
+
+        return resultMap;
     }
 }

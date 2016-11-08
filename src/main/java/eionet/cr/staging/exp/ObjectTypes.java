@@ -100,14 +100,14 @@ public class ObjectTypes {
                 new ObjectProperty("http://purl.org/linked-data/cube#dataSet", "dataSet", "dataSet", ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/dataset/<value>");
         property.setHint("Expects a Eurostat dataset code. e.g. aact_ali01, edat_aes_l11, fish_ld_nl, etc.");
-        qbObservation.addProperty(property, false, "dataSet", "dataset", "variable", "variableCode");
+        qbObservation.addProperty(property, true, "dataSet", "dataset", "variable", "variableCode");
 
         // Breakdown.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/breakdown", "breakdown", "breakdown",
                 ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/codelist/breakdown/<value>");
         property.setHint("Expects a Eurostat breakdown code. e.g. 10_bb, 10_c10, etc.");
-        qbObservation.addProperty(property, false, "breakdown", "brkDown", "brkdwn", "breakdownCode", "brkDownCode", "brkdwnCode");
+        qbObservation.addProperty(property, true, "breakdown", "brkDown", "brkdwn", "breakdownCode", "brkDownCode", "brkdwnCode");
 
         // Unit.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/unit-measure", "unit", "unit",
@@ -171,21 +171,21 @@ public class ObjectTypes {
                 new ObjectProperty("http://purl.org/linked-data/cube#dataSet", "dataSet", "dataSet", ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/dataset/<value>");
         property.setHint("Expects a Eurostat dataset code. e.g. aact_ali01, edat_aes_l11, fish_ld_nl, etc.");
-        qbObservation.addProperty(property, false, "dataSet", "dataset", "variable", "variableCode");
+        qbObservation.addProperty(property, true, "dataSet", "dataset", "variable", "variableCode");
 
         // Indicator.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/indicator", "indicator", "indicator",
                 ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/codelist/indicator/<value>");
         property.setHint("Expects a Eurostat indicator code. e.g. p_siscall, p_cuse2, etc.");
-        qbObservation.addProperty(property, false, "indicator", "indicatorCode", "indic");
+        qbObservation.addProperty(property, true, "indicator", "indicatorCode", "indic");
 
         // Breakdown.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/breakdown", "breakdown", "breakdown",
                 ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/codelist/breakdown/<value>");
         property.setHint("Expects a Eurostat breakdown code. e.g. 10_bb, 10_c10, etc.");
-        qbObservation.addProperty(property, false, "breakdown", "brkDown", "brkdwn", "breakdownCode", "brkDownCode", "brkdwnCode");
+        qbObservation.addProperty(property, true, "breakdown", "brkDown", "brkdwn", "breakdownCode", "brkDownCode", "brkdwnCode");
 
         // Unit.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/unit-measure", "unit", "unit",

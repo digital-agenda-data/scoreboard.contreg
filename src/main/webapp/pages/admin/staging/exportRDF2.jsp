@@ -122,7 +122,7 @@
                         <c:forEach items="${actionBean.queryConf.propertyMappings}" var="propertyMapping">
                             <tr>
                                 <td style="text-align:right">
-                                    <label for="${propertyMapping.key.id}.columnSelect" class="required"><c:out value="${propertyMapping.key.label}"/>:</label>
+                                    <label for="${propertyMapping.key.id}.columnSelect" <c:if test="${not empty actionBean.requiredProperties[propertyMapping.key.predicate]}">class="required"</c:if>><c:out value="${propertyMapping.key.label}"/>:</label>
                                 </td>
                                 <td>
                                     <stripes:select name="${propertyMapping.key.id}.column" value="${propertyMapping.value}" title="${propertyMapping.key.hint}" id="${propertyMapping.key.id}.columnSelect">
