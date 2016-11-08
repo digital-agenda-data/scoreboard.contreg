@@ -200,7 +200,7 @@ public final class ExportRunner extends Thread {
         this.userName = userName;
         this.exportLogger = createLogger(exportId);
 
-        ObjectType objectType = ObjectTypes.getByUri(queryConf.getObjectTypeUri());
+        ObjectType objectType = ObjectTypes.getByDsd(queryConf.getObjectTypeDsd());
         if (objectType != null) {
             hiddenProperties = objectType.getHiddenProperties();
         }

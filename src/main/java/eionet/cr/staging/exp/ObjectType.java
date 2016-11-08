@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.util.LinkedCaseInsensitiveMap;
 
 /**
@@ -41,6 +42,9 @@ public class ObjectType {
 
     /** */
     private String label;
+
+    /** */
+    private DSD dsd;
 
     /** */
     private ArrayList<ObjectProperty> properties = new ArrayList<ObjectProperty>();
@@ -64,16 +68,18 @@ public class ObjectType {
     private HashMap<ObjectProperty, String[]> propertyToDefaultColumns = new HashMap<ObjectProperty, String[]>();
 
     /**
-     * Constructs object type with the given uri and label..
+     * Constructs object type with the given type URI, label and associated DSD.
      *
-     * @param uri the uri
+     * @param uri the URI
      * @param label the label
+     * @param dsd
      */
-    public ObjectType(String uri, String label) {
+    public ObjectType(String uri, String label, DSD dsd) {
 
         super();
         this.uri = uri;
         this.label = label;
+        this.dsd = dsd;
     }
 
     /**
@@ -208,5 +214,12 @@ public class ObjectType {
      */
     public void setObjectUriTemplate(String objectUriTemplate) {
         this.objectUriTemplate = objectUriTemplate;
+    }
+
+    /**
+     * @return the dsd
+     */
+    public DSD getDsd() {
+        return dsd;
     }
 }

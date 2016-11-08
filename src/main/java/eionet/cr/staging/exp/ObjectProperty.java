@@ -22,6 +22,7 @@
 package eionet.cr.staging.exp;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 
@@ -202,6 +203,30 @@ public class ObjectProperty {
     @Override
     public String toString() {
         return new StringBuilder().append(label).append(": ").append(predicate).toString();
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object other) {
+
+        if (other == null) {
+            return false;
+        }
+
+        if (other == this) {
+            return true;
+        }
+
+        if (other.getClass() != getClass()) {
+            return false;
+        }
+
+        ObjectProperty otherProperty = (ObjectProperty) other;
+        return new EqualsBuilder().append(predicate, otherProperty.predicate).isEquals();
     }
 
     /**

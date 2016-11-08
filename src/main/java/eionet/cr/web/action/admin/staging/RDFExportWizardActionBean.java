@@ -53,6 +53,7 @@ import eionet.cr.staging.exp.ExportRunner;
 import eionet.cr.staging.exp.ObjectProperty;
 import eionet.cr.staging.exp.ObjectType;
 import eionet.cr.staging.exp.ObjectTypes;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.staging.exp.QueryConfiguration;
 import eionet.cr.util.LinkedCaseInsensitiveMap;
 import eionet.cr.util.Pair;
@@ -109,7 +110,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     private String prevDbName;
 
     /** */
-    private String prevObjectTypeUri;
+    private DSD prevObjectTypeDsd;
 
     /** */
     private Set<String> prevColumnNames;
@@ -168,10 +169,11 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             prevColumnNames = columnNames;
 
             // If object type changed, change the templates of dataset ID and objects ID
-            if (!queryConf.getObjectTypeUri().equals(prevObjectTypeUri)) {
+            DSD objectTypeDsd = queryConf.getObjectTypeDsd();
+            if (objectTypeDsd != null && !objectTypeDsd.equals(prevObjectTypeDsd)) {
                 objectTypeChanged();
             }
-            prevObjectTypeUri = queryConf.getObjectTypeUri();
+            prevObjectTypeDsd = queryConf.getObjectTypeDsd();
 
             // Finally, return resolution.
             return new ForwardResolution(STEP2_JSP);
@@ -413,8 +415,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                     addGlobalValidationError("The query must not be blank!");
                 }
 
-                String objectTypeUri = queryConf == null ? null : queryConf.getObjectTypeUri();
-                if (StringUtils.isBlank(objectTypeUri)) {
+                DSD objectTypeDsd = queryConf == null ? null : queryConf.getObjectTypeDsd();
+                if (objectTypeDsd == null) {
                     addGlobalValidationError("The type of objects must not be blank!");
                 }
 
@@ -499,7 +501,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         this.exportName = null;
         this.tablesColumns = null;
         this.prevColumnNames = null;
-        this.prevObjectTypeUri = null;
+        this.prevObjectTypeDsd = null;
     }
 
     /**
@@ -640,15 +642,15 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     }
 
     /**
-     * Returns object type for the currently selected object type URI.
+     * Returns object type for the currently selected DSD.
      *
      * @return the object type
      */
     public ObjectType getObjectType() {
 
-        String objTypeUri = queryConf == null ? null : queryConf.getObjectTypeUri();
-        if (StringUtils.isNotBlank(objTypeUri)) {
-            return ObjectTypes.getByUri(objTypeUri);
+        DSD objTypeDsd = queryConf == null ? null : queryConf.getObjectTypeDsd();
+        if (objTypeDsd != null) {
+            return ObjectTypes.getByDsd(objTypeDsd);
         }
 
         return null;

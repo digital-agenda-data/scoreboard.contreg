@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.util.LinkedCaseInsensitiveMap;
 
 /**
@@ -44,6 +45,9 @@ public class QueryConfiguration implements Serializable {
 
     /** The object type uri. */
     private String objectTypeUri;
+
+    /** The object type DSD. */
+    private DSD objectTypeDsd;
 
     /** The column mappings. */
     private LinkedCaseInsensitiveMap<ObjectProperty> columnMappings = new LinkedCaseInsensitiveMap<ObjectProperty>();
@@ -232,5 +236,19 @@ public class QueryConfiguration implements Serializable {
         } else if (hasDatasetMapping && hasFixedDataset) {
             throw new IllegalArgumentException("Dataset cannot be specieid through column mappings and fixed value at the same time!");
         }
+    }
+
+    /**
+     * @return the objectTypeDsd
+     */
+    public DSD getObjectTypeDsd() {
+        return objectTypeDsd;
+    }
+
+    /**
+     * @param objectTypeDsd the objectTypeDsd to set
+     */
+    public void setObjectTypeDsd(DSD objectTypeDsd) {
+        this.objectTypeDsd = objectTypeDsd;
     }
 }

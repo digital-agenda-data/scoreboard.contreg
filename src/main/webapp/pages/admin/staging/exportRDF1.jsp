@@ -91,12 +91,12 @@
                      </tr>
                     <tr>
                         <td style="text-align:right;vertical-align:top">
-                            <stripes:label for="selObjectsType" class="question required" title="The type of objects that the query will return.">Objects type:</stripes:label>
+                            <stripes:label for="selObjectType" class="question required" title="The type of objects that the query will return.">Objects type:</stripes:label>
                         </td>
                         <td>
-                            <stripes:select name="queryConf.objectTypeUri" id="selObjectType" value="${actionBean.queryConf.objectTypeUri}">
+                            <stripes:select name="queryConf.objectTypeDsd" id="selObjectType" value="${actionBean.queryConf.objectTypeDsd}">
                                 <c:forEach items="${actionBean.objectTypes}" var="objectType">
-                                    <stripes:option value="${objectType.uri}" label="${objectType.label}"/>
+                                    <stripes:option value="${objectType.dsd}" label="${objectType.label}"/>
                                 </c:forEach>
                             </stripes:select>
                         </td>
