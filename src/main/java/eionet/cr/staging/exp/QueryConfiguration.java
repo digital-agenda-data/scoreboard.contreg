@@ -25,6 +25,8 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
+
 import eionet.cr.util.LinkedCaseInsensitiveMap;
 
 /**
@@ -209,5 +211,26 @@ public class QueryConfiguration implements Serializable {
      */
     public boolean isClearDataset() {
         return clearDataset;
+    }
+
+    /**
+     *
+     */
+    public void validateDatasetPresence() {
+
+        boolean hasDatasetMapping= true;
+        for (Entry<String, ObjectProperty> entry : columnMappings.entrySet()) {
+            ObjectProperty property = entry.getValue();
+            if (property != null && property.getId().equalsIgnoreCase("dataSet")) {
+                hasDatasetMapping = true;
+            }
+        }
+
+        boolean hasFixedDataset = StringUtils.isNotBlank(datasetUri);
+        if (!hasDatasetMapping && !hasFixedDataset) {
+            throw new IllegalArgumentException("Dataset must be specified!");
+        } else if (hasDatasetMapping && hasFixedDataset) {
+            throw new IllegalArgumentException("Dataset cannot be specieid through column mappings and fixed value at the same time!");
+        }
     }
 }

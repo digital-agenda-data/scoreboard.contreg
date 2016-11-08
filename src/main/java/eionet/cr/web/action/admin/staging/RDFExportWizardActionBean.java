@@ -347,10 +347,12 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     @ValidationMethod(on = {"step2", "run", "test"})
     public void validateStep2AndRun() {
 
-        boolean hasIndicatorMapping = false;
+        boolean hasDatasetMapping = false;
         // Ensure that all selected columns have been mapped to a property.
         Map<String, ObjectProperty> colMappings = queryConf == null ? null : queryConf.getColumnMappings();
-        if (colMappings != null && !colMappings.isEmpty()) {
+        if (colMappings == null || colMappings.isEmpty()) {
+            addGlobalValidationError("Found no column mappings!");
+        } else {
 
             for (Entry<String, ObjectProperty> entry : colMappings.entrySet()) {
 
@@ -359,8 +361,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                 if (property == null) {
                     addGlobalValidationError("Missing property selection for this column: " + colName);
                 } else {
-                    if (property.getId().equals("indicator")) {
-                        hasIndicatorMapping = true;
+                    if (property.getId().equalsIgnoreCase("dataSet")) {
+                        hasDatasetMapping = true;
                     }
                 }
             }
@@ -373,18 +375,13 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                     addGlobalValidationError("Missing a column mapping for this required property: " + requiredProperty.getLabel());
                 }
             }
-        } else {
-            addGlobalValidationError("Found no column mappings!");
         }
 
-        // Ensure that indicator is given, either from picklist or column mapping.
-        if (!hasIndicatorMapping && StringUtils.isBlank(queryConf.getIndicatorUri())) {
-            addGlobalValidationError("Indciator must be selected from picklist or provided by column mapping!");
-        }
-
-        // Ensure that the dataset where the results will be exported to, is selected.
-        if (queryConf == null || StringUtils.isBlank(queryConf.getDatasetUri())) {
-            addGlobalValidationError("The dataset must be selected!");
+        try {
+            // Ensure that dataset is specified, either in the column mappings or fixed value (but not both!).
+            queryConf.validateDatasetPresence();
+        } catch (IllegalArgumentException e) {
+            addGlobalValidationError(e.getMessage());
         }
 
         getContext().setSourcePageResolution(new ForwardResolution(STEP2_JSP));

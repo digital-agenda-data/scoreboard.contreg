@@ -133,12 +133,12 @@ public final class ExportRunner extends Thread {
     private Set<ObjectHiddenProperty> hiddenProperties;
 
     /** */
-    private URI graphURI;
+    private URI fixedGraphURI;
 
     /** */
-    private URI datasetPredicateURI;
-    private URI datasetValueURI;
-    private String datasetIdentifier;
+    private URI fixedDatasetPredicateURI;
+    private URI fixedDatasetValueURI;
+    private String fixedDatasetIdentifier;
 
     /** */
     private URI indicatorPredicateURI;
@@ -262,12 +262,12 @@ public final class ExportRunner extends Thread {
             prepareValues(valueFactory);
 
             // If the dataset should be cleared then do it right now.
-            if (queryConf.isClearDataset() && graphURI != null) {
-                LogUtil.debug("Clearing the graph: " + graphURI, exportLogger, LOGGER);
+            if (queryConf.isClearDataset() && fixedGraphURI != null) {
+                LogUtil.debug("Clearing the graph: " + fixedGraphURI, exportLogger, LOGGER);
                 try {
-                    repoConn.clear(graphURI);
+                    repoConn.clear(fixedGraphURI);
                 } catch (RepositoryException e) {
-                    throw new DAOException("Failed clearing graph: " + graphURI, e);
+                    throw new DAOException("Failed clearing graph: " + fixedGraphURI, e);
                 }
             }
 
@@ -275,7 +275,7 @@ public final class ExportRunner extends Thread {
             executeExport(repoConn);
 
             // Update the dataset's last modification date.
-            updateDatasetModificationDate(repoConn, valueFactory, datasetValueURI);
+            updateDatasetModificationDate(repoConn, valueFactory, fixedDatasetValueURI);
 
             // Commit the transaction.
             repoConn.commit();
@@ -400,15 +400,17 @@ public final class ExportRunner extends Thread {
             indicatorValueURI = vf.createURI(indicatorUri);
         }
 
-        String datasetUri = queryConf.getDatasetUri();
-        datasetIdentifier = StringUtils.substringAfterLast(datasetUri, "/");
-        if (StringUtils.isBlank(datasetIdentifier)) {
-            throw new IllegalArgumentException("Unable to extract identifier from this dataset URI: " + datasetUri);
-        }
-        datasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
-        datasetValueURI = vf.createURI(datasetUri);
+        String fixedDatasetUri = queryConf.getDatasetUri();
+        if (StringUtils.isNotBlank(fixedDatasetUri)) {
+            fixedDatasetIdentifier = StringUtils.substringAfterLast(fixedDatasetUri, "/");
+            if (StringUtils.isBlank(fixedDatasetIdentifier)) {
+                throw new IllegalArgumentException("Unable to extract identifier from this dataset URI: " + fixedDatasetUri);
+            }
+            fixedDatasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
+            fixedDatasetValueURI = vf.createURI(fixedDatasetUri);
 
-        graphURI = vf.createURI(StringUtils.replace(datasetUri, "/dataset/", "/data/"));
+            fixedGraphURI = vf.createURI(StringUtils.replace(fixedDatasetUri, "/dataset/", "/data/"));
+        }
     }
 
     /**
@@ -455,7 +457,7 @@ public final class ExportRunner extends Thread {
         if (StringUtils.isBlank(subjectUri)) {
             throw new IllegalArgumentException("The object URI template in the query configuration must not be blank!");
         }
-        subjectUri = StringUtils.replace(subjectUri, "<dataset>", datasetIdentifier);
+        subjectUri = StringUtils.replace(subjectUri, "<dataset>", fixedDatasetIdentifier);
 
         // Prepare the map of ObjectDTO to be added to the subject later.
         LinkedHashMap<URI, ArrayList<Value>> valuesByPredicate = new LinkedHashMap<URI, ArrayList<Value>>();
@@ -464,7 +466,7 @@ public final class ExportRunner extends Thread {
         addPredicateValue(valuesByPredicate, rdfTypeURI, objectTypeURI);
 
         // Add the DataCube dataset predicate-value. Assume this point cannot be reached if dataset value is empty.
-        addPredicateValue(valuesByPredicate, datasetPredicateURI, datasetValueURI);
+        addPredicateValue(valuesByPredicate, fixedDatasetPredicateURI, fixedDatasetValueURI);
 
         // Add predicate-value pairs for hidden properties.
         if (hiddenProperties != null) {
@@ -559,8 +561,8 @@ public final class ExportRunner extends Thread {
                 if (values != null && !values.isEmpty()) {
                     URI predicateURI = entry.getKey();
                     for (Value value : values) {
-                        repoConn.add(subjectURI, predicateURI, value, graphURI);
-                        graphs.add(graphURI.stringValue());
+                        repoConn.add(subjectURI, predicateURI, value, fixedGraphURI);
+                        graphs.add(fixedGraphURI.stringValue());
                         tripleCount++;
                         if (tripleCount % 5000 == 0) {
                             LOGGER.debug(tripleCount + " triples exported so far");

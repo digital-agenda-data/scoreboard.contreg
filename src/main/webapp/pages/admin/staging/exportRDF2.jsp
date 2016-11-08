@@ -10,10 +10,38 @@
             ( function($) {
                 $(document).ready(
                     function(){
-
+                    	
                         // Ensure a property select box title is updated with the hint of the currently selected property.
                         $("select[id$=propertySelect]").change(function() {
+                        	
+                        	var selectedValue = $("option:selected",this).attr('value');
+                        	if (selectedValue == "http://purl.org/linked-data/cube#dataSet") {
+                        		if ($('#selDataset').has('[selected]')) {
+                        			var fixedDatasetValue = $("option:selected",$('#selDataset')).attr('value');
+                        			if (fixedDatasetValue) {
+                        				alert("A fixed dataset is already mapped below!");
+                        				$(this).val('').change();
+                        				return false;
+                        			}
+                        		}
+                        	}
+                        	
                             $(this).attr("title", $("option:selected",this).attr('title'));
+                            return true;
+                        });
+                        
+                        $("#selDataset").change(function() {
+                            
+                            var fixedDatasetValue = $("option:selected",this).attr('value');
+                            if (fixedDatasetValue) {
+                            	var mappedDatasetValue = $("option:selected",$('#variable\\.propertySelect')).attr('value');
+                            	if (mappedDatasetValue == "http://purl.org/linked-data/cube#dataSet") {
+                            		alert("Dataset already mapped in above mappings!");
+                                    $(this).val('').change();
+                                    return false;
+                            	}
+                            }
+                            
                             return true;
                         });
 
@@ -114,28 +142,15 @@
                     <table>
                         <tr>
                             <td style="text-align:right;vertical-align:top">
-                                <label for="selIndicator" title="Indicator of the selected observations." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Indicator:</label>
-                            </td>
-                            <td>
-                                <stripes:select id="selIndicator" name="queryConf.indicatorUri" value="${actionBean.queryConf.indicatorUri}">
-                                    <stripes:option value="" label=""/>
-                                    <c:forEach items="${actionBean.indicators}" var="indicatorPair">
-                                        <stripes:option value="${indicatorPair.left}" label="${indicatorPair.right}" title="${indicatorPair.left}"/>
-                                    </c:forEach>
-                                </stripes:select>&nbsp;<span style="font-size:0.8em">(must be selected, unless indicator has been mapped to one of the selected columns above)</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:right;vertical-align:top">
-                                <stripes:label for="selDataset" class="required" title="The target dataset where the export's results will go to.">Dataset:</stripes:label>
+                                <label for="selDataset" title="The target dataset where the export's results will go to. NB! This is valid only when no dataset mapping has been chosen in the above mappings." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset:</label>
                             </td>
                             <td>
                                 <stripes:select name="queryConf.datasetUri" id="selDataset" value="${actionBean.queryConf.datasetUri}">
-                                    <c:if test="${empty actionBean.datasets}">
-                                        <stripes:option value="" label=" - none found - "/>
+                                    <c:if test="${empty actionBean.queryConf.datasetUri}">
+                                        <option value="" selected="selected" disabled="disabled" style="display:none;"> - required if no dataset mapping has been specified above - </option>
                                     </c:if>
                                     <c:if test="${not empty actionBean.datasets}">
-                                        <stripes:option value="" label=""/>
+                                        <option value=""></option>
                                         <c:forEach items="${actionBean.datasets}" var="dataset">
                                             <stripes:option value="${dataset.left}" label="${dataset.right}"/>
                                         </c:forEach>
