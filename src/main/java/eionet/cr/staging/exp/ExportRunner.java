@@ -27,7 +27,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -316,71 +315,71 @@ public final class ExportRunner extends Thread {
      */
     private void executeExport(RepositoryConnection repoConn) throws RepositoryException, SQLException, DAOException {
 
-        // Nothing to do here if query or column mappings is empty.
-        String query = queryConf.getQuery();
-        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
-            return;
-        }
-
-        Connection sqlConn = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            // Prepare SQL connection.
-            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
-
-            // Prepare ValueFactory to be used by each "export row" call below.
-            ValueFactory valueFactory = repoConn.getValueFactory();
-
-            rowCount = 0;
-            int offset = 0;
-            int limit = EXPORT_PAGE_SIZE;
-            int rsSize = 0;
-            int queryCounter = 0;
-            do {
-                queryCounter++;
-
-                String pageQuery = buildPageQuery(query, offset, limit);
-                offset = offset + limit;
-
-                if (queryCounter <= 2) {
-                    LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
-                }
-
-                rsSize = 0;
-                pstmt = sqlConn.prepareStatement(pageQuery);
-                rs = pstmt.executeQuery();
-
-                while (rs.next()) {
-
-                    rowCount++;
-                    rsSize++;
-
-                    exportRow(rs, rowCount, repoConn, valueFactory);
-
-                    // Log progress after every 1000 rows, but not more than 50 times.
-                    if (rowCount % 1000 == 0) {
-                        if (rowCount == 50000) {
-                            LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
-                        } else if (rowCount < 50000) {
-                            LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
-                        }
-                    }
-                }
-
-                SQLUtil.close(rs);
-                SQLUtil.close(pstmt);
-
-            } while (rsSize == limit);
-
-            LOGGER.debug("Total number of page queries executed: " + queryCounter);
-            LogUtil.debug("A total of " + rowCount + " rows exported", exportLogger, LOGGER);
-
-        } finally {
-            SQLUtil.close(rs);
-            SQLUtil.close(pstmt);
-            SQLUtil.close(sqlConn);
-        }
+//        // Nothing to do here if query or column mappings is empty.
+//        String query = queryConf.getQuery();
+//        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
+//            return;
+//        }
+//
+//        Connection sqlConn = null;
+//        PreparedStatement pstmt = null;
+//        ResultSet rs = null;
+//        try {
+//            // Prepare SQL connection.
+//            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
+//
+//            // Prepare ValueFactory to be used by each "export row" call below.
+//            ValueFactory valueFactory = repoConn.getValueFactory();
+//
+//            rowCount = 0;
+//            int offset = 0;
+//            int limit = EXPORT_PAGE_SIZE;
+//            int rsSize = 0;
+//            int queryCounter = 0;
+//            do {
+//                queryCounter++;
+//
+//                String pageQuery = buildPageQuery(query, offset, limit);
+//                offset = offset + limit;
+//
+//                if (queryCounter <= 2) {
+//                    LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
+//                }
+//
+//                rsSize = 0;
+//                pstmt = sqlConn.prepareStatement(pageQuery);
+//                rs = pstmt.executeQuery();
+//
+//                while (rs.next()) {
+//
+//                    rowCount++;
+//                    rsSize++;
+//
+//                    exportRow(rs, rowCount, repoConn, valueFactory);
+//
+//                    // Log progress after every 1000 rows, but not more than 50 times.
+//                    if (rowCount % 1000 == 0) {
+//                        if (rowCount == 50000) {
+//                            LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
+//                        } else if (rowCount < 50000) {
+//                            LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
+//                        }
+//                    }
+//                }
+//
+//                SQLUtil.close(rs);
+//                SQLUtil.close(pstmt);
+//
+//            } while (rsSize == limit);
+//
+//            LOGGER.debug("Total number of page queries executed: " + queryCounter);
+//            LogUtil.debug("A total of " + rowCount + " rows exported", exportLogger, LOGGER);
+//
+//        } finally {
+//            SQLUtil.close(rs);
+//            SQLUtil.close(pstmt);
+//            SQLUtil.close(sqlConn);
+//        }
     }
 
     /**
@@ -421,11 +420,11 @@ public final class ExportRunner extends Thread {
      */
     private void setPredicateURIs(ValueFactory vf) {
 
-        Map<String, ObjectProperty> columnMappings = queryConf.getColumnMappings();
-        Collection<ObjectProperty> objectProperties = columnMappings.values();
-        for (ObjectProperty objectProperty : objectProperties) {
-            objectProperty.setPredicateURI(vf);
-        }
+//        Map<String, ObjectProperty> columnMappings = queryConf.getColumnMappings();
+//        Collection<ObjectProperty> objectProperties = columnMappings.values();
+//        for (ObjectProperty objectProperty : objectProperties) {
+//            objectProperty.setPredicateURI(vf);
+//        }
     }
 
     /**
@@ -478,57 +477,57 @@ public final class ExportRunner extends Thread {
         boolean hasIndicatorMapping = false;
 
         // Loop through the query configuration's column mappings, construct ObjectDTO for each.
-        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
-
-            String colName = entry.getKey();
-            String colValue = rs.getString(colName);
-            ObjectProperty property = entry.getValue();
-            if (property.getId().equals(INDICATOR)) {
-                hasIndicatorMapping = true;
-            }
-
-            if (StringUtils.isBlank(colValue)) {
-                if (property.getId().equals(BREAKDOWN)) {
-                    colValue = DEFAULT_BREAKDOWN_CODE;
-                } else if (property.getId().equals(INDICATOR)) {
-                    colValue = DEFAULT_INDICATOR_CODE;
-                }
-            }
-
-            if (StringUtils.isNotBlank(colValue)) {
-
-                // Replace property place-holders in subject ID
-                subjectUri = StringUtils.replace(subjectUri, "<" + property.getId() + ">", colValue);
-
-                URI predicateURI = property.getPredicateURI();
-                if (predicateURI != null) {
-
-                    String propertyValue = property.getValueTemplate();
-                    if (propertyValue == null) {
-                        propertyValue = colValue;
-                    } else {
-                        // Replace the column value place-holder in the value template (the latter cannot be specified by user)
-                        propertyValue = StringUtils.replace(propertyValue, "<value>", colValue);
-                    }
-
-                    recordMissingConcepts(property, colValue, propertyValue);
-
-                    Value value = null;
-                    if (property.isLiteralRange()) {
-                        try {
-                            String dataTypeUri = property.getDataType();
-                            value = vf.createLiteral(propertyValue, dataTypeUri == null ? null : vf.createURI(dataTypeUri));
-                        } catch (IllegalArgumentException e) {
-                            value = vf.createLiteral(propertyValue);
-                        }
-                    } else {
-                        value = vf.createURI(propertyValue);
-                    }
-
-                    addPredicateValue(valuesByPredicate, predicateURI, value);
-                }
-            }
-        }
+//        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
+//
+//            String colName = entry.getKey();
+//            String colValue = rs.getString(colName);
+//            ObjectProperty property = entry.getValue();
+//            if (property.getId().equals(INDICATOR)) {
+//                hasIndicatorMapping = true;
+//            }
+//
+//            if (StringUtils.isBlank(colValue)) {
+//                if (property.getId().equals(BREAKDOWN)) {
+//                    colValue = DEFAULT_BREAKDOWN_CODE;
+//                } else if (property.getId().equals(INDICATOR)) {
+//                    colValue = DEFAULT_INDICATOR_CODE;
+//                }
+//            }
+//
+//            if (StringUtils.isNotBlank(colValue)) {
+//
+//                // Replace property place-holders in subject ID
+//                subjectUri = StringUtils.replace(subjectUri, "<" + property.getId() + ">", colValue);
+//
+//                URI predicateURI = property.getPredicateURI();
+//                if (predicateURI != null) {
+//
+//                    String propertyValue = property.getValueTemplate();
+//                    if (propertyValue == null) {
+//                        propertyValue = colValue;
+//                    } else {
+//                        // Replace the column value place-holder in the value template (the latter cannot be specified by user)
+//                        propertyValue = StringUtils.replace(propertyValue, "<value>", colValue);
+//                    }
+//
+//                    recordMissingConcepts(property, colValue, propertyValue);
+//
+//                    Value value = null;
+//                    if (property.isLiteralRange()) {
+//                        try {
+//                            String dataTypeUri = property.getDataType();
+//                            value = vf.createLiteral(propertyValue, dataTypeUri == null ? null : vf.createURI(dataTypeUri));
+//                        } catch (IllegalArgumentException e) {
+//                            value = vf.createLiteral(propertyValue);
+//                        }
+//                    } else {
+//                        value = vf.createURI(propertyValue);
+//                    }
+//
+//                    addPredicateValue(valuesByPredicate, predicateURI, value);
+//                }
+//            }
+//        }
 
         // If there was no column mapping for the indicator, but a fixed indicator URI has been provided then use the latter.
         if (!hasIndicatorMapping && indicatorValueURI != null) {
@@ -742,9 +741,9 @@ public final class ExportRunner extends Thread {
 
         // Nothing to do here if query or column mappings is empty.
         String query = queryConf.getQuery();
-        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
-            return;
-        }
+//        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
+//            return;
+//        }
 
         String countQuery = buildCountQuery(query);
 
@@ -835,18 +834,18 @@ public final class ExportRunner extends Thread {
     private void processTestRow(ResultSet rs) throws SQLException, DAOException {
 
         LinkedHashMap<String, String> rowMap = new LinkedHashMap<String, String>();
-        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
-
-            ObjectProperty property = entry.getValue();
-            String colName = entry.getKey();
-            String colValue = rs.getString(colName);
-
-            String valueTemplate = property.getValueTemplate();
-            String propertyValue = valueTemplate == null ? colValue : StringUtils.replace(valueTemplate, "<value>", colValue);
-            recordMissingConcepts(property, colValue, propertyValue);
-
-            rowMap.put(colName, colValue);
-        }
+//        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
+//
+//            ObjectProperty property = entry.getValue();
+//            String colName = entry.getKey();
+//            String colValue = rs.getString(colName);
+//
+//            String valueTemplate = property.getValueTemplate();
+//            String propertyValue = valueTemplate == null ? colValue : StringUtils.replace(valueTemplate, "<value>", colValue);
+//            recordMissingConcepts(property, colValue, propertyValue);
+//
+//            rowMap.put(colName, colValue);
+//        }
 
         if (!rowMap.isEmpty()) {
             testResults.add(rowMap);

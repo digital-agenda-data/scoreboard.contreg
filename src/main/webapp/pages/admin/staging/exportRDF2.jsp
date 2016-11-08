@@ -117,18 +117,18 @@
                 </fieldset>
                 <fieldset style="margin-top:20px">
 
-                    <legend style="font-weight:bold">The mapping of columns to RDF properties:</legend>
+                    <legend style="font-weight:bold">The mapping of RDF properties to selected SQL columns:</legend>
                     <table>
-                        <c:forEach items="${actionBean.queryConf.columnMappings}" var="colMapping">
+                        <c:forEach items="${actionBean.queryConf.propertyMappings}" var="propertyMapping">
                             <tr>
                                 <td style="text-align:right">
-                                    <label for="${colMapping.key}.propertySelect" class="required"><c:out value="${colMapping.key}"/>:</label>
+                                    <label for="${propertyMapping.key.id}.columnSelect" class="required"><c:out value="${propertyMapping.key.label}"/>:</label>
                                 </td>
                                 <td>
-                                    <stripes:select name="${colMapping.key}.property" value="${colMapping.value.predicate}" title="${colMapping.value.hint}" id="${colMapping.key}.propertySelect">
+                                    <stripes:select name="${propertyMapping.key.id}.column" value="${propertyMapping.value}" title="${propertyMapping.key.hint}" id="${propertyMapping.key.id}.columnSelect">
                                         <stripes:option value="" label=""/>
-                                        <c:forEach items="${actionBean.typeProperties}" var="typeProperty">
-                                            <stripes:option value="${typeProperty.predicate}" label="${typeProperty.label}" title="${typeProperty.hint}"/>
+                                        <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
+                                            <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
                                         </c:forEach>
                                     </stripes:select>
                                 </td>

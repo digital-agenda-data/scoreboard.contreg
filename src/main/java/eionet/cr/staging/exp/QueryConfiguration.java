@@ -22,13 +22,11 @@
 package eionet.cr.staging.exp;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.StringUtils;
-
 import eionet.cr.staging.exp.ObjectTypes.DSD;
-import eionet.cr.util.LinkedCaseInsensitiveMap;
 
 /**
  * A bean that represents an RDF export query's configuration (in the context of staging databases).
@@ -49,8 +47,8 @@ public class QueryConfiguration implements Serializable {
     /** The object type DSD. */
     private DSD objectTypeDsd;
 
-    /** The column mappings. */
-    private LinkedCaseInsensitiveMap<ObjectProperty> columnMappings = new LinkedCaseInsensitiveMap<ObjectProperty>();
+    /** */
+    private Map<ObjectProperty, String> propertyMappings = new LinkedHashMap<>();
 
     /** */
     private String objectUriTemplate;
@@ -93,46 +91,19 @@ public class QueryConfiguration implements Serializable {
     }
 
     /**
-     * @return the columnMappings
-     */
-    public Map<String, ObjectProperty> getColumnMappings() {
-        return columnMappings;
-    }
-
-    /**
-     * Put column mapping.
      *
-     * @param columnName the column name
-     * @param propertyConf the property conf
+     * @param objectProperty
+     * @param selectorColumn
      */
-    public void putColumnMapping(String columnName, ObjectProperty propertyConf) {
-        columnMappings.put(columnName, propertyConf);
-    }
-
-    /**
-     * Put column names.
-     *
-     * @param columnNames the column names
-     */
-    public void putColumnNames(Iterable<String> columnNames) {
-
-        for (String colName : columnNames) {
-            columnMappings.put(colName, null);
-        }
+    public void putPropertyMapping(ObjectProperty objectProperty, String selectorColumn) {
+        propertyMappings.put(objectProperty, selectorColumn);
     }
 
     /**
      * Clear column mappings.
      */
-    public void clearColumnMappings() {
-        this.columnMappings.clear();
-    }
-
-    /**
-     * @param columnMappings the columnMappings to set
-     */
-    public void setColumnMappings(LinkedCaseInsensitiveMap<ObjectProperty> columnMappings) {
-        this.columnMappings = columnMappings;
+    public void clearPropertyMappings() {
+        propertyMappings.clear();
     }
 
     /**
@@ -175,9 +146,9 @@ public class QueryConfiguration implements Serializable {
         sb.append("[Query]").append(LINE_BREAK);
         sb.append(query).append(LINE_BREAK);
         sb.append(LINE_BREAK);
-        sb.append("[Column mappings]").append(LINE_BREAK);
-        for (Entry<String, ObjectProperty> entry : columnMappings.entrySet()) {
-            sb.append(entry.getKey()).append(" = ").append(entry.getValue().getLabel()).append(LINE_BREAK);
+        sb.append("[Property mappings]").append(LINE_BREAK);
+        for (Entry<ObjectProperty, String> entry : propertyMappings.entrySet()) {
+            sb.append(entry.getKey().getLabel()).append(" = ").append(entry.getValue()).append(LINE_BREAK);
         }
         sb.append(LINE_BREAK);
         sb.append("[Other settings]").append(LINE_BREAK);
@@ -222,20 +193,22 @@ public class QueryConfiguration implements Serializable {
      */
     public void validateDatasetPresence() {
 
-        boolean hasDatasetMapping= true;
-        for (Entry<String, ObjectProperty> entry : columnMappings.entrySet()) {
-            ObjectProperty property = entry.getValue();
-            if (property != null && property.getId().equalsIgnoreCase("dataSet")) {
-                hasDatasetMapping = true;
-            }
-        }
+        // TODO: rewrite in the light of new property mappings
 
-        boolean hasFixedDataset = StringUtils.isNotBlank(datasetUri);
-        if (!hasDatasetMapping && !hasFixedDataset) {
-            throw new IllegalArgumentException("Dataset must be specified!");
-        } else if (hasDatasetMapping && hasFixedDataset) {
-            throw new IllegalArgumentException("Dataset cannot be specieid through column mappings and fixed value at the same time!");
-        }
+//        boolean hasDatasetMapping= true;
+//        for (Entry<String, ObjectProperty> entry : columnMappings.entrySet()) {
+//            ObjectProperty property = entry.getValue();
+//            if (property != null && property.getId().equalsIgnoreCase("dataSet")) {
+//                hasDatasetMapping = true;
+//            }
+//        }
+//
+//        boolean hasFixedDataset = StringUtils.isNotBlank(datasetUri);
+//        if (!hasDatasetMapping && !hasFixedDataset) {
+//            throw new IllegalArgumentException("Dataset must be specified!");
+//        } else if (hasDatasetMapping && hasFixedDataset) {
+//            throw new IllegalArgumentException("Dataset cannot be specieid through column mappings and fixed value at the same time!");
+//        }
     }
 
     /**
@@ -250,5 +223,19 @@ public class QueryConfiguration implements Serializable {
      */
     public void setObjectTypeDsd(DSD objectTypeDsd) {
         this.objectTypeDsd = objectTypeDsd;
+    }
+
+    /**
+     * @return the propertyMappings
+     */
+    public Map<ObjectProperty, String> getPropertyMappings() {
+        return propertyMappings;
+    }
+
+    /**
+     * @param propertyMappings the propertyMappings to set
+     */
+    public void setPropertyMappings(Map<ObjectProperty, String> propertyMappings) {
+        this.propertyMappings = propertyMappings;
     }
 }

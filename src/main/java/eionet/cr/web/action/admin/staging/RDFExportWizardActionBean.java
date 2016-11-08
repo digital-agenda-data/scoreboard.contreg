@@ -26,7 +26,9 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,6 @@ import eionet.cr.staging.exp.ObjectType;
 import eionet.cr.staging.exp.ObjectTypes;
 import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.staging.exp.QueryConfiguration;
-import eionet.cr.util.LinkedCaseInsensitiveMap;
 import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
@@ -86,7 +87,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     private static final SimpleDateFormat DEFAULT_EXPORT_NAME_DATE_FORMAT = new SimpleDateFormat("yyMMdd_HHmmss");
 
     /**  */
-    private static final String COLUMN_PROPERTY_PARAM_SUFFIX = ".property";
+    private static final String PROPERTY_COLUMN_PARAM_SUFFIX = ".column";
 
     /** */
     private static final String STEP1_JSP = "/pages/admin/staging/exportRDF1.jsp";
@@ -135,6 +136,9 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     /** */
     private ExportRunner testRun;
 
+    /** */
+    private Set<String> selectedColumns;
+
     /**
      * Event handler for the wizard's first step.
      *
@@ -160,13 +164,13 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         // Handle POST request.
         try {
             // Compile the query on the database side, get the names of columns selected by the query.
-            Set<String> columnNames = DAOFactory.get().getDao(StagingDatabaseDAO.class).prepareStatement(queryConf.getQuery(), dbName);
+            selectedColumns = DAOFactory.get().getDao(StagingDatabaseDAO.class).prepareStatement(queryConf.getQuery(), dbName);
 
             // If column names changed, make corrections in the mappings map then too.
-            if (!equalsCaseInsensitive(columnNames, prevColumnNames)) {
-                selectedColumnsChanged(columnNames);
+            if (!equalsCaseInsensitive(selectedColumns, prevColumnNames)) {
+                selectedColumnsChanged(selectedColumns);
             }
-            prevColumnNames = columnNames;
+            prevColumnNames = selectedColumns;
 
             // If object type changed, change the templates of dataset ID and objects ID
             DSD objectTypeDsd = queryConf.getObjectTypeDsd();
@@ -351,18 +355,20 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         boolean hasDatasetMapping = false;
         // Ensure that all selected columns have been mapped to a property.
-        Map<String, ObjectProperty> colMappings = queryConf == null ? null : queryConf.getColumnMappings();
-        if (colMappings == null || colMappings.isEmpty()) {
-            addGlobalValidationError("Found no column mappings!");
+        Map<ObjectProperty, String> propertyMappings = queryConf == null ? null : queryConf.getPropertyMappings();
+        if (propertyMappings == null || propertyMappings.isEmpty()) {
+            addGlobalValidationError("Found no property mappings!");
         } else {
 
-            for (Entry<String, ObjectProperty> entry : colMappings.entrySet()) {
+            Set<ObjectProperty> mappedProperties = propertyMappings.keySet();
+            for (Entry<ObjectProperty, String> entry : propertyMappings.entrySet()) {
 
-                String colName = entry.getKey();
-                ObjectProperty property = entry.getValue();
-                if (property == null) {
-                    addGlobalValidationError("Missing property selection for this column: " + colName);
+                ObjectProperty property = entry.getKey();
+                String column = entry.getValue();
+                if (StringUtils.isBlank(column)) {
+                    addGlobalValidationError("Missing selection for this property: " + property.getLabel());
                 } else {
+                    mappedProperties.add(property);
                     if (property.getId().equalsIgnoreCase("dataSet")) {
                         hasDatasetMapping = true;
                     }
@@ -370,11 +376,10 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             }
 
             // Ensure that all required properties have a mapping.
-            Collection<ObjectProperty> mappedProperties = colMappings.values();
             HashSet<ObjectProperty> requiredProperties = getObjectType().getRequiredProperties();
             for (ObjectProperty requiredProperty : requiredProperties) {
                 if (!mappedProperties.contains(requiredProperty)) {
-                    addGlobalValidationError("Missing a column mapping for this required property: " + requiredProperty.getLabel());
+                    addGlobalValidationError("Missing a mapping for this required property: " + requiredProperty.getLabel());
                 }
             }
         }
@@ -444,18 +449,18 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             ObjectType objectType = getObjectType();
             if (objectType != null) {
 
-                Map<String, ObjectProperty> colMappings = queryConf == null ? null : queryConf.getColumnMappings();
-                if (colMappings != null && !colMappings.isEmpty()) {
+                Map<ObjectProperty, String> propertyMappings = queryConf == null ? null : queryConf.getPropertyMappings();
+                if (propertyMappings != null && !propertyMappings.isEmpty()) {
 
                     HttpServletRequest request = getContext().getRequest();
-                    LinkedHashSet<String> keySet = new LinkedHashSet<String>(colMappings.keySet());
-                    for (String colName : keySet) {
+                    LinkedHashSet<ObjectProperty> keySet = new LinkedHashSet<ObjectProperty>(propertyMappings.keySet());
+                    for (ObjectProperty objectProperty : keySet) {
 
-                        String propertyPredicate = request.getParameter(colName + COLUMN_PROPERTY_PARAM_SUFFIX);
-                        if (!StringUtils.isBlank(propertyPredicate)) {
-                            colMappings.put(colName, objectType.getPropertyByPredicate(propertyPredicate));
+                        String propertyColumn = request.getParameter(objectProperty.getId() + PROPERTY_COLUMN_PARAM_SUFFIX);
+                        if (StringUtils.isNotBlank(propertyColumn)) {
+                            propertyMappings.put(objectProperty, propertyColumn);
                         } else {
-                            colMappings.put(colName, null);
+                            propertyMappings.put(objectProperty, null);
                         }
                     }
                 }
@@ -527,30 +532,47 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             queryConf = new QueryConfiguration();
         }
 
-        Map<String, ObjectProperty> curMappings = queryConf.getColumnMappings();
-        if (selectedColumns == null || selectedColumns.isEmpty()) {
-            curMappings.clear();
-            return;
-        }
-
         ObjectType objectType = getObjectType();
-        LinkedCaseInsensitiveMap<ObjectProperty> newMappings = new LinkedCaseInsensitiveMap<ObjectProperty>();
-        for (String column : selectedColumns) {
-            if (curMappings.containsKey(column)) {
-                ObjectProperty curProperty = curMappings.get(column);
-                if (curProperty == null) {
-                    newMappings.put(column, null);
-                } else if (!objectType.hasThisProperty(curProperty)) {
-                    newMappings.put(column, objectType.getDefaultProperty(column));
-                } else {
-                    newMappings.put(column, curProperty);
+        HashMap<ObjectProperty, String[]> propertiesToDefaultColumns = objectType.getPropertyToDefaultColumns();
+
+        Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
+        if (currentMappings == null || currentMappings.isEmpty()) {
+
+            currentMappings = new LinkedHashMap<>();
+            List<ObjectProperty> possibleProperties = objectType.getProperties();
+            for (ObjectProperty possibleProperty : possibleProperties) {
+
+                String mappedColumn = null;
+                String[] defaultColumns = propertiesToDefaultColumns.get(possibleProperty);
+                for (String defaultColumn : defaultColumns) {
+                    for (String selectedColumn : selectedColumns) {
+                        if (selectedColumn.equalsIgnoreCase(defaultColumn)) {
+                            mappedColumn = selectedColumn;
+                            break;
+                        }
+                    }
                 }
-            } else {
-                newMappings.put(column, objectType.getDefaultProperty(column));
+                currentMappings.put(possibleProperty, mappedColumn);
+            }
+
+            queryConf.setPropertyMappings(currentMappings);
+        } else {
+            for (Entry<ObjectProperty, String> entry : currentMappings.entrySet()) {
+
+                ObjectProperty currentProperty = entry.getKey();
+                String currentColumn = entry.getValue();
+                HashSet<String> defaultColumnsUpperCase = new HashSet<>();
+                for (String defaultColumn : propertiesToDefaultColumns.get(currentProperty)) {
+                    defaultColumnsUpperCase.add(defaultColumn.toUpperCase());
+                }
+
+                if (!defaultColumnsUpperCase.contains(currentColumn.toUpperCase())) {
+                    entry.setValue(null);
+                }
             }
         }
 
-        queryConf.setColumnMappings(newMappings);
+        System.out.println();
     }
 
     /**
@@ -828,5 +850,12 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      */
     public void setNewDatasetDescription(String newDatasetDescription) {
         this.newDatasetDescription = newDatasetDescription;
+    }
+
+    /**
+     * @return the selectedColumns
+     */
+    public Set<String> getSelectedColumns() {
+        return selectedColumns;
     }
 }
