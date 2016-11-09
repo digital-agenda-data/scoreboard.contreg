@@ -92,7 +92,7 @@ public class ObjectTypes {
 
         ObjectType qbObservation =
                 new ObjectType("http://purl.org/linked-data/cube#Observation", "Default Scoreboard observation", DSD.SCOREBOARD);
-        String objUriTempl = "http://semantic.digital-agenda-data.eu/data/<dataset>/<breakdown>/<unit>/<refArea>/<timePeriod>";
+        String objUriTempl = "http://semantic.digital-agenda-data.eu/data/<dataSet>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
 
         // dataSet.
@@ -163,7 +163,7 @@ public class ObjectTypes {
 
         ObjectType qbObservation = new ObjectType("http://purl.org/linked-data/cube#Observation", "DESI observation", DSD.DESI);
         String objUriTempl =
-                "http://semantic.digital-agenda-data.eu/data/<dataset>/<indicator>/<breakdown>/<unit>/<refArea>/<timePeriod>";
+                "http://semantic.digital-agenda-data.eu/data/<dataSet>/<indicator>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
 
         // dataSet.

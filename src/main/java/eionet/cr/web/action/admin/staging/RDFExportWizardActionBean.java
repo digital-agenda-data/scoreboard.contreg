@@ -60,6 +60,7 @@ import eionet.cr.staging.exp.QueryConfiguration;
 import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -221,7 +222,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         if (queryConf == null) {
             queryConf = new QueryConfiguration();
         }
-        queryConf.setClearDataset(StringUtils.equals(getContext().getRequestParameter("clearDataset"), Boolean.TRUE.toString()));
+        queryConf.setClearGraph(StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearGraph"), Boolean.TRUE.toString()));
 
         try {
             StagingDatabaseDTO dto = DAOFactory.get().getDao(StagingDatabaseDAO.class).getDatabaseByName(dbName);
@@ -243,9 +244,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      */
     public Resolution test() {
 
-        if (1 == 1) {
-            addSystemMessage("No real test run yet!");
-            return new ForwardResolution(STEP2_JSP);
+        if (queryConf != null) {
+            queryConf.setClearGraph(StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearGraph"), Boolean.TRUE.toString()));
         }
 
         try {
@@ -510,6 +510,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         ObjectType objectType = getObjectType();
         if (objectType != null) {
             queryConf.setObjectUriTemplate(objectType.getObjectUriTemplate());
+            queryConf.setObjectTypeUri(objectType.getUri());
         }
     }
 
@@ -564,8 +565,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                 }
             }
         }
-
-        System.out.println();
     }
 
     /**
@@ -871,5 +870,32 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         }
 
         return resultMap;
+    }
+
+    /**
+     *
+     */
+    @After
+    public void afterEventHandling() {
+
+        if (queryConf != null) {
+            String targetGraphValueSelectorColumn = queryConf.getTargetGraphValueSelectorColumn();
+            if (StringUtils.isBlank(targetGraphValueSelectorColumn)) {
+
+                Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
+                if (currentMappings != null && !currentMappings.isEmpty()) {
+                    for (Entry<ObjectProperty, String> entry : currentMappings.entrySet()) {
+
+                        ObjectProperty property = entry.getKey();
+                        if (Predicates.DATACUBE_DATA_SET.equals(property.getPredicate())) {
+                            String column = entry.getValue();
+                            if (StringUtils.isNotBlank(column)) {
+                                queryConf.setTargetGraphValueSelectorColumn(column);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

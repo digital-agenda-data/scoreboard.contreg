@@ -133,15 +133,15 @@ public final class ExportRunner extends Thread {
 
     /** */
     private URI fixedGraphURI;
-
-    /** */
-    private URI fixedDatasetPredicateURI;
-    private URI fixedDatasetValueURI;
-    private String fixedDatasetIdentifier;
-
-    /** */
-    private URI indicatorPredicateURI;
-    private URI indicatorValueURI;
+    //
+    // /** */
+    // private URI fixedDatasetPredicateURI;
+    // private URI fixedDatasetValueURI;
+    // private String fixedDatasetIdentifier;
+    //
+    // /** */
+    // private URI indicatorPredicateURI;
+    // private URI indicatorValueURI;
 
     /** */
     private Set<String> existingIndicators;
@@ -166,6 +166,9 @@ public final class ExportRunner extends Thread {
 
     /** */
     private HashSet<String> timePeriods = new HashSet<String>();
+
+    /** */
+    private Set<URI> touchedDatasets;
 
     /**
      * Private class constructor, to be used for running the export.
@@ -261,7 +264,7 @@ public final class ExportRunner extends Thread {
             prepareValues(valueFactory);
 
             // If the dataset should be cleared then do it right now.
-            if (queryConf.isClearDataset() && fixedGraphURI != null) {
+            if (queryConf.isClearGraph() && fixedGraphURI != null) {
                 LogUtil.debug("Clearing the graph: " + fixedGraphURI, exportLogger, LOGGER);
                 try {
                     repoConn.clear(fixedGraphURI);
@@ -273,8 +276,10 @@ public final class ExportRunner extends Thread {
             // Run the export query and export its results.
             executeExport(repoConn);
 
-            // Update the dataset's last modification date.
-            updateDatasetModificationDate(repoConn, valueFactory, fixedDatasetValueURI);
+            // Update all "touched" datasets' last modification date.
+            for (URI datasetURI : this.touchedDatasets) {
+                updateDatasetModificationDate(repoConn, valueFactory, datasetURI);
+            }
 
             // Commit the transaction.
             repoConn.commit();
@@ -315,71 +320,72 @@ public final class ExportRunner extends Thread {
      */
     private void executeExport(RepositoryConnection repoConn) throws RepositoryException, SQLException, DAOException {
 
-//        // Nothing to do here if query or column mappings is empty.
-//        String query = queryConf.getQuery();
-//        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
-//            return;
-//        }
-//
-//        Connection sqlConn = null;
-//        PreparedStatement pstmt = null;
-//        ResultSet rs = null;
-//        try {
-//            // Prepare SQL connection.
-//            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
-//
-//            // Prepare ValueFactory to be used by each "export row" call below.
-//            ValueFactory valueFactory = repoConn.getValueFactory();
-//
-//            rowCount = 0;
-//            int offset = 0;
-//            int limit = EXPORT_PAGE_SIZE;
-//            int rsSize = 0;
-//            int queryCounter = 0;
-//            do {
-//                queryCounter++;
-//
-//                String pageQuery = buildPageQuery(query, offset, limit);
-//                offset = offset + limit;
-//
-//                if (queryCounter <= 2) {
-//                    LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
-//                }
-//
-//                rsSize = 0;
-//                pstmt = sqlConn.prepareStatement(pageQuery);
-//                rs = pstmt.executeQuery();
-//
-//                while (rs.next()) {
-//
-//                    rowCount++;
-//                    rsSize++;
-//
-//                    exportRow(rs, rowCount, repoConn, valueFactory);
-//
-//                    // Log progress after every 1000 rows, but not more than 50 times.
-//                    if (rowCount % 1000 == 0) {
-//                        if (rowCount == 50000) {
-//                            LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...", exportLogger, LOGGER);
-//                        } else if (rowCount < 50000) {
-//                            LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
-//                        }
-//                    }
-//                }
-//
-//                SQLUtil.close(rs);
-//                SQLUtil.close(pstmt);
-//
-//            } while (rsSize == limit);
-//
-//            LOGGER.debug("Total number of page queries executed: " + queryCounter);
-//            LogUtil.debug("A total of " + rowCount + " rows exported", exportLogger, LOGGER);
-//
-//        } finally {
-//            SQLUtil.close(rs);
-//            SQLUtil.close(pstmt);
-//            SQLUtil.close(sqlConn);
-//        }
+        // Nothing to do here if query or column mappings is empty.
+        String query = queryConf.getQuery();
+        if (StringUtils.isBlank(query) || queryConf.getPropertyMappings().isEmpty()) {
+            return;
+        }
+
+        Connection sqlConn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            // Prepare SQL connection.
+            sqlConn = SesameUtil.getSQLConnection(dbDTO.getName());
+
+            // Prepare ValueFactory to be used by each "export row" call below.
+            ValueFactory valueFactory = repoConn.getValueFactory();
+
+            rowCount = 0;
+            int offset = 0;
+            int limit = EXPORT_PAGE_SIZE;
+            int rsSize = 0;
+            int queryCounter = 0;
+            do {
+                queryCounter++;
+
+                String pageQuery = buildPageQuery(query, offset, limit);
+                offset = offset + limit;
+
+                if (queryCounter <= 2) {
+                    LOGGER.debug(String.format("Going to execute page query nr %d:\n%s\n", queryCounter, pageQuery));
+                }
+
+                rsSize = 0;
+                pstmt = sqlConn.prepareStatement(pageQuery);
+                rs = pstmt.executeQuery();
+
+                while (rs.next()) {
+
+                    rowCount++;
+                    rsSize++;
+
+                    exportRow(rs, rowCount, repoConn, valueFactory);
+
+                    // Log progress after every 1000 rows, but not more than 50 times.
+                    if (rowCount % 1000 == 0) {
+                        if (rowCount == 50000) {
+                            LogUtil.debug(rowCount + " rows exported, no further row-count logged until export finished...",
+                                    exportLogger, LOGGER);
+                        } else if (rowCount < 50000) {
+                            LogUtil.debug(rowCount + " rows exported", exportLogger, LOGGER);
+                        }
+                    }
+                }
+
+                SQLUtil.close(rs);
+                SQLUtil.close(pstmt);
+
+            } while (rsSize == limit);
+
+            LOGGER.debug("Total number of page queries executed: " + queryCounter);
+            LogUtil.debug("A total of " + rowCount + " rows exported", exportLogger, LOGGER);
+
+        } finally {
+            SQLUtil.close(rs);
+            SQLUtil.close(pstmt);
+            SQLUtil.close(sqlConn);
+        }
     }
 
     /**
@@ -393,23 +399,21 @@ public final class ExportRunner extends Thread {
         objectTypeURI = vf.createURI(queryConf.getObjectTypeUri());
         rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
 
-        indicatorPredicateURI = vf.createURI(Predicates.DAS_INDICATOR);
-        String indicatorUri = queryConf.getIndicatorUri();
-        if (StringUtils.isNotBlank(indicatorUri)) {
-            indicatorValueURI = vf.createURI(indicatorUri);
+        String targetGraphValueTemplate = queryConf.getTargetGraphValueTemplate();
+        boolean isFixedGraph = targetGraphValueTemplate != null && !targetGraphValueTemplate.contains("<value>");
+        if (isFixedGraph) {
+            fixedGraphURI = vf.createURI(targetGraphValueTemplate);
         }
 
-        String fixedDatasetUri = queryConf.getDatasetUri();
-        if (StringUtils.isNotBlank(fixedDatasetUri)) {
-            fixedDatasetIdentifier = StringUtils.substringAfterLast(fixedDatasetUri, "/");
-            if (StringUtils.isBlank(fixedDatasetIdentifier)) {
-                throw new IllegalArgumentException("Unable to extract identifier from this dataset URI: " + fixedDatasetUri);
-            }
-            fixedDatasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
-            fixedDatasetValueURI = vf.createURI(fixedDatasetUri);
-
-            fixedGraphURI = vf.createURI(StringUtils.replace(fixedDatasetUri, "/dataset/", "/data/"));
-        }
+        // String fixedDatasetUri = queryConf.getDatasetUri();
+        // if (StringUtils.isNotBlank(fixedDatasetUri)) {
+        // fixedDatasetIdentifier = StringUtils.substringAfterLast(fixedDatasetUri, "/");
+        // if (StringUtils.isBlank(fixedDatasetIdentifier)) {
+        // throw new IllegalArgumentException("Unable to extract identifier from this dataset URI: " + fixedDatasetUri);
+        // }
+        // fixedDatasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
+        // fixedDatasetValueURI = vf.createURI(fixedDatasetUri);
+        // }
     }
 
     /**
@@ -420,11 +424,11 @@ public final class ExportRunner extends Thread {
      */
     private void setPredicateURIs(ValueFactory vf) {
 
-//        Map<String, ObjectProperty> columnMappings = queryConf.getColumnMappings();
-//        Collection<ObjectProperty> objectProperties = columnMappings.values();
-//        for (ObjectProperty objectProperty : objectProperties) {
-//            objectProperty.setPredicateURI(vf);
-//        }
+        Map<ObjectProperty, String> propertyMappings = queryConf.getPropertyMappings();
+        Set<ObjectProperty> properties = propertyMappings.keySet();
+        for (ObjectProperty property : properties) {
+            property.setPredicateURI(vf);
+        }
     }
 
     /**
@@ -448,7 +452,7 @@ public final class ExportRunner extends Thread {
             throws SQLException, RepositoryException, DAOException {
 
         if (rowIndex == 1) {
-            loadExistingConcepts();
+            loadExistingCodelists();
         }
 
         // Prepare subject URI on the basis of the template in the query configuration.
@@ -456,16 +460,12 @@ public final class ExportRunner extends Thread {
         if (StringUtils.isBlank(subjectUri)) {
             throw new IllegalArgumentException("The object URI template in the query configuration must not be blank!");
         }
-        subjectUri = StringUtils.replace(subjectUri, "<dataset>", fixedDatasetIdentifier);
 
         // Prepare the map of ObjectDTO to be added to the subject later.
         LinkedHashMap<URI, ArrayList<Value>> valuesByPredicate = new LinkedHashMap<URI, ArrayList<Value>>();
 
         // Add rdf:type predicate-value.
         addPredicateValue(valuesByPredicate, rdfTypeURI, objectTypeURI);
-
-        // Add the DataCube dataset predicate-value. Assume this point cannot be reached if dataset value is empty.
-        addPredicateValue(valuesByPredicate, fixedDatasetPredicateURI, fixedDatasetValueURI);
 
         // Add predicate-value pairs for hidden properties.
         if (hiddenProperties != null) {
@@ -474,74 +474,65 @@ public final class ExportRunner extends Thread {
             }
         }
 
-        boolean hasIndicatorMapping = false;
+        String targetGraphSelectorColumnValue = null;
 
         // Loop through the query configuration's column mappings, construct ObjectDTO for each.
-//        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
-//
-//            String colName = entry.getKey();
-//            String colValue = rs.getString(colName);
-//            ObjectProperty property = entry.getValue();
-//            if (property.getId().equals(INDICATOR)) {
-//                hasIndicatorMapping = true;
-//            }
-//
-//            if (StringUtils.isBlank(colValue)) {
-//                if (property.getId().equals(BREAKDOWN)) {
-//                    colValue = DEFAULT_BREAKDOWN_CODE;
-//                } else if (property.getId().equals(INDICATOR)) {
-//                    colValue = DEFAULT_INDICATOR_CODE;
-//                }
-//            }
-//
-//            if (StringUtils.isNotBlank(colValue)) {
-//
-//                // Replace property place-holders in subject ID
-//                subjectUri = StringUtils.replace(subjectUri, "<" + property.getId() + ">", colValue);
-//
-//                URI predicateURI = property.getPredicateURI();
-//                if (predicateURI != null) {
-//
-//                    String propertyValue = property.getValueTemplate();
-//                    if (propertyValue == null) {
-//                        propertyValue = colValue;
-//                    } else {
-//                        // Replace the column value place-holder in the value template (the latter cannot be specified by user)
-//                        propertyValue = StringUtils.replace(propertyValue, "<value>", colValue);
-//                    }
-//
-//                    recordMissingConcepts(property, colValue, propertyValue);
-//
-//                    Value value = null;
-//                    if (property.isLiteralRange()) {
-//                        try {
-//                            String dataTypeUri = property.getDataType();
-//                            value = vf.createLiteral(propertyValue, dataTypeUri == null ? null : vf.createURI(dataTypeUri));
-//                        } catch (IllegalArgumentException e) {
-//                            value = vf.createLiteral(propertyValue);
-//                        }
-//                    } else {
-//                        value = vf.createURI(propertyValue);
-//                    }
-//
-//                    addPredicateValue(valuesByPredicate, predicateURI, value);
-//                }
-//            }
-//        }
+        for (Entry<ObjectProperty, String> entry : queryConf.getPropertyMappings().entrySet()) {
 
-        // If there was no column mapping for the indicator, but a fixed indicator URI has been provided then use the latter.
-        if (!hasIndicatorMapping && indicatorValueURI != null) {
-            addPredicateValue(valuesByPredicate, indicatorPredicateURI, indicatorValueURI);
+            String colName = entry.getValue();
+            String colValue = rs.getString(colName);
+            ObjectProperty property = entry.getKey();
+
+            if (StringUtils.equals(colName, queryConf.getTargetGraphValueSelectorColumn())) {
+                targetGraphSelectorColumnValue = colValue;
+            }
+
+            if (StringUtils.isBlank(colValue)) {
+                if (property.getId().equals(BREAKDOWN)) {
+                    colValue = DEFAULT_BREAKDOWN_CODE;
+                } else if (property.getId().equals(INDICATOR)) {
+                    colValue = DEFAULT_INDICATOR_CODE;
+                }
+            }
+
+            if (StringUtils.isNotBlank(colValue)) {
+
+                // Replace property place-holder in subject ID
+                subjectUri = StringUtils.replace(subjectUri, "<" + property.getId() + ">", colValue);
+
+                URI predicateURI = property.getPredicateURI();
+                if (predicateURI != null) {
+
+                    String propertyValue = property.getValueTemplate();
+                    if (propertyValue == null) {
+                        propertyValue = colValue;
+                    } else {
+                        // Replace the column value place-holder in the value template (the latter cannot be specified by user)
+                        propertyValue = StringUtils.replace(propertyValue, "<value>", colValue);
+                    }
+
+                    recordMissingConcepts(property, colValue, propertyValue);
+
+                    Value value = null;
+                    if (property.isLiteralRange()) {
+                        try {
+                            String dataTypeUri = property.getDataType();
+                            value = vf.createLiteral(propertyValue, dataTypeUri == null ? null : vf.createURI(dataTypeUri));
+                        } catch (IllegalArgumentException e) {
+                            value = vf.createLiteral(propertyValue);
+                        }
+                    } else {
+                        value = vf.createURI(propertyValue);
+                    }
+
+                    addPredicateValue(valuesByPredicate, predicateURI, value);
+                }
+            }
         }
 
-        // If <indicator> column placeholder not replaced yet, then use the fixed indicator URI if given.
+        // If <indicator> column placeholder not replaced yet, then use the default.
         if (subjectUri.indexOf("<indicator>") != -1) {
-            String indicatorCode = StringUtils.substringAfterLast(queryConf.getIndicatorUri(), "/");
-            if (StringUtils.isBlank(indicatorCode)) {
-                // No fixed indicator URI given either, resort to the default.
-                indicatorCode = DEFAULT_INDICATOR_CODE;
-            }
-            subjectUri = StringUtils.replace(subjectUri, "<indicator>", indicatorCode);
+            subjectUri = StringUtils.replace(subjectUri, "<indicator>", DEFAULT_INDICATOR_CODE);
         }
 
         // If <breakdown> column placeholder not replaced yet, then use the default.
@@ -552,6 +543,17 @@ public final class ExportRunner extends Thread {
         // Loop over predicate-value pairs and create the triples in the triple store.
         if (!valuesByPredicate.isEmpty()) {
 
+            URI targetGraphURI = fixedGraphURI;
+            if (targetGraphURI == null) {
+                String targetGraphValueTemplate = queryConf.getTargetGraphValueTemplate();
+                if (targetGraphValueTemplate != null && targetGraphSelectorColumnValue != null) {
+                    String targetGraphValue = targetGraphValueTemplate.replace("<value>", targetGraphSelectorColumnValue);
+                    if (StringUtils.isNotBlank(targetGraphValue)) {
+                        targetGraphURI = vf.createURI(targetGraphValue);
+                    }
+                }
+            }
+
             int tripleCountBefore = tripleCount;
             URI subjectURI = vf.createURI(subjectUri);
             for (Entry<URI, ArrayList<Value>> entry : valuesByPredicate.entrySet()) {
@@ -560,8 +562,19 @@ public final class ExportRunner extends Thread {
                 if (values != null && !values.isEmpty()) {
                     URI predicateURI = entry.getKey();
                     for (Value value : values) {
-                        repoConn.add(subjectURI, predicateURI, value, fixedGraphURI);
-                        graphs.add(fixedGraphURI.stringValue());
+
+                        LOGGER.trace(String.format("Adding triple: <%s> <%s> <%s> <%s>", subjectURI.stringValue(),
+                                predicateURI.stringValue(), value.toString(), targetGraphURI.stringValue()));
+
+                        repoConn.add(subjectURI, predicateURI, value, targetGraphURI);
+                        graphs.add(targetGraphURI.stringValue());
+
+                        if (Predicates.DATACUBE_DATA_SET.equals(predicateURI.stringValue())) {
+                            if (value instanceof URI) {
+                                touchedDatasets.add((URI) value);
+                            }
+                        }
+
                         tripleCount++;
                         if (tripleCount % 5000 == 0) {
                             LOGGER.debug(tripleCount + " triples exported so far");
@@ -611,7 +624,8 @@ public final class ExportRunner extends Thread {
      * @param datasetURI
      * @throws RepositoryException
      */
-    private void updateDatasetModificationDate(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI) throws RepositoryException {
+    private void updateDatasetModificationDate(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI)
+            throws RepositoryException {
 
         // Prepare some values
         URI predicateURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
@@ -653,11 +667,12 @@ public final class ExportRunner extends Thread {
      * @throws DAOException
      *             the dAO exception
      */
-    public static synchronized ExportRunner start(StagingDatabaseDTO dbDTO, String exportName, String userName, QueryConfiguration queryConf)
-            throws DAOException {
+    public static synchronized ExportRunner start(StagingDatabaseDTO dbDTO, String exportName, String userName,
+            QueryConfiguration queryConf) throws DAOException {
 
         // Create the export record in the database.
-        int exportId = DAOFactory.get().getDao(StagingDatabaseDAO.class).startRDEExport(dbDTO.getId(), exportName, userName, queryConf);
+        int exportId =
+                DAOFactory.get().getDao(StagingDatabaseDAO.class).startRDEExport(dbDTO.getId(), exportName, userName, queryConf);
 
         ExportRunner exportRunner = new ExportRunner(dbDTO, exportId, exportName, userName, queryConf);
         exportRunner.start();
@@ -724,7 +739,8 @@ public final class ExportRunner extends Thread {
      * @throws DAOException
      * @throws RepositoryException
      */
-    public static ExportRunner test(StagingDatabaseDTO dbDTO, QueryConfiguration queryConf) throws RepositoryException, DAOException, SQLException {
+    public static ExportRunner test(StagingDatabaseDTO dbDTO, QueryConfiguration queryConf)
+            throws RepositoryException, DAOException, SQLException {
 
         ExportRunner exportRunner = new ExportRunner(dbDTO, queryConf);
         exportRunner.test();
@@ -739,11 +755,11 @@ public final class ExportRunner extends Thread {
      */
     private void test() throws RepositoryException, SQLException, DAOException {
 
-        // Nothing to do here if query or column mappings is empty.
+        // Nothing to do here if query or property mappings empty.
         String query = queryConf.getQuery();
-//        if (StringUtils.isBlank(query) || queryConf.getColumnMappings().isEmpty()) {
-//            return;
-//        }
+        if (StringUtils.isBlank(query) || queryConf.getPropertyMappings().isEmpty()) {
+            return;
+        }
 
         String countQuery = buildCountQuery(query);
 
@@ -773,9 +789,9 @@ public final class ExportRunner extends Thread {
                 int i = 0;
                 while (rs.next()) {
                     if (++i == 1) {
-                        LOGGER.debug("Loading existing concepts...");
-                        loadExistingConcepts();
-                        LOGGER.debug("Processing first test results row...");
+                        LOGGER.debug("Loading existing codelists ...");
+                        loadExistingCodelists();
+                        LOGGER.debug("Processing the first test results row ...");
                     }
                     processTestRow(rs);
                 }
@@ -803,8 +819,8 @@ public final class ExportRunner extends Thread {
             throw new DAOException("Was expecting the query to strat with a 'SELECT' statement!");
         }
 
-        String resultQuery = new StringBuilder().append(String.format("SELECT TOP %d,%d * FROM (", offset, limit)).append(query.trim())
-                .append(") as QRY").toString();
+        String resultQuery = new StringBuilder().append(String.format("SELECT TOP %d,%d * FROM (", offset, limit))
+                .append(query.trim()).append(") as QRY").toString();
         return resultQuery;
     }
 
@@ -821,7 +837,8 @@ public final class ExportRunner extends Thread {
             throw new DAOException("Was expecting query to start with a 'SELECT' statement!");
         }
 
-        String resultQuery = new StringBuilder().append("SELECT COUNT(*) FROM (").append(query.trim()).append(") as QRY").toString();
+        String resultQuery =
+                new StringBuilder().append("SELECT COUNT(*) FROM (").append(query.trim()).append(") as QRY").toString();
         return resultQuery;
     }
 
@@ -834,18 +851,18 @@ public final class ExportRunner extends Thread {
     private void processTestRow(ResultSet rs) throws SQLException, DAOException {
 
         LinkedHashMap<String, String> rowMap = new LinkedHashMap<String, String>();
-//        for (Entry<String, ObjectProperty> entry : queryConf.getColumnMappings().entrySet()) {
-//
-//            ObjectProperty property = entry.getValue();
-//            String colName = entry.getKey();
-//            String colValue = rs.getString(colName);
-//
-//            String valueTemplate = property.getValueTemplate();
-//            String propertyValue = valueTemplate == null ? colValue : StringUtils.replace(valueTemplate, "<value>", colValue);
-//            recordMissingConcepts(property, colValue, propertyValue);
-//
-//            rowMap.put(colName, colValue);
-//        }
+        for (Entry<ObjectProperty, String> entry : queryConf.getPropertyMappings().entrySet()) {
+
+            ObjectProperty property = entry.getKey();
+            String colName = entry.getValue();
+            String colValue = rs.getString(colName);
+
+            String valueTemplate = property.getValueTemplate();
+            String propertyValue = valueTemplate == null ? colValue : StringUtils.replace(valueTemplate, "<value>", colValue);
+            recordMissingConcepts(property, colValue, propertyValue);
+
+            rowMap.put(colName, colValue);
+        }
 
         if (!rowMap.isEmpty()) {
             testResults.add(rowMap);
@@ -876,7 +893,7 @@ public final class ExportRunner extends Thread {
     /**
      * @throws DAOException
      */
-    private void loadExistingConcepts() throws DAOException {
+    private void loadExistingCodelists() throws DAOException {
 
         existingIndicators = getDao().getIndicators().keySet();
         existingBreakdowns = getDao().getBreakdowns().keySet();
@@ -933,7 +950,8 @@ public final class ExportRunner extends Thread {
      */
     public boolean isFoundMissingConcepts() {
 
-        return !missingIndicators.isEmpty() || !missingBreakdowns.isEmpty() || !missingUnits.isEmpty() || !missingRefAreas.isEmpty();
+        return !missingIndicators.isEmpty() || !missingBreakdowns.isEmpty() || !missingUnits.isEmpty()
+                || !missingRefAreas.isEmpty();
     }
 
     /**

@@ -122,10 +122,10 @@
                         <c:forEach items="${actionBean.queryConf.propertyMappings}" var="propertyMapping">
                             <tr>
                                 <td style="text-align:right">
-                                    <label for="${propertyMapping.key.id}.columnSelect" <c:if test="${not empty actionBean.requiredProperties[propertyMapping.key.predicate]}">class="required"</c:if>><c:out value="${propertyMapping.key.label}"/>:</label>
+                                    <label for="${propertyMapping.key.id}.columnSelect" <c:if test="${not empty actionBean.requiredProperties[propertyMapping.key.predicate]}">class="required"</c:if> title="${propertyMapping.key.hint}" ><c:out value="${propertyMapping.key.label}"/>:</label>
                                 </td>
                                 <td>
-                                    <stripes:select name="${propertyMapping.key.id}.column" value="${propertyMapping.value}" title="${propertyMapping.key.hint}" id="${propertyMapping.key.id}.columnSelect">
+                                    <stripes:select name="${propertyMapping.key.id}.column" value="${propertyMapping.value}" id="${propertyMapping.key.id}.columnSelect">
                                         <stripes:option value="" label=""/>
                                         <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
                                             <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
@@ -138,26 +138,35 @@
 
                 </fieldset>
                 <fieldset style="margin-top:20px">
-                    <legend style="font-weight:bold">Other settings:</legend>
+                    <legend style="font-weight:bold">Target graph:</legend>
                     <table>
                         <tr>
                             <td style="text-align:right;vertical-align:top">
-                                <label for="selDataset" title="The target dataset where the export's results will go to. NB! This is valid only when no dataset mapping has been chosen in the above mappings." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset:</label>
+                                <label for="txtGraphTemplate" title="Value template of the URI of the target graph where the observations will be stored into. Use &lt;value&gt; as placeholder to be filled by selector column below. Or type a fixed value without any placeholder (in which case the selector column below will be ignored)." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Value template:</label>
                             </td>
                             <td>
-                                <stripes:select name="queryConf.datasetUri" id="selDataset" value="${actionBean.queryConf.datasetUri}">
-                                    <c:if test="${empty actionBean.queryConf.datasetUri}">
-                                        <option value="" selected="selected" disabled="disabled" style="display:none;"> - required if no dataset mapping has been specified above - </option>
-                                    </c:if>
-                                    <c:if test="${not empty actionBean.datasets}">
-                                        <option value=""></option>
-                                        <c:forEach items="${actionBean.datasets}" var="dataset">
-                                            <stripes:option value="${dataset.left}" label="${dataset.right}"/>
-                                        </c:forEach>
-                                    </c:if>
-                                </stripes:select>&nbsp;&nbsp;<a href="#" id="createNewDatasetLink" title="Opens a pop-up where you can start a brand new dataset.">Create new &#187;</a><br/>
-                                <input type="checkbox" name="clearDataset" id="chkClear" value="true"/>
-                                <stripes:label for="chkClear" title="If checked, the contents of the selected dataset will be cleared before the export runs." style="font-size:0.8em">Clear dataset before the export</stripes:label>
+                                <stripes:text name="queryConf.targetGraphValueTemplate" id="txtGraphTemplate" value="${actionBean.queryConf.targetGraphValueTemplate}" size="80"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="text-align:right;vertical-align:top">
+                                <label for="selGraphSelectorColumn" title="An above-queried SQL column that will fill the &lt;value&gt; placeholder in the above value template for each queried observation." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Value selector column:</label>
+                            </td>
+                            <td>
+                                <stripes:select name="queryConf.targetGraphValueSelectorColumn" value="${actionBean.queryConf.targetGraphValueSelectorColumn}" id="selGraphSelectorColumn">
+                                    <stripes:option value="" label=""/>
+                                    <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
+                                        <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
+                                    </c:forEach>
+                                </stripes:select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <stripes:label for="chkClear" title="If checked, the contents of the graph(s) will be cleared before the export runs.">Clear graph before run:</stripes:label>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="clearGraph" id="chkClear" value="true"/>
                             </td>
                         </tr>
                     </table>

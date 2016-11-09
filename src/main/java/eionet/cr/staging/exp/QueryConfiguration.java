@@ -35,6 +35,9 @@ import eionet.cr.staging.exp.ObjectTypes.DSD;
  */
 public class QueryConfiguration implements Serializable {
 
+    /**  */
+    private static final long serialVersionUID = 4190150524529242869L;
+
     /** */
     private static final String LINE_BREAK = "\n";
 
@@ -59,8 +62,14 @@ public class QueryConfiguration implements Serializable {
     /** The datasetUri URI. */
     private String datasetUri;
 
-    /** If true, the dataset should be cleared before the export query is executed. */
-    private boolean clearDataset;
+    /** If true, the target graph(s) should be cleared before the export query is executed. */
+    private boolean clearGraph;
+
+    /** */
+    private String targetGraphValueTemplate = "http://semantic.digital-agenda-data.eu/data/<value>";
+
+    /** */
+    private String targetGraphValueSelectorColumn;
 
     /**
      * @return the query
@@ -175,43 +184,6 @@ public class QueryConfiguration implements Serializable {
     }
 
     /**
-     * @param clearDataset the clearDataset to set
-     */
-    public void setClearDataset(boolean clearDataset) {
-        this.clearDataset = clearDataset;
-    }
-
-    /**
-     * @return the clearDataset
-     */
-    public boolean isClearDataset() {
-        return clearDataset;
-    }
-
-    /**
-     *
-     */
-    public void validateDatasetPresence() {
-
-        // TODO: rewrite in the light of new property mappings
-
-//        boolean hasDatasetMapping= true;
-//        for (Entry<String, ObjectProperty> entry : columnMappings.entrySet()) {
-//            ObjectProperty property = entry.getValue();
-//            if (property != null && property.getId().equalsIgnoreCase("dataSet")) {
-//                hasDatasetMapping = true;
-//            }
-//        }
-//
-//        boolean hasFixedDataset = StringUtils.isNotBlank(datasetUri);
-//        if (!hasDatasetMapping && !hasFixedDataset) {
-//            throw new IllegalArgumentException("Dataset must be specified!");
-//        } else if (hasDatasetMapping && hasFixedDataset) {
-//            throw new IllegalArgumentException("Dataset cannot be specieid through column mappings and fixed value at the same time!");
-//        }
-    }
-
-    /**
      * @return the objectTypeDsd
      */
     public DSD getObjectTypeDsd() {
@@ -237,5 +209,47 @@ public class QueryConfiguration implements Serializable {
      */
     public void setPropertyMappings(Map<ObjectProperty, String> propertyMappings) {
         this.propertyMappings = propertyMappings;
+    }
+
+    /**
+     * @return the targetGraphValueTemplate
+     */
+    public String getTargetGraphValueTemplate() {
+        return targetGraphValueTemplate;
+    }
+
+    /**
+     * @param targetGraphValueTemplate the targetGraphValueTemplate to set
+     */
+    public void setTargetGraphValueTemplate(String targetGraphValueTemplate) {
+        this.targetGraphValueTemplate = targetGraphValueTemplate;
+    }
+
+    /**
+     * @return the targetGraphValueSelectorColumn
+     */
+    public String getTargetGraphValueSelectorColumn() {
+        return targetGraphValueSelectorColumn;
+    }
+
+    /**
+     * @param targetGraphValueSelectorColumn the targetGraphValueSelectorColumn to set
+     */
+    public void setTargetGraphValueSelectorColumn(String targetGraphValueSelectorColumn) {
+        this.targetGraphValueSelectorColumn = targetGraphValueSelectorColumn;
+    }
+
+    /**
+     * @return the clearGraph
+     */
+    public boolean isClearGraph() {
+        return clearGraph;
+    }
+
+    /**
+     * @param clearGraph the clearGraph to set
+     */
+    public void setClearGraph(boolean clearGraph) {
+        this.clearGraph = clearGraph;
     }
 }
