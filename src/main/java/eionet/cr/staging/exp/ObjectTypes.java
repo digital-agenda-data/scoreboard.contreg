@@ -21,6 +21,8 @@
 
 package eionet.cr.staging.exp;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -94,13 +96,14 @@ public class ObjectTypes {
                 new ObjectType("http://purl.org/linked-data/cube#Observation", "Default Scoreboard observation", DSD.SCOREBOARD);
         String objUriTempl = "http://semantic.digital-agenda-data.eu/data/<dataSet>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
+        qbObservation.setDynamicDatasetColumns(new HashSet<>(Arrays.asList("dataSet", "dataset", "variable", "variableCode")));
 
         // dataSet.
         ObjectProperty property =
                 new ObjectProperty("http://purl.org/linked-data/cube#dataSet", "dataSet", "dataSet", ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/dataset/<value>");
         property.setHint("Expects a Eurostat dataset code. e.g. aact_ali01, edat_aes_l11, fish_ld_nl, etc.");
-        qbObservation.addProperty(property, true, "dataSet", "dataset", "variable", "variableCode");
+//        qbObservation.addProperty(property, true, "dataSet", "dataset", "variable", "variableCode");
 
         // Breakdown.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/breakdown", "breakdown", "breakdown",
@@ -124,7 +127,7 @@ public class ObjectTypes {
         qbObservation.addProperty(property, true, "refArea", "country", "countryCode");
 
         // Time period.
-        property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/time-period", "time-period",
+        property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/time-period", "timePeriod",
                 "time-period", ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://reference.data.gov.uk/id/gregorian-year/<value>");
         property.setHint("Expects a 4-digit notation of a calendar year. e.g. 1999, 2000, 2001, etc.");
@@ -134,6 +137,7 @@ public class ObjectTypes {
         property = new ObjectProperty("http://purl.org/linked-data/sdmx/2009/measure#obsValue", "obsValue", "obsValue",
                 ObjectProperty.Range.LITERAL);
         property.setDataType(XMLSchema.DOUBLE.stringValue());
+        property.setValueTemplate("<value>");
         property.setHint("Expects an Observation's measured value, as a number. e.g. 0.789, 0.018, 1000, 4.324, etc.");
         qbObservation.addProperty(property, true, "value", "observedValue", "obsValue");
 
@@ -141,6 +145,7 @@ public class ObjectTypes {
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/note", "note", "note",
                 ObjectProperty.Range.LITERAL);
         property.setDataType(XMLSchema.STRING.stringValue());
+        property.setValueTemplate("<value>");
         property.setHint("Expects any text that servers as a comment/note to the observation.");
         qbObservation.addProperty(property, false, "note", "notes", "comment", "comments");
 
@@ -165,20 +170,22 @@ public class ObjectTypes {
         String objUriTempl =
                 "http://semantic.digital-agenda-data.eu/data/<dataSet>/<indicator>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
+        qbObservation.setFixedDatasetUri("http://semantic.digital-agenda-data.eu/dataset/DESI");
+//        qbObservation.setTargetGraphValueTemplate("http://semantic.digital-agenda-data.eu/data/DESI");
 
         // dataSet.
         ObjectProperty property =
                 new ObjectProperty("http://purl.org/linked-data/cube#dataSet", "dataSet", "dataSet", ObjectProperty.Range.RESOURCE);
-        property.setValueTemplate("http://semantic.digital-agenda-data.eu/dataset/<value>");
+        property.setValueTemplate("http://semantic.digital-agenda-data.eu/dataset/DESI");
         property.setHint("Expects a Eurostat dataset code. e.g. aact_ali01, edat_aes_l11, fish_ld_nl, etc.");
-        qbObservation.addProperty(property, true, "dataSet", "dataset", "variable", "variableCode");
+//        qbObservation.addProperty(property, true);
 
         // Indicator.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/indicator", "indicator", "indicator",
                 ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://semantic.digital-agenda-data.eu/codelist/indicator/<value>");
         property.setHint("Expects a Eurostat indicator code. e.g. p_siscall, p_cuse2, etc.");
-        qbObservation.addProperty(property, true, "indicator", "indicatorCode", "indic");
+        qbObservation.addProperty(property, true, "variable", "indicator", "indicatorCode", "indic");
 
         // Breakdown.
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/breakdown", "breakdown", "breakdown",
@@ -212,6 +219,7 @@ public class ObjectTypes {
         property = new ObjectProperty("http://purl.org/linked-data/sdmx/2009/measure#obsValue", "obsValue", "obsValue",
                 ObjectProperty.Range.LITERAL);
         property.setDataType(XMLSchema.DOUBLE.stringValue());
+        property.setValueTemplate("<value>");
         property.setHint("Expects an Observation's measured value, as a number. e.g. 0.789, 0.018, 1000, 4.324, etc.");
         qbObservation.addProperty(property, true, "value", "observedValue", "obsValue");
 
@@ -219,6 +227,7 @@ public class ObjectTypes {
         property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/note", "note", "note",
                 ObjectProperty.Range.LITERAL);
         property.setDataType(XMLSchema.STRING.stringValue());
+        property.setValueTemplate("<value>");
         property.setHint("Expects any text that servers as a comment/note to the observation.");
         qbObservation.addProperty(property, false, "note", "notes", "comment", "comments");
 

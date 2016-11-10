@@ -60,7 +60,6 @@ import eionet.cr.staging.exp.QueryConfiguration;
 import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
-import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -89,6 +88,9 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
     /**  */
     private static final String PROPERTY_COLUMN_PARAM_SUFFIX = ".column";
+
+    /** */
+    private static final String PROPERTY_VALUE_TEMPLATE_PARAM_SUFFIX = ".valueTemplate";
 
     /** */
     private static final String STEP1_JSP = "/pages/admin/staging/exportRDF1.jsp";
@@ -140,6 +142,9 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     /** */
     private Set<String> selectedColumns;
 
+    /** */
+    private String datasetType;
+
     /**
      * Event handler for the wizard's first step.
      *
@@ -164,21 +169,22 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         // Handle POST request.
         try {
+            // If object type changed...
+            DSD objectTypeDsd = queryConf.getObjectTypeDsd();
+            boolean objectTypeChanged = objectTypeDsd != null && !objectTypeDsd.equals(prevObjectTypeDsd);
+            if (objectTypeChanged) {
+                doObjectTypeChanged();
+            }
+            prevObjectTypeDsd = queryConf.getObjectTypeDsd();
+
             // Compile the query on the database side, get the names of columns selected by the query.
             selectedColumns = DAOFactory.get().getDao(StagingDatabaseDAO.class).prepareStatement(queryConf.getQuery(), dbName);
 
             // If column names changed, make corrections in the mappings map then too.
-            if (!equalsCaseInsensitive(selectedColumns, prevColumnNames)) {
-                selectedColumnsChanged(selectedColumns);
+            if (objectTypeChanged || !equalsCaseInsensitive(selectedColumns, prevColumnNames)) {
+                doSelectedColumnsChanged(selectedColumns);
             }
             prevColumnNames = selectedColumns;
-
-            // If object type changed, change the templates of dataset ID and objects ID
-            DSD objectTypeDsd = queryConf.getObjectTypeDsd();
-            if (objectTypeDsd != null && !objectTypeDsd.equals(prevObjectTypeDsd)) {
-                objectTypeChanged();
-            }
-            prevObjectTypeDsd = queryConf.getObjectTypeDsd();
 
             // Finally, return resolution.
             return new ForwardResolution(STEP2_JSP);
@@ -222,7 +228,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         if (queryConf == null) {
             queryConf = new QueryConfiguration();
         }
-        queryConf.setClearGraph(StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearGraph"), Boolean.TRUE.toString()));
+        queryConf.setClearDataset(
+                StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearDataset"), Boolean.TRUE.toString()));
 
         try {
             StagingDatabaseDTO dto = DAOFactory.get().getDao(StagingDatabaseDAO.class).getDatabaseByName(dbName);
@@ -245,7 +252,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     public Resolution test() {
 
         if (queryConf != null) {
-            queryConf.setClearGraph(StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearGraph"), Boolean.TRUE.toString()));
+            queryConf.setClearDataset(
+                    StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearDataset"), Boolean.TRUE.toString()));
         }
 
         try {
@@ -311,7 +319,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             if (queryConf == null) {
                 queryConf = new QueryConfiguration();
             }
-            queryConf.setDatasetUri(datasetUri);
+            queryConf.setFixedDatasetUri(datasetUri);
         } catch (DAOException e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
@@ -381,6 +389,15 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                 if (StringUtils.isBlank(mappedColumn)) {
                     addGlobalValidationError("No column mapped for required property \"" + requiredProperty.getLabel() + "\"");
                 }
+            }
+        }
+
+        String eventName = getContext().getEventName();
+        if (eventName.equals("run") || eventName.equals("test")) {
+            if (datasetType.equals("DYNAMIC") && StringUtils.isBlank(queryConf.getDynamicDatasetColumn())) {
+                addGlobalValidationError("No SQL column chosen for dynamic dataset!");
+            } else if (datasetType.equals("FIXED") && StringUtils.isBlank(queryConf.getFixedDatasetUri())) {
+                addGlobalValidationError("No fixed dataset chosen!");
             }
         }
 
@@ -458,6 +475,30 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                     }
                 }
             }
+
+            // if (queryConf != null) {
+            // Map<String, String> propertyValueTemplates = queryConf.getPropertyValueTemplates();
+            // if (propertyValueTemplates == null || propertyValueTemplates.isEmpty()) {
+            //
+            // propertyValueTemplates = new LinkedHashMap<>();
+            // queryConf.setPropertyValueTemplates(propertyValueTemplates);
+            // List<ObjectProperty> possibleProperties = objectType.getProperties();
+            // for (ObjectProperty objectProperty : possibleProperties) {
+            // propertyValueTemplates.put(objectProperty.getId(), objectProperty.getValueTemplate());
+            // }
+            // } else {
+            // HttpServletRequest request = getContext().getRequest();
+            // Set<String> keySet = propertyValueTemplates.keySet();
+            // for (String objectPropertyId : keySet) {
+            //
+            // String submittedValueTemplate =
+            // request.getParameter(objectPropertyId + PROPERTY_VALUE_TEMPLATE_PARAM_SUFFIX);
+            // if (StringUtils.isNotBlank(submittedValueTemplate)) {
+            // propertyValueTemplates.put(objectPropertyId, submittedValueTemplate);
+            // }
+            // }
+            // }
+            // }
         }
     }
 
@@ -505,13 +546,20 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     /**
      * To be called when object type changed.
      */
-    private void objectTypeChanged() {
+    private void doObjectTypeChanged() {
 
         ObjectType objectType = getObjectType();
         if (objectType != null) {
             queryConf.setObjectUriTemplate(objectType.getObjectUriTemplate());
             queryConf.setObjectTypeUri(objectType.getUri());
+            queryConf.setPropertyMappings(null);
+            queryConf.setDynamicDatasetColumn(null);
+            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
+            // queryConf.setTargetGraphValueTemplate(objectType.getTargetGraphValueTemplate());
+            // queryConf.setPropertyValueTemplates(null);
         }
+
+        datasetType = null;
     }
 
     /**
@@ -520,16 +568,29 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      * @param selectedColumns
      *            the selected columns
      */
-    private void selectedColumnsChanged(Set<String> selectedColumns) {
+    private void doSelectedColumnsChanged(Set<String> selectedColumns) {
 
         if (queryConf == null) {
             queryConf = new QueryConfiguration();
         }
 
         ObjectType objectType = getObjectType();
+        Set<String> dynamicDatasetColumns = objectType.getDynamicDatasetColumns();
+        if (dynamicDatasetColumns != null && !dynamicDatasetColumns.isEmpty()) {
+            for (String selectedColumn : selectedColumns) {
+                if (dynamicDatasetColumns.contains(selectedColumn)) {
+                    queryConf.setDynamicDatasetColumn(selectedColumn);
+                    break;
+                }
+            }
+        } else if (StringUtils.isNotBlank(objectType.getFixedDatasetUri())) {
+            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
+        }
+
         HashMap<ObjectProperty, String[]> propertiesToDefaultColumns = objectType.getPropertyToDefaultColumns();
 
-        Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
+        Map<ObjectProperty, String> propertyMappings = queryConf.getPropertyMappings();
+        Map<ObjectProperty, String> currentMappings = propertyMappings;
         if (currentMappings == null || currentMappings.isEmpty()) {
 
             currentMappings = new LinkedHashMap<>();
@@ -538,11 +599,13 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
                 String mappedColumn = null;
                 String[] defaultColumns = propertiesToDefaultColumns.get(possibleProperty);
-                for (String defaultColumn : defaultColumns) {
-                    for (String selectedColumn : selectedColumns) {
-                        if (selectedColumn.equalsIgnoreCase(defaultColumn)) {
-                            mappedColumn = selectedColumn;
-                            break;
+                if (defaultColumns != null) {
+                    for (String defaultColumn : defaultColumns) {
+                        for (String selectedColumn : selectedColumns) {
+                            if (selectedColumn.equalsIgnoreCase(defaultColumn)) {
+                                mappedColumn = selectedColumn;
+                                break;
+                            }
                         }
                     }
                 }
@@ -555,9 +618,13 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
                 ObjectProperty currentProperty = entry.getKey();
                 String currentColumn = entry.getValue();
+
+                String[] defaultColumns = propertiesToDefaultColumns.get(currentProperty);
                 HashSet<String> defaultColumnsUpperCase = new HashSet<>();
-                for (String defaultColumn : propertiesToDefaultColumns.get(currentProperty)) {
-                    defaultColumnsUpperCase.add(defaultColumn.toUpperCase());
+                if (defaultColumns != null) {
+                    for (String defaultColumn : defaultColumns) {
+                        defaultColumnsUpperCase.add(defaultColumn.toUpperCase());
+                    }
                 }
 
                 if (!defaultColumnsUpperCase.contains(currentColumn.toUpperCase())) {
@@ -565,6 +632,20 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                 }
             }
         }
+
+        // Set<ObjectProperty> keySet = currentMappings.keySet();
+        // if (keySet != null && !keySet.isEmpty()) {
+        //
+        // Map<String, String> propertyValueTemplates = queryConf.getPropertyValueTemplates();
+        // if (propertyValueTemplates == null) {
+        // propertyValueTemplates = new LinkedHashMap<>();
+        // queryConf.setPropertyValueTemplates(propertyValueTemplates);
+        // }
+        //
+        // for (ObjectProperty objectProperty : keySet) {
+        // propertyValueTemplates.put(objectProperty.getId(), objectProperty.getValueTemplate());
+        // }
+        // }
     }
 
     /**
@@ -698,39 +779,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      */
     public void setExportName(String exportName) {
         this.exportName = exportName;
-    }
-
-    /**
-     * Validate column place-holders in the given template, using the given set of column names.
-     *
-     * @param template
-     *            the template
-     * @param colNames
-     *            the col names
-     * @return true, if successful
-     */
-    private boolean validateColumnPlaceholders(String template, Set<String> colNames) {
-
-        if (colNames == null || colNames.isEmpty()) {
-            return true;
-        }
-
-        int length = template.length();
-        for (int i = 0; i < length; i++) {
-
-            char c = template.charAt(i);
-            if (c == '<') {
-                int j = template.indexOf('>', i);
-                if (j != -1) {
-                    String colName = template.substring(i + 1, j);
-                    if (!colNames.contains(colName)) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
     }
 
     /**
@@ -874,28 +922,55 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
     /**
      *
+     * @return
      */
-    @After
-    public void afterEventHandling() {
+    public String getDatasetType() {
 
-        if (queryConf != null) {
-            String targetGraphValueSelectorColumn = queryConf.getTargetGraphValueSelectorColumn();
-            if (StringUtils.isBlank(targetGraphValueSelectorColumn)) {
+        if (StringUtils.isBlank(datasetType)) {
 
-                Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
-                if (currentMappings != null && !currentMappings.isEmpty()) {
-                    for (Entry<ObjectProperty, String> entry : currentMappings.entrySet()) {
-
-                        ObjectProperty property = entry.getKey();
-                        if (Predicates.DATACUBE_DATA_SET.equals(property.getPredicate())) {
-                            String column = entry.getValue();
-                            if (StringUtils.isNotBlank(column)) {
-                                queryConf.setTargetGraphValueSelectorColumn(column);
-                            }
-                        }
-                    }
-                }
+            ObjectType objectType = getObjectType();
+            Set<String> dynamicDatasetColumns = objectType.getDynamicDatasetColumns();
+            if (dynamicDatasetColumns != null && !dynamicDatasetColumns.isEmpty()) {
+                datasetType = "DYNAMIC";
+            } else {
+                datasetType = "FIXED";
             }
         }
+
+        return datasetType;
     }
+
+    /**
+     *
+     * @param datasetType
+     * @return
+     */
+    public void setDatasetType(String datasetType) {
+        this.datasetType = datasetType;
+    }
+
+    // /**
+    // *
+    // */
+    // @After
+    // public void afterEventHandling() {
+    //
+    // if (queryConf != null) {
+    // Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
+    // if (currentMappings != null && !currentMappings.isEmpty()) {
+    // for (Entry<ObjectProperty, String> entry : currentMappings.entrySet()) {
+    //
+    // ObjectProperty property = entry.getKey();
+    // if (Predicates.DATACUBE_DATA_SET.equals(property.getPredicate())) {
+    // String column = entry.getValue();
+    // if (StringUtils.isNotBlank(column)) {
+    // queryConf.setTargetGraphValueSelectorColumn(column);
+    // } else{
+    // queryConf.setTargetGraphValueSelectorColumn(null);
+    // }
+    // }
+    // }
+    // }
+    // }
+    // }
 }

@@ -112,18 +112,21 @@
         <div style="padding-top:20px">
             <crfn:form id="form1" beanclass="${actionBean['class'].name}" method="post">
                 <fieldset>
-                    <legend style="font-weight:bold">The query:</legend>
+                    <legend style="font-weight:bold">Query:</legend>
                     <pre style="font-size:0.75em;max-height:130px;overflow:auto"><c:out value="${actionBean.queryConf.query}" /></pre>
                 </fieldset>
                 <fieldset style="margin-top:20px">
 
-                    <legend style="font-weight:bold">The mapping of RDF properties to selected SQL columns:</legend>
+                    <legend style="font-weight:bold">Mapping of observation properties to queried SQL columns:</legend>
                     <table>
                         <c:forEach items="${actionBean.queryConf.propertyMappings}" var="propertyMapping">
                             <tr>
-                                <td style="text-align:right">
+                                <td style="text-align:right;padding-right:10px">
                                     <label for="${propertyMapping.key.id}.columnSelect" <c:if test="${not empty actionBean.requiredProperties[propertyMapping.key.predicate]}">class="required"</c:if> title="${propertyMapping.key.hint}" ><c:out value="${propertyMapping.key.label}"/>:</label>
                                 </td>
+<%--                                <td>
+                                    <stripes:text name="${propertyMapping.key.id}.valueTemplate" value="${actionBean.queryConf.propertyValueTemplates[propertyMapping.key.id]}" size="70" id="${propertyMapping.key.id}.valueTemplateText"/>&nbsp;
+                                </td> --%>
                                 <td>
                                     <stripes:select name="${propertyMapping.key.id}.column" value="${propertyMapping.value}" id="${propertyMapping.key.id}.columnSelect">
                                         <stripes:option value="" label=""/>
@@ -137,7 +140,47 @@
                     </table>
 
                 </fieldset>
+                
                 <fieldset style="margin-top:20px">
+                    <legend style="font-weight:bold">Target dataset:</legend>
+                    <table>
+                        <tr>
+                            <td>
+                                <stripes:radio id="dynamicDatasetRadio" name="datasetType" value="DYNAMIC" checked="DYNAMIC" />
+                            </td>
+                            <td>
+                                <label for="selDynamicDatasetColumn" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset identifier dynamically expected from this SQL column:</label>
+                                <stripes:select name="queryConf.dynamicDatasetColumn" value="${actionBean.queryConf.dynamicDatasetColumn}" id="selDynamicDatasetColumn">
+                                    <stripes:option value="" label=" - choose SQL column - "/>
+                                    <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
+                                        <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
+                                    </c:forEach>
+                                </stripes:select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding-top:5px">
+                                <stripes:radio id="fixedDatasetRadio" name="datasetType" value="FIXED" checked="FIXED" />
+                            </td>
+                            <td style="padding-top:5px">
+                                <label for="selFixedDatasetUri" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset will be fixed to this:</label>
+                                <stripes:select name="queryConf.fixedDatasetUri" value="${actionBean.queryConf.fixedDatasetUri}" id="selFixedDatasetColumn">
+                                    <stripes:option value="" label=" - choose existing dataset - "/>
+                                    <c:forEach items="${actionBean.datasets}" var="dataset">
+                                        <stripes:option value="${dataset.left}" label="${dataset.right}"/>
+                                    </c:forEach>
+                                </stripes:select>&nbsp;&nbsp;<a href="#" id="createNewDatasetLink" title="Opens a pop-up where you can start a brand new dataset.">Create new &#187;</a><br/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="vertical-align:middle;padding-top:10px">
+                                <stripes:label for="chkClear" title="If checked, the contents of the dataset(s) will be cleared before the export runs.">Clear dataset(s) old content:</stripes:label><input type="checkbox" name="clearDataset" id="chkClear" value="true"/>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+                
+<%--                <fieldset style="margin-top:20px">
                     <legend style="font-weight:bold">Target graph:</legend>
                     <table>
                         <tr>
@@ -170,7 +213,7 @@
                             </td>
                         </tr>
                     </table>
-                </fieldset>
+                </fieldset> --%>
                 <div style="margin-top:20px">
                     <stripes:submit name="backToStep1" value="< Back"/>&nbsp;
                     <stripes:submit name="test" id="testButton" value="Test"/>&nbsp;

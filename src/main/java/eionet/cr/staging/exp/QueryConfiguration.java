@@ -26,6 +26,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang.StringUtils;
+
 import eionet.cr.staging.exp.ObjectTypes.DSD;
 
 /**
@@ -53,23 +55,26 @@ public class QueryConfiguration implements Serializable {
     /** */
     private Map<ObjectProperty, String> propertyMappings = new LinkedHashMap<>();
 
+//    /** */
+//    private Map<String, String> propertyValueTemplates = new LinkedHashMap<>();
+
     /** */
     private String objectUriTemplate;
 
-    /** The indicator URI. */
-    private String indicatorUri;
+    /** */
+    private String dynamicDatasetColumn;
 
-    /** The datasetUri URI. */
-    private String datasetUri;
+    /** */
+    private String fixedDatasetUri;
 
     /** If true, the target graph(s) should be cleared before the export query is executed. */
-    private boolean clearGraph;
+    private boolean clearDataset;
 
-    /** */
-    private String targetGraphValueTemplate = "http://semantic.digital-agenda-data.eu/data/<value>";
-
-    /** */
-    private String targetGraphValueSelectorColumn;
+//    /** */
+//    private String targetGraphValueTemplate;
+//
+//    /** */
+//    private String targetGraphValueSelectorColumn;
 
     /**
      * @return the query
@@ -100,47 +105,10 @@ public class QueryConfiguration implements Serializable {
     }
 
     /**
-     *
-     * @param objectProperty
-     * @param selectorColumn
-     */
-    public void putPropertyMapping(ObjectProperty objectProperty, String selectorColumn) {
-        propertyMappings.put(objectProperty, selectorColumn);
-    }
-
-    /**
      * Clear column mappings.
      */
     public void clearPropertyMappings() {
         propertyMappings.clear();
-    }
-
-    /**
-     * @return the indicatorUri
-     */
-    public String getIndicatorUri() {
-        return indicatorUri;
-    }
-
-    /**
-     * @param indicatorUri the indicatorUri to set
-     */
-    public void setIndicatorUri(String indicator) {
-        this.indicatorUri = indicator;
-    }
-
-    /**
-     * @return the datasetUri
-     */
-    public String getDatasetUri() {
-        return datasetUri;
-    }
-
-    /**
-     * @param datasetUri the datasetUri to set
-     */
-    public void setDatasetUri(String dataset) {
-        this.datasetUri = dataset;
     }
 
     /**
@@ -162,8 +130,8 @@ public class QueryConfiguration implements Serializable {
         sb.append(LINE_BREAK);
         sb.append("[Other settings]").append(LINE_BREAK);
         sb.append("Objects type: ").append(objectTypeUri).append(LINE_BREAK);
-        sb.append("Indicator: ").append(indicatorUri).append(LINE_BREAK);
-        sb.append("Dataset: ").append(datasetUri);
+        sb.append("Dynamic dataset column: ").append(StringUtils.trimToEmpty(dynamicDatasetColumn));
+        sb.append("Fixed dataset URI: ").append(StringUtils.trimToEmpty(fixedDatasetUri));
         sb.append(LINE_BREAK);
 
         return sb.toString();
@@ -211,45 +179,89 @@ public class QueryConfiguration implements Serializable {
         this.propertyMappings = propertyMappings;
     }
 
+//    /**
+//     * @return the targetGraphValueTemplate
+//     */
+//    public String getTargetGraphValueTemplate() {
+//        return targetGraphValueTemplate;
+//    }
+//
+//    /**
+//     * @param targetGraphValueTemplate the targetGraphValueTemplate to set
+//     */
+//    public void setTargetGraphValueTemplate(String targetGraphValueTemplate) {
+//        this.targetGraphValueTemplate = targetGraphValueTemplate;
+//    }
+//
+//    /**
+//     * @return the targetGraphValueSelectorColumn
+//     */
+//    public String getTargetGraphValueSelectorColumn() {
+//        return targetGraphValueSelectorColumn;
+//    }
+//
+//    /**
+//     * @param targetGraphValueSelectorColumn the targetGraphValueSelectorColumn to set
+//     */
+//    public void setTargetGraphValueSelectorColumn(String targetGraphValueSelectorColumn) {
+//        this.targetGraphValueSelectorColumn = targetGraphValueSelectorColumn;
+//    }
+
     /**
-     * @return the targetGraphValueTemplate
+     * @return the clearDataset
      */
-    public String getTargetGraphValueTemplate() {
-        return targetGraphValueTemplate;
+    public boolean isClearDataset() {
+        return clearDataset;
     }
 
     /**
-     * @param targetGraphValueTemplate the targetGraphValueTemplate to set
+     * @param clearDataset the clearDataset to set
      */
-    public void setTargetGraphValueTemplate(String targetGraphValueTemplate) {
-        this.targetGraphValueTemplate = targetGraphValueTemplate;
+    public void setClearDataset(boolean clearGraph) {
+        this.clearDataset = clearGraph;
+    }
+//
+//    /**
+//     *
+//     * @return
+//     */
+//    public Map<String, String> getPropertyValueTemplates() {
+//        return propertyValueTemplates;
+//    }
+//
+//    /**
+//     *
+//     * @param propertyValueTemplates
+//     */
+//    public void setPropertyValueTemplates(Map<String, String> propertyValueTemplates) {
+//        this.propertyValueTemplates = propertyValueTemplates;
+//    }
+
+    /**
+     * @return the dynamicDatasetColumn
+     */
+    public String getDynamicDatasetColumn() {
+        return dynamicDatasetColumn;
     }
 
     /**
-     * @return the targetGraphValueSelectorColumn
+     * @param dynamicDatasetColumn the dynamicDatasetColumn to set
      */
-    public String getTargetGraphValueSelectorColumn() {
-        return targetGraphValueSelectorColumn;
+    public void setDynamicDatasetColumn(String dynamicDatasetColumn) {
+        this.dynamicDatasetColumn = dynamicDatasetColumn;
     }
 
     /**
-     * @param targetGraphValueSelectorColumn the targetGraphValueSelectorColumn to set
+     * @return the fixedDatasetUri
      */
-    public void setTargetGraphValueSelectorColumn(String targetGraphValueSelectorColumn) {
-        this.targetGraphValueSelectorColumn = targetGraphValueSelectorColumn;
+    public String getFixedDatasetUri() {
+        return fixedDatasetUri;
     }
 
     /**
-     * @return the clearGraph
+     * @param fixedDatasetUri the fixedDatasetUri to set
      */
-    public boolean isClearGraph() {
-        return clearGraph;
-    }
-
-    /**
-     * @param clearGraph the clearGraph to set
-     */
-    public void setClearGraph(boolean clearGraph) {
-        this.clearGraph = clearGraph;
+    public void setFixedDatasetUri(String fixedDatasetUri) {
+        this.fixedDatasetUri = fixedDatasetUri;
     }
 }

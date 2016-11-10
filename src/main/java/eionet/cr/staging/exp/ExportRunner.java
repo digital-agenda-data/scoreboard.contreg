@@ -77,6 +77,12 @@ public final class ExportRunner extends Thread {
     /** */
     public static final String EXPORT_URI_PREFIX = "http://semantic.digital-agenda-data.eu/import/";
 
+    /** */
+    public static final String DATASET_URI_TEMPLATE = "http://semantic.digital-agenda-data.eu/dataset/<identifier>";
+
+    /** */
+    public static final String DATASET_DATA_GRAPH_URI_TEMPLATE = "http://semantic.digital-agenda-data.eu/data/<identifier>";
+
     /**  */
     private static final String REF_AREA = "refArea";
 
@@ -132,16 +138,11 @@ public final class ExportRunner extends Thread {
     private Set<ObjectHiddenProperty> hiddenProperties;
 
     /** */
-    private URI fixedGraphURI;
-    //
-    // /** */
-    // private URI fixedDatasetPredicateURI;
-    // private URI fixedDatasetValueURI;
-    // private String fixedDatasetIdentifier;
-    //
-    // /** */
-    // private URI indicatorPredicateURI;
-    // private URI indicatorValueURI;
+    private URI fixedDatasetURI;
+    private URI fixedDatasetGraphURI;
+
+    /** */
+    private URI datasetPredicateURI;
 
     /** */
     private Set<String> existingIndicators;
@@ -168,7 +169,10 @@ public final class ExportRunner extends Thread {
     private HashSet<String> timePeriods = new HashSet<String>();
 
     /** */
-    private Set<URI> touchedDatasets;
+    private Set<URI> touchedDatasets = new HashSet<>();
+
+    /** */
+    private Set<URI> clearedGraphs = new HashSet<>();
 
     /**
      * Private class constructor, to be used for running the export.
@@ -264,12 +268,12 @@ public final class ExportRunner extends Thread {
             prepareValues(valueFactory);
 
             // If the dataset should be cleared then do it right now.
-            if (queryConf.isClearGraph() && fixedGraphURI != null) {
-                LogUtil.debug("Clearing the graph: " + fixedGraphURI, exportLogger, LOGGER);
+            if (queryConf.isClearDataset() && fixedDatasetGraphURI != null) {
+                LogUtil.debug("Clearing the graph: " + fixedDatasetGraphURI, exportLogger, LOGGER);
                 try {
-                    repoConn.clear(fixedGraphURI);
+                    repoConn.clear(fixedDatasetGraphURI);
                 } catch (RepositoryException e) {
-                    throw new DAOException("Failed clearing graph: " + fixedGraphURI, e);
+                    throw new DAOException("Failed clearing graph: " + fixedDatasetGraphURI, e);
                 }
             }
 
@@ -399,21 +403,14 @@ public final class ExportRunner extends Thread {
         objectTypeURI = vf.createURI(queryConf.getObjectTypeUri());
         rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
 
-        String targetGraphValueTemplate = queryConf.getTargetGraphValueTemplate();
-        boolean isFixedGraph = targetGraphValueTemplate != null && !targetGraphValueTemplate.contains("<value>");
-        if (isFixedGraph) {
-            fixedGraphURI = vf.createURI(targetGraphValueTemplate);
+        String fixedDatasetUri = queryConf.getFixedDatasetUri();
+        boolean isFixedDataset = fixedDatasetUri != null && !fixedDatasetUri.contains("<value>");
+        if (isFixedDataset) {
+            fixedDatasetURI = vf.createURI(fixedDatasetUri);
+            fixedDatasetGraphURI = vf.createURI(fixedDatasetUri.replace("/dataset/", "/data/"));
         }
 
-        // String fixedDatasetUri = queryConf.getDatasetUri();
-        // if (StringUtils.isNotBlank(fixedDatasetUri)) {
-        // fixedDatasetIdentifier = StringUtils.substringAfterLast(fixedDatasetUri, "/");
-        // if (StringUtils.isBlank(fixedDatasetIdentifier)) {
-        // throw new IllegalArgumentException("Unable to extract identifier from this dataset URI: " + fixedDatasetUri);
-        // }
-        // fixedDatasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
-        // fixedDatasetValueURI = vf.createURI(fixedDatasetUri);
-        // }
+        datasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
     }
 
     /**
@@ -474,18 +471,12 @@ public final class ExportRunner extends Thread {
             }
         }
 
-        String targetGraphSelectorColumnValue = null;
-
         // Loop through the query configuration's column mappings, construct ObjectDTO for each.
         for (Entry<ObjectProperty, String> entry : queryConf.getPropertyMappings().entrySet()) {
 
             String colName = entry.getValue();
             String colValue = rs.getString(colName);
             ObjectProperty property = entry.getKey();
-
-            if (StringUtils.equals(colName, queryConf.getTargetGraphValueSelectorColumn())) {
-                targetGraphSelectorColumnValue = colValue;
-            }
 
             if (StringUtils.isBlank(colValue)) {
                 if (property.getId().equals(BREAKDOWN)) {
@@ -530,6 +521,31 @@ public final class ExportRunner extends Thread {
             }
         }
 
+        URI targetDatasetURI = fixedDatasetURI;
+        if (targetDatasetURI == null) {
+
+            String dynamicDatasetIdentifier = null;
+            String dynamicDatasetColumn = queryConf.getDynamicDatasetColumn();
+            if (StringUtils.isNotBlank(dynamicDatasetColumn)) {
+                try {
+                    dynamicDatasetIdentifier = rs.getString(dynamicDatasetColumn);
+                } catch (Exception e) {
+                    // Ignore.
+                }
+            }
+
+            if (StringUtils.isNotBlank(dynamicDatasetIdentifier)) {
+
+                String targetDatasetValue = DATASET_URI_TEMPLATE.replace("<identifier>", dynamicDatasetIdentifier);
+                targetDatasetURI = vf.createURI(targetDatasetValue);
+                subjectUri = subjectUri.replace("<dataSet>", dynamicDatasetIdentifier);
+            }
+        }
+
+        if (targetDatasetURI != null) {
+            addPredicateValue(valuesByPredicate, datasetPredicateURI, targetDatasetURI);
+        }
+
         // If <indicator> column placeholder not replaced yet, then use the default.
         if (subjectUri.indexOf("<indicator>") != -1) {
             subjectUri = StringUtils.replace(subjectUri, "<indicator>", DEFAULT_INDICATOR_CODE);
@@ -543,14 +559,10 @@ public final class ExportRunner extends Thread {
         // Loop over predicate-value pairs and create the triples in the triple store.
         if (!valuesByPredicate.isEmpty()) {
 
-            URI targetGraphURI = fixedGraphURI;
+            URI targetGraphURI = fixedDatasetGraphURI;
             if (targetGraphURI == null) {
-                String targetGraphValueTemplate = queryConf.getTargetGraphValueTemplate();
-                if (targetGraphValueTemplate != null && targetGraphSelectorColumnValue != null) {
-                    String targetGraphValue = targetGraphValueTemplate.replace("<value>", targetGraphSelectorColumnValue);
-                    if (StringUtils.isNotBlank(targetGraphValue)) {
-                        targetGraphURI = vf.createURI(targetGraphValue);
-                    }
+                if (targetDatasetURI != null) {
+                    targetGraphURI = vf.createURI(targetDatasetURI.stringValue().replace("/dataset/", "/data/"));
                 }
             }
 
@@ -562,6 +574,16 @@ public final class ExportRunner extends Thread {
                 if (values != null && !values.isEmpty()) {
                     URI predicateURI = entry.getKey();
                     for (Value value : values) {
+
+                        if (queryConf.isClearDataset() && !clearedGraphs.contains(targetGraphURI)) {
+                            LogUtil.debug("Clearing the graph: " + targetGraphURI, exportLogger, LOGGER);
+                            try {
+                                repoConn.clear(targetGraphURI);
+                                clearedGraphs.add(targetGraphURI);
+                            } catch (RepositoryException e) {
+                                throw new DAOException("Failed clearing graph: " + targetGraphURI, e);
+                            }
+                        }
 
                         LOGGER.trace(String.format("Adding triple: <%s> <%s> <%s> <%s>", subjectURI.stringValue(),
                                 predicateURI.stringValue(), value.toString(), targetGraphURI.stringValue()));
