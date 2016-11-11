@@ -164,8 +164,15 @@
 
                     <div style="width:100%;padding-top:10px;">
 
-                        <p>The results of this export were stored into the following dataset(s):</p>
                         <c:set var="graphsToDatasets" value="${actionBean.exportDTO.graphsToDatasets}"/>
+                        
+                        <c:if test="${fn:length(graphsToDatasets) == 1}">
+                            <p>The results of this export were stored into the following dataset:</p>
+                        </c:if>
+                        <c:if test="${fn:length(graphsToDatasets) > 1}">
+                            <p>The results of this export were stored into the following ${fn:length(graphsToDatasets)} datasets:</p>
+                        </c:if>
+                        
                         <c:if test="${not empty graphsToDatasets}">
                             <ul style="list-style:none;margin:0;padding:0;">
                                 <c:forEach items="${graphsToDatasets}" var="graphEntry">

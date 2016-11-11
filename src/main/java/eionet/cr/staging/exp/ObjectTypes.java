@@ -211,7 +211,7 @@ public class ObjectTypes {
         qbObservation.addProperty(property, true, "refArea", "country", "countryCode");
 
         // Time period.
-        property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/time-period", "time-period",
+        property = new ObjectProperty("http://semantic.digital-agenda-data.eu/def/property/time-period", "timePeriod",
                 "time-period", ObjectProperty.Range.RESOURCE);
         property.setValueTemplate("http://reference.data.gov.uk/id/gregorian-year/<value>");
         property.setHint("Expects a 4-digit notation of a calendar year. e.g. 1999, 2000, 2001, etc.");

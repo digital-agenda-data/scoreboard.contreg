@@ -502,19 +502,23 @@ public final class ExportRunner extends Thread {
         }
 
         // Prepare target dataset URI and take into account the dynamic dataset identifier column if specified.
+        String datasetIdentifier = null;
         String targetDatasetUri = queryConf.getDatasetUriTemplate();
         String datasetIdentifierColumn = queryConf.getDatasetIdentifierColumn();
         if (StringUtils.isNotBlank(datasetIdentifierColumn)) {
                 try {
-                    String datasetIdentifier = rs.getString(datasetIdentifierColumn);
+                    datasetIdentifier = rs.getString(datasetIdentifierColumn);
                     if (StringUtils.isNotBlank(datasetIdentifier)) {
                         targetDatasetUri = targetDatasetUri.replace("<identifier>", datasetIdentifier);
-                        subjectUri = subjectUri.replace("<dataSet>", datasetIdentifier);
                     }
                 } catch (Exception e) {
                     // Ignore.
                 }
+        } else if (StringUtils.isNotBlank(targetDatasetUri)) {
+            datasetIdentifier = StringUtils.substringAfterLast(targetDatasetUri, "/dataset/");
         }
+
+        subjectUri = subjectUri.replace("<dataSet>", datasetIdentifier);
 
         // Add cube:dataSet predicate.
         if (StringUtils.isNotBlank(targetDatasetUri)) {
@@ -642,10 +646,16 @@ public final class ExportRunner extends Thread {
             repoConn.add(datasetURI, dcTermsModifiedURI, modifiedDateValue, graphURI);
 
             // Add other triples.
-            repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
-            repoConn.add(datasetURI, dcTermsIdentifierURI, vf.createLiteral(datasetIdentifier), graphURI);
 
-            if (dsdURI != null) {
+            repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
+
+            boolean hasIdentifier = repoConn.hasStatement(datasetURI, dcTermsIdentifierURI, null, false, emptyResourceArray);
+            if (!hasIdentifier) {
+                repoConn.add(datasetURI, dcTermsIdentifierURI, vf.createLiteral(datasetIdentifier), graphURI);
+            }
+
+            boolean hasDSD = repoConn.hasStatement(datasetURI, cubeStructureURI, null, false, emptyResourceArray);
+            if (!hasDSD && dsdURI != null) {
                 repoConn.add(datasetURI, cubeStructureURI, dsdURI, graphURI);
             }
 
@@ -654,28 +664,6 @@ public final class ExportRunner extends Thread {
                 repoConn.add(datasetURI, rdfsLabelURI, vf.createLiteral(datasetIdentifier), graphURI);
             }
         }
-    }
-
-    /**
-     * Updates the last modified date of the given dataset, using the given repository connection and value factory.
-     *
-     * @param repoConn
-     * @param vf
-     * @param datasetURI
-     * @throws RepositoryException
-     */
-    private void touchDataset(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI)
-            throws RepositoryException {
-
-        // Prepare some values
-        URI predicateURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
-        Literal dateValue = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
-
-        // Remove all previous dcterms:modified triples of the given dataset.
-        repoConn.remove(datasetURI, predicateURI, null, datasetURI);
-
-        // Add new dcterms:modified triple for the given dataset.
-        repoConn.add(datasetURI, predicateURI, dateValue, datasetURI);
     }
 
     /**
