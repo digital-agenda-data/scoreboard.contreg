@@ -150,7 +150,7 @@
                             </td>
                             <td>
                                 <label for="selDynamicDatasetColumn" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset identifier dynamically expected from this SQL column:</label>
-                                <stripes:select name="queryConf.dynamicDatasetColumn" value="${actionBean.queryConf.dynamicDatasetColumn}" id="selDynamicDatasetColumn">
+                                <stripes:select name="queryConf.datasetIdentifierColumn" value="${actionBean.queryConf.datasetIdentifierColumn}" id="selDynamicDatasetColumn">
                                     <stripes:option value="" label=" - choose SQL column - "/>
                                     <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
                                         <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
@@ -163,8 +163,8 @@
                                 <stripes:radio id="fixedDatasetRadio" name="datasetType" value="FIXED" checked="FIXED" />
                             </td>
                             <td style="padding-top:5px">
-                                <label for="selFixedDatasetUri" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset will be fixed to this:</label>
-                                <stripes:select name="queryConf.fixedDatasetUri" value="${actionBean.queryConf.fixedDatasetUri}" id="selFixedDatasetColumn">
+                                <label for="selDatasetUri" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset will be fixed to this:</label>
+                                <stripes:select name="queryConf.datasetUriTemplate" value="${actionBean.queryConf.datasetUriTemplate}" id="selDatasetUri">
                                     <stripes:option value="" label=" - choose existing dataset - "/>
                                     <c:forEach items="${actionBean.datasets}" var="dataset">
                                         <stripes:option value="${dataset.left}" label="${dataset.right}"/>

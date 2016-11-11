@@ -37,6 +37,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.RepositoryException;
@@ -228,8 +229,18 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         if (queryConf == null) {
             queryConf = new QueryConfiguration();
         }
-        queryConf.setClearDataset(
-                StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearDataset"), Boolean.TRUE.toString()));
+
+        String clearDatasetStr = getContext().getRequestParameter("clearDataset");
+        queryConf.setClearDataset(StringUtils.equalsIgnoreCase(clearDatasetStr, Boolean.TRUE.toString()));
+
+        if ("FIXED".equals(datasetType)) {
+            queryConf.setDatasetIdentifierColumn(null);
+        } if ("DYNAMIC".equals(datasetType)) {
+            ObjectType objectType = getObjectType();
+            if (objectType != null) {
+                queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
+            }
+        }
 
         try {
             StagingDatabaseDTO dto = DAOFactory.get().getDao(StagingDatabaseDAO.class).getDatabaseByName(dbName);
@@ -319,7 +330,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             if (queryConf == null) {
                 queryConf = new QueryConfiguration();
             }
-            queryConf.setFixedDatasetUri(datasetUri);
+            queryConf.setDatasetUriTemplate(datasetUri);
         } catch (DAOException e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
@@ -394,9 +405,9 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         String eventName = getContext().getEventName();
         if (eventName.equals("run") || eventName.equals("test")) {
-            if (datasetType.equals("DYNAMIC") && StringUtils.isBlank(queryConf.getDynamicDatasetColumn())) {
+            if (datasetType.equals("DYNAMIC") && StringUtils.isBlank(queryConf.getDatasetIdentifierColumn())) {
                 addGlobalValidationError("No SQL column chosen for dynamic dataset!");
-            } else if (datasetType.equals("FIXED") && StringUtils.isBlank(queryConf.getFixedDatasetUri())) {
+            } else if (datasetType.equals("FIXED") && StringUtils.isBlank(queryConf.getDatasetUriTemplate())) {
                 addGlobalValidationError("No fixed dataset chosen!");
             }
         }
@@ -553,10 +564,10 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             queryConf.setObjectUriTemplate(objectType.getObjectUriTemplate());
             queryConf.setObjectTypeUri(objectType.getUri());
             queryConf.setPropertyMappings(null);
-            queryConf.setDynamicDatasetColumn(null);
-            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
-            // queryConf.setTargetGraphValueTemplate(objectType.getTargetGraphValueTemplate());
-            // queryConf.setPropertyValueTemplates(null);
+            queryConf.setDatasetIdentifierColumn(null);
+//            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
+//            queryConf.setTargetGraphValueTemplate(objectType.getTargetGraphValueTemplate());
+//            queryConf.setPropertyValueTemplates(null);
         }
 
         datasetType = null;
@@ -575,17 +586,21 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         }
 
         ObjectType objectType = getObjectType();
-        Set<String> dynamicDatasetColumns = objectType.getDynamicDatasetColumns();
-        if (dynamicDatasetColumns != null && !dynamicDatasetColumns.isEmpty()) {
+        Set<String> datasetIdnetifierColumns = objectType.getDatasetIdentifierColumns();
+        if (CollectionUtils.isNotEmpty(datasetIdnetifierColumns)) {
             for (String selectedColumn : selectedColumns) {
-                if (dynamicDatasetColumns.contains(selectedColumn)) {
-                    queryConf.setDynamicDatasetColumn(selectedColumn);
+                if (datasetIdnetifierColumns.contains(selectedColumn)) {
+                    queryConf.setDatasetIdentifierColumn(selectedColumn);
                     break;
                 }
             }
-        } else if (StringUtils.isNotBlank(objectType.getFixedDatasetUri())) {
-            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
+        } else if (StringUtils.isNotBlank(objectType.getDatasetUriTemplate())) {
+            queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
         }
+
+//        } else if (StringUtils.isNotBlank(objectType.getFixedDatasetUri())) {
+//            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
+//        }
 
         HashMap<ObjectProperty, String[]> propertiesToDefaultColumns = objectType.getPropertyToDefaultColumns();
 
@@ -929,12 +944,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         if (StringUtils.isBlank(datasetType)) {
 
             ObjectType objectType = getObjectType();
-            Set<String> dynamicDatasetColumns = objectType.getDynamicDatasetColumns();
-            if (dynamicDatasetColumns != null && !dynamicDatasetColumns.isEmpty()) {
-                datasetType = "DYNAMIC";
-            } else {
-                datasetType = "FIXED";
-            }
+            Set<String> dynamicDatasetIdentifierColumns = objectType.getDatasetIdentifierColumns();
+            datasetType = CollectionUtils.isEmpty(dynamicDatasetIdentifierColumns) ? "FIXED" : "DYNAMIC";
         }
 
         return datasetType;

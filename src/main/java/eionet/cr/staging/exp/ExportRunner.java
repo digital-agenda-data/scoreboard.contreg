@@ -77,12 +77,6 @@ public final class ExportRunner extends Thread {
     /** */
     public static final String EXPORT_URI_PREFIX = "http://semantic.digital-agenda-data.eu/import/";
 
-    /** */
-    public static final String DATASET_URI_TEMPLATE = "http://semantic.digital-agenda-data.eu/dataset/<identifier>";
-
-    /** */
-    public static final String DATASET_DATA_GRAPH_URI_TEMPLATE = "http://semantic.digital-agenda-data.eu/data/<identifier>";
-
     /**  */
     private static final String REF_AREA = "refArea";
 
@@ -136,10 +130,6 @@ public final class ExportRunner extends Thread {
 
     /** */
     private Set<ObjectHiddenProperty> hiddenProperties;
-
-    /** */
-    private URI fixedDatasetURI;
-    private URI fixedDatasetGraphURI;
 
     /** */
     private URI datasetPredicateURI;
@@ -267,20 +257,10 @@ public final class ExportRunner extends Thread {
             ValueFactory valueFactory = repoConn.getValueFactory();
             prepareValues(valueFactory);
 
-            // If the dataset should be cleared then do it right now.
-            if (queryConf.isClearDataset() && fixedDatasetGraphURI != null) {
-                LogUtil.debug("Clearing the graph: " + fixedDatasetGraphURI, exportLogger, LOGGER);
-                try {
-                    repoConn.clear(fixedDatasetGraphURI);
-                } catch (RepositoryException e) {
-                    throw new DAOException("Failed clearing graph: " + fixedDatasetGraphURI, e);
-                }
-            }
-
             // Run the export query and export its results.
             executeExport(repoConn);
 
-            // Update all "touched" datasets' last modification date.
+            // Update all "touched" datasets.
             for (URI datasetURI : this.touchedDatasets) {
                 updateDatasetModificationDate(repoConn, valueFactory, datasetURI);
             }
@@ -403,12 +383,12 @@ public final class ExportRunner extends Thread {
         objectTypeURI = vf.createURI(queryConf.getObjectTypeUri());
         rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
 
-        String fixedDatasetUri = queryConf.getFixedDatasetUri();
-        boolean isFixedDataset = fixedDatasetUri != null && !fixedDatasetUri.contains("<value>");
-        if (isFixedDataset) {
-            fixedDatasetURI = vf.createURI(fixedDatasetUri);
-            fixedDatasetGraphURI = vf.createURI(fixedDatasetUri.replace("/dataset/", "/data/"));
-        }
+//        String datasetUriTemplate = queryConf.getDatasetUriTemplate();
+//        boolean isFixedDataset = datasetUriTemplate != null && !datasetUriTemplate.contains("<value>");
+//        if (isFixedDataset) {
+//            fixedDatasetURI = vf.createURI(datasetUriTemplate);
+//            fixedDatasetGraphURI = vf.createURI(datasetUriTemplate.replace("/dataset/", "/data/"));
+//        }
 
         datasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
     }
@@ -521,29 +501,26 @@ public final class ExportRunner extends Thread {
             }
         }
 
-        URI targetDatasetURI = fixedDatasetURI;
-        if (targetDatasetURI == null) {
-
-            String dynamicDatasetIdentifier = null;
-            String dynamicDatasetColumn = queryConf.getDynamicDatasetColumn();
-            if (StringUtils.isNotBlank(dynamicDatasetColumn)) {
+        // Prepare target dataset URI and take into account the dynamic dataset identifier column if specified.
+        String targetDatasetUri = queryConf.getDatasetUriTemplate();
+        String datasetIdentifierColumn = queryConf.getDatasetIdentifierColumn();
+        if (StringUtils.isNotBlank(datasetIdentifierColumn)) {
                 try {
-                    dynamicDatasetIdentifier = rs.getString(dynamicDatasetColumn);
+                    String datasetIdentifier = rs.getString(datasetIdentifierColumn);
+                    if (StringUtils.isNotBlank(datasetIdentifier)) {
+                        targetDatasetUri = targetDatasetUri.replace("<identifier>", datasetIdentifier);
+                        subjectUri = subjectUri.replace("<dataSet>", datasetIdentifier);
+                    }
                 } catch (Exception e) {
                     // Ignore.
                 }
-            }
-
-            if (StringUtils.isNotBlank(dynamicDatasetIdentifier)) {
-
-                String targetDatasetValue = DATASET_URI_TEMPLATE.replace("<identifier>", dynamicDatasetIdentifier);
-                targetDatasetURI = vf.createURI(targetDatasetValue);
-                subjectUri = subjectUri.replace("<dataSet>", dynamicDatasetIdentifier);
-            }
         }
 
-        if (targetDatasetURI != null) {
-            addPredicateValue(valuesByPredicate, datasetPredicateURI, targetDatasetURI);
+        // Add cube:dataSet predicate.
+        if (StringUtils.isNotBlank(targetDatasetUri)) {
+            addPredicateValue(valuesByPredicate, datasetPredicateURI, vf.createURI(targetDatasetUri));
+        } else {
+            throw new IllegalArgumentException("Could not detect target dataset URI!");
         }
 
         // If <indicator> column placeholder not replaced yet, then use the default.
@@ -559,12 +536,7 @@ public final class ExportRunner extends Thread {
         // Loop over predicate-value pairs and create the triples in the triple store.
         if (!valuesByPredicate.isEmpty()) {
 
-            URI targetGraphURI = fixedDatasetGraphURI;
-            if (targetGraphURI == null) {
-                if (targetDatasetURI != null) {
-                    targetGraphURI = vf.createURI(targetDatasetURI.stringValue().replace("/dataset/", "/data/"));
-                }
-            }
+            URI targetGraphURI = vf.createURI(targetDatasetUri.replace("/dataset/", "/data/"));
 
             int tripleCountBefore = tripleCount;
             URI subjectURI = vf.createURI(subjectUri);

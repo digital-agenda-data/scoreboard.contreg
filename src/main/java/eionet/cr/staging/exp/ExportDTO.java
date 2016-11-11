@@ -21,7 +21,12 @@
 
 package eionet.cr.staging.exp;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * DTO (Data Transfer Object) for records in STAGING_DB table.
@@ -255,5 +260,18 @@ public class ExportDTO {
      */
     public void setGraphs(String graphs) {
         this.graphs = graphs;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public List<String> getGraphsList() {
+        if (StringUtils.isNotBlank(graphs)) {
+            String[] split = StringUtils.split(graphs, "\n");
+            return Arrays.asList(split);
+        } else {
+            return Collections.EMPTY_LIST;
+        }
     }
 }

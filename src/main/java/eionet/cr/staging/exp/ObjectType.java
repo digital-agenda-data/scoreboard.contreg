@@ -71,10 +71,13 @@ public class ObjectType {
 //    private String targetGraphValueTemplate = "http://semantic.digital-agenda-data.eu/data/<value>";
 
     /** */
-    private Set<String> dynamicDatasetColumns;
+    private Set<String> datasetIdentifierColumns;
+
+//    /** */
+//    private String fixedDatasetUri;
 
     /** */
-    private String fixedDatasetUri;
+    private String datasetUriTemplate;
 
     /**
      * Constructs object type with the given type URI, label and associated DSD.
@@ -247,30 +250,44 @@ public class ObjectType {
 //    }
 
     /**
-     * @return the dynamicDatasetColumns
+     * @return the datasetIdentifierColumns
      */
-    public Set<String> getDynamicDatasetColumns() {
-        return dynamicDatasetColumns;
+    public Set<String> getDatasetIdentifierColumns() {
+        return datasetIdentifierColumns;
     }
 
     /**
-     * @param dynamicDatasetColumns the dynamicDatasetColumns to set
+     * @param datasetIdentifierColumns the datasetIdentifierColumns to set
      */
-    public void setDynamicDatasetColumns(Set<String> dynamicDatasetColumns) {
-        this.dynamicDatasetColumns = dynamicDatasetColumns;
+    public void setDatasetIdentifierColumns(Set<String> datasetIdentifierColumns) {
+        this.datasetIdentifierColumns = datasetIdentifierColumns;
+    }
+
+//    /**
+//     * @return the fixedDatasetUri
+//     */
+//    public String getFixedDatasetUri() {
+//        return fixedDatasetUri;
+//    }
+//
+//    /**
+//     * @param fixedDatasetUri the fixedDatasetUri to set
+//     */
+//    public void setFixedDatasetUri(String fixedDatasetUri) {
+//        this.fixedDatasetUri = fixedDatasetUri;
+//    }
+
+    /**
+     * @return the datasetUriTemplate
+     */
+    public String getDatasetUriTemplate() {
+        return datasetUriTemplate;
     }
 
     /**
-     * @return the fixedDatasetUri
+     * @param datasetUriTemplate the datasetUriTemplate to set
      */
-    public String getFixedDatasetUri() {
-        return fixedDatasetUri;
-    }
-
-    /**
-     * @param fixedDatasetUri the fixedDatasetUri to set
-     */
-    public void setFixedDatasetUri(String fixedDatasetUri) {
-        this.fixedDatasetUri = fixedDatasetUri;
+    public void setDatasetUriTemplate(String datasetUriTemplate) {
+        this.datasetUriTemplate = datasetUriTemplate;
     }
 }

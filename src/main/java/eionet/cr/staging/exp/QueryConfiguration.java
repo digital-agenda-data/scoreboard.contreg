@@ -62,10 +62,10 @@ public class QueryConfiguration implements Serializable {
     private String objectUriTemplate;
 
     /** */
-    private String dynamicDatasetColumn;
+    private String datasetIdentifierColumn;
 
     /** */
-    private String fixedDatasetUri;
+    private String datasetUriTemplate;
 
     /** If true, the target graph(s) should be cleared before the export query is executed. */
     private boolean clearDataset;
@@ -129,9 +129,11 @@ public class QueryConfiguration implements Serializable {
         }
         sb.append(LINE_BREAK);
         sb.append("[Other settings]").append(LINE_BREAK);
-        sb.append("Objects type: ").append(objectTypeUri).append(LINE_BREAK);
-        sb.append("Dynamic dataset column: ").append(StringUtils.trimToEmpty(dynamicDatasetColumn));
-        sb.append("Fixed dataset URI: ").append(StringUtils.trimToEmpty(fixedDatasetUri));
+        sb.append("Object RDF type: ").append(objectTypeUri).append(LINE_BREAK);
+        sb.append("Object URI template: ").append(objectUriTemplate).append(LINE_BREAK);
+        sb.append("Dataset URI template: ").append(StringUtils.trimToEmpty(datasetUriTemplate)).append(LINE_BREAK);
+        sb.append("Dataset identifier column: ").append(StringUtils.trimToEmpty(datasetIdentifierColumn)).append(LINE_BREAK);
+        sb.append("Clear dataset(s): ").append(clearDataset);
         sb.append(LINE_BREAK);
 
         return sb.toString();
@@ -238,30 +240,30 @@ public class QueryConfiguration implements Serializable {
 //    }
 
     /**
-     * @return the dynamicDatasetColumn
+     * @return the datasetIdentifierColumn
      */
-    public String getDynamicDatasetColumn() {
-        return dynamicDatasetColumn;
+    public String getDatasetIdentifierColumn() {
+        return datasetIdentifierColumn;
     }
 
     /**
-     * @param dynamicDatasetColumn the dynamicDatasetColumn to set
+     * @param datasetIdentifierColumn the datasetIdentifierColumn to set
      */
-    public void setDynamicDatasetColumn(String dynamicDatasetColumn) {
-        this.dynamicDatasetColumn = dynamicDatasetColumn;
+    public void setDatasetIdentifierColumn(String datasetIdentifierColumn) {
+        this.datasetIdentifierColumn = datasetIdentifierColumn;
     }
 
     /**
-     * @return the fixedDatasetUri
+     * @return the datasetUriTemplate
      */
-    public String getFixedDatasetUri() {
-        return fixedDatasetUri;
+    public String getDatasetUriTemplate() {
+        return datasetUriTemplate;
     }
 
     /**
-     * @param fixedDatasetUri the fixedDatasetUri to set
+     * @param datasetUriTemplate the datasetUriTemplate to set
      */
-    public void setFixedDatasetUri(String fixedDatasetUri) {
-        this.fixedDatasetUri = fixedDatasetUri;
+    public void setDatasetUriTemplate(String datasetUriTemplate) {
+        this.datasetUriTemplate = datasetUriTemplate;
     }
 }

@@ -96,7 +96,8 @@ public class ObjectTypes {
                 new ObjectType("http://purl.org/linked-data/cube#Observation", "Default Scoreboard observation", DSD.SCOREBOARD);
         String objUriTempl = "http://semantic.digital-agenda-data.eu/data/<dataSet>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
-        qbObservation.setDynamicDatasetColumns(new HashSet<>(Arrays.asList("dataSet", "dataset", "variable", "variableCode")));
+        qbObservation.setDatasetIdentifierColumns(new HashSet<>(Arrays.asList("dataSet", "dataset", "variable", "variableCode")));
+        qbObservation.setDatasetUriTemplate("http://semantic.digital-agenda-data.eu/dataset/<identifier>");
 
         // dataSet.
         ObjectProperty property =
@@ -170,7 +171,8 @@ public class ObjectTypes {
         String objUriTempl =
                 "http://semantic.digital-agenda-data.eu/data/<dataSet>/<indicator>/<breakdown>/<unit>/<refArea>/<timePeriod>";
         qbObservation.setObjectUriTemplate(objUriTempl);
-        qbObservation.setFixedDatasetUri("http://semantic.digital-agenda-data.eu/dataset/DESI");
+        //qbObservation.setFixedDatasetUri("http://semantic.digital-agenda-data.eu/dataset/DESI");
+        qbObservation.setDatasetUriTemplate("http://semantic.digital-agenda-data.eu/dataset/DESI");
 //        qbObservation.setTargetGraphValueTemplate("http://semantic.digital-agenda-data.eu/data/DESI");
 
         // dataSet.

@@ -166,10 +166,8 @@
 
                         <p>The results of this export were stored into the following dataset(s):</p>
                         <c:if test="${not empty actionBean.exportDTO.graphs}">
-                            <c:set var="newline" value="\n"/>
-                            <c:set var="graphs" value="${fn:split(actionBean.exportDTO.graphs, newLine)}"/>
                             <ul style="list-style:none;margin:0;padding:0;">
-                                <c:forEach items="${graphs}" var="graphUri">
+                                <c:forEach items="${actionBean.exportDTO.graphsList}" var="graphUri">
                                     <li>
                                         <stripes:link beanclass="${actionBean.objectsInSourceActionBeanClass.name}">
                                             <c:out value="${graphUri}"/>
