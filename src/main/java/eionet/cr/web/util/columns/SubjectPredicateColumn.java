@@ -24,13 +24,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import net.sourceforge.stripes.action.UrlBinding;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.functors.EqualPredicate;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
@@ -40,6 +37,7 @@ import eionet.cr.dto.SubjectDTO;
 import eionet.cr.util.URIUtil;
 import eionet.cr.util.Util;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
+import net.sourceforge.stripes.action.UrlBinding;
 
 /**
  *
@@ -47,9 +45,6 @@ import eionet.cr.web.action.factsheet.FactsheetActionBean;
  *
  */
 public class SubjectPredicateColumn extends SearchResultColumn {
-
-    /** */
-    protected static final Logger logger = Logger.getLogger(SubjectPredicateColumn.class);
 
     /** */
     private String predicateUri;
@@ -141,7 +136,6 @@ public class SubjectPredicateColumn extends SearchResultColumn {
                 } else {
                     result = objectValuesToCSV(objects);
                 }
-                logger.debug(result);
                 result = buildFactsheetLink(subjectDTO.getUri(), StringEscapeUtils.escapeXml(result), false);
 
             } else if (!objects.isEmpty()) {

@@ -24,7 +24,9 @@ package eionet.cr.staging.exp;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -273,5 +275,19 @@ public class ExportDTO {
         } else {
             return Collections.EMPTY_LIST;
         }
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Map<String, String> getGraphsToDatasets() {
+
+        Map<String, String> resultMap = new LinkedHashMap<>();
+        for (String graphUri : getGraphsList()) {
+            resultMap.put(graphUri, graphUri.replace("/data/", "/dataset/"));
+        }
+
+        return resultMap;
     }
 }

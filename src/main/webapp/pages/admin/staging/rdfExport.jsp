@@ -165,14 +165,16 @@
                     <div style="width:100%;padding-top:10px;">
 
                         <p>The results of this export were stored into the following dataset(s):</p>
-                        <c:if test="${not empty actionBean.exportDTO.graphs}">
+                        <c:set var="graphsToDatasets" value="${actionBean.exportDTO.graphsToDatasets}"/>
+                        <c:if test="${not empty graphsToDatasets}">
                             <ul style="list-style:none;margin:0;padding:0;">
-                                <c:forEach items="${actionBean.exportDTO.graphsList}" var="graphUri">
+                                <c:forEach items="${graphsToDatasets}" var="graphEntry">
                                     <li>
                                         <stripes:link beanclass="${actionBean.objectsInSourceActionBeanClass.name}">
-                                            <c:out value="${graphUri}"/>
+                                            <c:out value="${graphEntry.key}"/>
                                             <stripes:param name="search" value=""/>
-                                            <stripes:param name="uri" value="${graphUri}"/>
+                                            <stripes:param name="uri" value="${graphEntry.key}"/>
+                                            <stripes:param name="factsheetUri" value="${graphEntry.value}"/>
                                         </stripes:link>
                                     </li>
                                 </c:forEach>

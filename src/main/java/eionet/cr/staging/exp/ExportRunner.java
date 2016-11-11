@@ -40,6 +40,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
@@ -48,6 +49,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 
 import eionet.cr.common.Predicates;
+import eionet.cr.common.Subjects;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.StagingDatabaseDAO;
@@ -261,9 +263,7 @@ public final class ExportRunner extends Thread {
             executeExport(repoConn);
 
             // Update all "touched" datasets.
-            for (URI datasetURI : this.touchedDatasets) {
-                updateDatasetModificationDate(repoConn, valueFactory, datasetURI);
-            }
+            updateTouchedDatasets(repoConn, valueFactory);
 
             // Commit the transaction.
             repoConn.commit();
@@ -610,6 +610,52 @@ public final class ExportRunner extends Thread {
         values.add(value);
     }
 
+    private void updateTouchedDatasets(RepositoryConnection repoConn, ValueFactory vf) throws RepositoryException {
+
+        // Prepare some URIs.
+
+        URI dcTermsModifiedURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
+        Literal modifiedDateValue = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
+
+        URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
+        URI cubeDataSetURI = vf.createURI(Subjects.DATACUBE_DATA_SET);
+
+        URI dcTermsIdentifierURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
+        URI rdfsLabelURI = vf.createURI(Predicates.RDFS_LABEL);
+
+        URI cubeStructureURI = vf.createURI(Predicates.DATACUBE_STRUCTURE);
+        URI dsdURI = queryConf.getObjectTypeDsd() == null ? null : vf.createURI(queryConf.getObjectTypeDsd().getUri());
+
+        Resource[] emptyResourceArray = new Resource[0];
+
+        for (URI datasetURI : touchedDatasets) {
+
+            URI graphURI = datasetURI;
+
+            // TODO: obtain dataset identifer in a less hardcoded way.
+            String datasetIdentifier = StringUtils.substringAfterLast(datasetURI.stringValue(), "/");
+
+            // Remove all previous dcterms:modified triples of the given dataset.
+            repoConn.remove(datasetURI, dcTermsModifiedURI, null, graphURI);
+
+            // Add new dcterms:modified triple for the given dataset.
+            repoConn.add(datasetURI, dcTermsModifiedURI, modifiedDateValue, graphURI);
+
+            // Add other triples.
+            repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
+            repoConn.add(datasetURI, dcTermsIdentifierURI, vf.createLiteral(datasetIdentifier), graphURI);
+
+            if (dsdURI != null) {
+                repoConn.add(datasetURI, cubeStructureURI, dsdURI, graphURI);
+            }
+
+            boolean hasLabel = repoConn.hasStatement(datasetURI, rdfsLabelURI, null, false, emptyResourceArray);
+            if (!hasLabel) {
+                repoConn.add(datasetURI, rdfsLabelURI, vf.createLiteral(datasetIdentifier), graphURI);
+            }
+        }
+    }
+
     /**
      * Updates the last modified date of the given dataset, using the given repository connection and value factory.
      *
@@ -618,7 +664,7 @@ public final class ExportRunner extends Thread {
      * @param datasetURI
      * @throws RepositoryException
      */
-    private void updateDatasetModificationDate(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI)
+    private void touchDataset(RepositoryConnection repoConn, ValueFactory vf, URI datasetURI)
             throws RepositoryException {
 
         // Prepare some values
