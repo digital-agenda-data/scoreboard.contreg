@@ -33,7 +33,7 @@
 
             function typeChanged(selectObj){
             	var value = selectObj.options[selectObj.selectedIndex].value;
-            	if (value == 'OBSERVATION') {
+            	if (value!= null && value.startsWith('OBSERVATION_')) {
             		document.getElementById("graphRow").style.display = 'none';
             		document.getElementById("datasetRow").style.display = '';
             	}
@@ -86,7 +86,7 @@
                            <stripes:file name="fileBean" id="fileInput" size="120"/>
                         </td>
                     </tr>
-                    <tr id="graphRow" ${actionBean.uploadType eq 'OBSERVATION' ? 'style="display:none"' : ''}>
+                    <tr id="graphRow" ${fn:startsWith(actionBean.uploadType, 'OBSERVATION_') ? 'style="display:none"' : ''}>
                         <td>
                             &nbsp;
                         </td>
@@ -94,7 +94,7 @@
                             <stripes:checkbox name="clearGraph" id="chkClearGraph"/>&nbsp;<label for="chkClearGraph">Clear all previous content of selected type</label>
                         </td>
                     </tr>
-                    <tr id="datasetRow" ${actionBean.uploadType eq 'OBSERVATION' ? '' : 'style="display:none"'}>
+                    <tr id="datasetRow" ${fn:startsWith(actionBean.uploadType, 'OBSERVATION_') ? '' : 'style="display:none"'}>
                         <td>
                             <label for="selDataset" class="question required">Target dataset:</label>
                         </td>

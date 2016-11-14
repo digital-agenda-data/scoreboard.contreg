@@ -115,7 +115,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
         } else if (fileBean == null || fileBean.getSize() == 0) {
             addGlobalValidationError("Uploaded file missing or empty!");
             return new ForwardResolution(JSP);
-        } else if (XLWrapUploadType.OBSERVATION.equals(uploadType)) {
+        } else if (XLWrapUploadType.OBSERVATION_SCOREBOARD.equals(uploadType)) {
             if (StringUtils.isBlank(targetDataset)) {
                 addGlobalValidationError("Target dataset must be selected!");
                 return new ForwardResolution(JSP);
@@ -210,7 +210,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
-                    .addParameter("clearDataset", clearDataset).addParameter("uploadType", XLWrapUploadType.OBSERVATION.name());
+                    .addParameter("clearDataset", clearDataset).addParameter("uploadType", XLWrapUploadType.OBSERVATION_SCOREBOARD.name());
         } catch (DAOException e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());

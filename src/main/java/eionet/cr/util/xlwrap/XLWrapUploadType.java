@@ -11,14 +11,17 @@ import eionet.cr.common.Subjects;
 
 public enum XLWrapUploadType {
 
-    INDICATOR("Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"), INDICATOR_GROUP(
-            "Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"), BREAKDOWN(
-            "Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"), BREAKDOWN_GROUP(
-            "Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
-    UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"), SOURCE(
-            "Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"), OBSERVATION(
-            "Observations", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION);
+    // @formatter:on
+    INDICATOR("Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"),
+    INDICATOR_GROUP("Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"),
+    BREAKDOWN("Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"),
+    BREAKDOWN_GROUP("Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
+    UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"),
+    SOURCE("Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"),
+    OBSERVATION_SCOREBOARD("Observations: Scoreboard", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION),
+    OBSERVATION_DESI("Observations: DESI", "File containing DESI observations", "", Subjects.DATACUBE_OBSERVATION);
 
+    // @formatter:off
     /** */
     private static final String GRAPH_TEMPLATE = "http://semantic.digital-agenda-data.eu/codelist/@type@/";
     private static final String SUBJECTS_TYPE_TEMPLATE = "http://semantic.digital-agenda-data.eu/def/class/@type@";
