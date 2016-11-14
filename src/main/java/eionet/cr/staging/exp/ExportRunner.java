@@ -615,6 +615,7 @@ public final class ExportRunner extends Thread {
 
         URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
         URI cubeDataSetURI = vf.createURI(Subjects.DATACUBE_DATA_SET);
+        URI dcatDatasetURI = vf.createURI(Subjects.DCAT_DATASET);
 
         URI dcTermsIdentifierURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
         URI rdfsLabelURI = vf.createURI(Predicates.RDFS_LABEL);
@@ -640,6 +641,7 @@ public final class ExportRunner extends Thread {
             // Add other triples.
 
             repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
+            repoConn.add(datasetURI, rdfTypeURI, dcatDatasetURI, graphURI);
 
             boolean hasIdentifier = repoConn.hasStatement(datasetURI, dcTermsIdentifierURI, null, false, emptyResourceArray);
             if (!hasIdentifier) {

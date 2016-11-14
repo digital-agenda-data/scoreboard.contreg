@@ -89,6 +89,7 @@ public interface Subjects {
     String SKOS_CONCEPT_SCHEME = "http://www.w3.org/2004/02/skos/core#ConceptScheme";
 
     String DCAT_WEB_SERVICE = "http://www.w3.org/ns/dcat#WebService";
+    String DCAT_DATASET = "http://www.w3.org/ns/dcat#Dataset";
 
     String ADMS_STATUS_COMPLETED = "http://purl.org/adms/status/Completed";
 }
