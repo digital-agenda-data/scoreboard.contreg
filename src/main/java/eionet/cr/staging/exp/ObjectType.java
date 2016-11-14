@@ -67,14 +67,8 @@ public class ObjectType {
     /** */
     private HashMap<ObjectProperty, String[]> propertyToDefaultColumns = new HashMap<ObjectProperty, String[]>();
 
-//    /** */
-//    private String targetGraphValueTemplate = "http://semantic.digital-agenda-data.eu/data/<value>";
-
     /** */
     private Set<String> datasetIdentifierColumns;
-
-//    /** */
-//    private String fixedDatasetUri;
 
     /** */
     private String datasetUriTemplate;
@@ -234,20 +228,6 @@ public class ObjectType {
     public DSD getDsd() {
         return dsd;
     }
-//
-//    /**
-//     * @return the targetGraphValueTemplate
-//     */
-//    public String getTargetGraphValueTemplate() {
-//        return targetGraphValueTemplate;
-//    }
-//
-//    /**
-//     * @param targetGraphValueTemplate the targetGraphValueTemplate to set
-//     */
-//    public void setTargetGraphValueTemplate(String targetGraphValueTemplate) {
-//        this.targetGraphValueTemplate = targetGraphValueTemplate;
-//    }
 
     /**
      * @return the datasetIdentifierColumns
@@ -262,20 +242,6 @@ public class ObjectType {
     public void setDatasetIdentifierColumns(Set<String> datasetIdentifierColumns) {
         this.datasetIdentifierColumns = datasetIdentifierColumns;
     }
-
-//    /**
-//     * @return the fixedDatasetUri
-//     */
-//    public String getFixedDatasetUri() {
-//        return fixedDatasetUri;
-//    }
-//
-//    /**
-//     * @param fixedDatasetUri the fixedDatasetUri to set
-//     */
-//    public void setFixedDatasetUri(String fixedDatasetUri) {
-//        this.fixedDatasetUri = fixedDatasetUri;
-//    }
 
     /**
      * @return the datasetUriTemplate

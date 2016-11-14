@@ -55,9 +55,6 @@ public class QueryConfiguration implements Serializable {
     /** */
     private Map<ObjectProperty, String> propertyMappings = new LinkedHashMap<>();
 
-//    /** */
-//    private Map<String, String> propertyValueTemplates = new LinkedHashMap<>();
-
     /** */
     private String objectUriTemplate;
 
@@ -69,12 +66,6 @@ public class QueryConfiguration implements Serializable {
 
     /** If true, the target graph(s) should be cleared before the export query is executed. */
     private boolean clearDataset;
-
-//    /** */
-//    private String targetGraphValueTemplate;
-//
-//    /** */
-//    private String targetGraphValueSelectorColumn;
 
     /**
      * @return the query
@@ -181,34 +172,6 @@ public class QueryConfiguration implements Serializable {
         this.propertyMappings = propertyMappings;
     }
 
-//    /**
-//     * @return the targetGraphValueTemplate
-//     */
-//    public String getTargetGraphValueTemplate() {
-//        return targetGraphValueTemplate;
-//    }
-//
-//    /**
-//     * @param targetGraphValueTemplate the targetGraphValueTemplate to set
-//     */
-//    public void setTargetGraphValueTemplate(String targetGraphValueTemplate) {
-//        this.targetGraphValueTemplate = targetGraphValueTemplate;
-//    }
-//
-//    /**
-//     * @return the targetGraphValueSelectorColumn
-//     */
-//    public String getTargetGraphValueSelectorColumn() {
-//        return targetGraphValueSelectorColumn;
-//    }
-//
-//    /**
-//     * @param targetGraphValueSelectorColumn the targetGraphValueSelectorColumn to set
-//     */
-//    public void setTargetGraphValueSelectorColumn(String targetGraphValueSelectorColumn) {
-//        this.targetGraphValueSelectorColumn = targetGraphValueSelectorColumn;
-//    }
-
     /**
      * @return the clearDataset
      */
@@ -222,22 +185,6 @@ public class QueryConfiguration implements Serializable {
     public void setClearDataset(boolean clearGraph) {
         this.clearDataset = clearGraph;
     }
-//
-//    /**
-//     *
-//     * @return
-//     */
-//    public Map<String, String> getPropertyValueTemplates() {
-//        return propertyValueTemplates;
-//    }
-//
-//    /**
-//     *
-//     * @param propertyValueTemplates
-//     */
-//    public void setPropertyValueTemplates(Map<String, String> propertyValueTemplates) {
-//        this.propertyValueTemplates = propertyValueTemplates;
-//    }
 
     /**
      * @return the datasetIdentifierColumn

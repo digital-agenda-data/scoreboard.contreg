@@ -382,14 +382,6 @@ public final class ExportRunner extends Thread {
 
         objectTypeURI = vf.createURI(queryConf.getObjectTypeUri());
         rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
-
-//        String datasetUriTemplate = queryConf.getDatasetUriTemplate();
-//        boolean isFixedDataset = datasetUriTemplate != null && !datasetUriTemplate.contains("<value>");
-//        if (isFixedDataset) {
-//            fixedDatasetURI = vf.createURI(datasetUriTemplate);
-//            fixedDatasetGraphURI = vf.createURI(datasetUriTemplate.replace("/dataset/", "/data/"));
-//        }
-
         datasetPredicateURI = vf.createURI(Predicates.DATACUBE_DATA_SET);
     }
 

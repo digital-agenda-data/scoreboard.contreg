@@ -486,30 +486,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                     }
                 }
             }
-
-            // if (queryConf != null) {
-            // Map<String, String> propertyValueTemplates = queryConf.getPropertyValueTemplates();
-            // if (propertyValueTemplates == null || propertyValueTemplates.isEmpty()) {
-            //
-            // propertyValueTemplates = new LinkedHashMap<>();
-            // queryConf.setPropertyValueTemplates(propertyValueTemplates);
-            // List<ObjectProperty> possibleProperties = objectType.getProperties();
-            // for (ObjectProperty objectProperty : possibleProperties) {
-            // propertyValueTemplates.put(objectProperty.getId(), objectProperty.getValueTemplate());
-            // }
-            // } else {
-            // HttpServletRequest request = getContext().getRequest();
-            // Set<String> keySet = propertyValueTemplates.keySet();
-            // for (String objectPropertyId : keySet) {
-            //
-            // String submittedValueTemplate =
-            // request.getParameter(objectPropertyId + PROPERTY_VALUE_TEMPLATE_PARAM_SUFFIX);
-            // if (StringUtils.isNotBlank(submittedValueTemplate)) {
-            // propertyValueTemplates.put(objectPropertyId, submittedValueTemplate);
-            // }
-            // }
-            // }
-            // }
         }
     }
 
@@ -565,9 +541,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             queryConf.setObjectTypeUri(objectType.getUri());
             queryConf.setPropertyMappings(null);
             queryConf.setDatasetIdentifierColumn(null);
-//            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
-//            queryConf.setTargetGraphValueTemplate(objectType.getTargetGraphValueTemplate());
-//            queryConf.setPropertyValueTemplates(null);
         }
 
         datasetType = null;
@@ -597,10 +570,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
         } else if (StringUtils.isNotBlank(objectType.getDatasetUriTemplate())) {
             queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
         }
-
-//        } else if (StringUtils.isNotBlank(objectType.getFixedDatasetUri())) {
-//            queryConf.setFixedDatasetUri(objectType.getFixedDatasetUri());
-//        }
 
         HashMap<ObjectProperty, String[]> propertiesToDefaultColumns = objectType.getPropertyToDefaultColumns();
 
@@ -647,20 +616,6 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                 }
             }
         }
-
-        // Set<ObjectProperty> keySet = currentMappings.keySet();
-        // if (keySet != null && !keySet.isEmpty()) {
-        //
-        // Map<String, String> propertyValueTemplates = queryConf.getPropertyValueTemplates();
-        // if (propertyValueTemplates == null) {
-        // propertyValueTemplates = new LinkedHashMap<>();
-        // queryConf.setPropertyValueTemplates(propertyValueTemplates);
-        // }
-        //
-        // for (ObjectProperty objectProperty : keySet) {
-        // propertyValueTemplates.put(objectProperty.getId(), objectProperty.getValueTemplate());
-        // }
-        // }
     }
 
     /**
@@ -959,29 +914,4 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     public void setDatasetType(String datasetType) {
         this.datasetType = datasetType;
     }
-
-    // /**
-    // *
-    // */
-    // @After
-    // public void afterEventHandling() {
-    //
-    // if (queryConf != null) {
-    // Map<ObjectProperty, String> currentMappings = queryConf.getPropertyMappings();
-    // if (currentMappings != null && !currentMappings.isEmpty()) {
-    // for (Entry<ObjectProperty, String> entry : currentMappings.entrySet()) {
-    //
-    // ObjectProperty property = entry.getKey();
-    // if (Predicates.DATACUBE_DATA_SET.equals(property.getPredicate())) {
-    // String column = entry.getValue();
-    // if (StringUtils.isNotBlank(column)) {
-    // queryConf.setTargetGraphValueSelectorColumn(column);
-    // } else{
-    // queryConf.setTargetGraphValueSelectorColumn(null);
-    // }
-    // }
-    // }
-    // }
-    // }
-    // }
 }
