@@ -26,6 +26,8 @@ public enum XLWrapUploadType {
     /** */
     public static final String MAPPING_FILE_EXTENSION = "trig";
     public static final String SPREADSHEET_FILE_EXTENSION = "xls";
+    public static final String SPREADSHEETS_PATH = "/spreadsheets/";
+    public static final String TRIG_FILES__PATH = "/trig/";
 
     /** */
     private String title;
@@ -65,7 +67,7 @@ public enum XLWrapUploadType {
 
         // Prepare Trig mapping template file reference.
 
-        String mappingTemplateFileName = normalizedName + "." + MAPPING_FILE_EXTENSION;
+        String mappingTemplateFileName = TRIG_FILES__PATH + normalizedName + "." + MAPPING_FILE_EXTENSION;
         URL mappingTemplateURL = getClass().getClassLoader().getResource(mappingTemplateFileName);
         if (mappingTemplateURL == null) {
             throw new CRRuntimeException("Could not locate mapping template by the name of " + mappingTemplateFileName);
@@ -78,7 +80,7 @@ public enum XLWrapUploadType {
 
         // Prepare download spreadsheet template file reference.
 
-        String spreadsheetTemplateFileName = normalizedName + "." + SPREADSHEET_FILE_EXTENSION;
+        String spreadsheetTemplateFileName = SPREADSHEETS_PATH + normalizedName + "." + SPREADSHEET_FILE_EXTENSION;
         URL spreadsheetTemplateURL = getClass().getClassLoader().getResource(spreadsheetTemplateFileName);
         if (spreadsheetTemplateURL == null) {
             throw new CRRuntimeException("Could not locate spreadsheet template by the name of " + spreadsheetTemplateFileName);
