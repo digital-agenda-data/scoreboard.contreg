@@ -27,7 +27,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -39,24 +38,20 @@ import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.openrdf.model.Literal;
-import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
-import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 
 import eionet.cr.common.Predicates;
-import eionet.cr.common.Subjects;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.StagingDatabaseDAO;
 import eionet.cr.dto.StagingDatabaseDTO;
 import eionet.cr.staging.util.TimePeriodsHarvester;
 import eionet.cr.util.LogUtil;
-import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.sql.SQLUtil;
 
@@ -161,7 +156,7 @@ public final class ExportRunner extends Thread {
     private HashSet<String> timePeriods = new HashSet<String>();
 
     /** */
-    private Set<URI> touchedDatasets = new HashSet<>();
+    private Set<String> touchedDatasetUris = new HashSet<>();
 
     /** */
     private Set<URI> clearedGraphs = new HashSet<>();
@@ -256,14 +251,15 @@ public final class ExportRunner extends Thread {
             repoConn.setAutoCommit(false);
 
             // Prepare re-occurring instances of Sesame's Value and URI, for better performance.
-            ValueFactory valueFactory = repoConn.getValueFactory();
-            prepareValues(valueFactory);
+            ValueFactory vf = repoConn.getValueFactory();
+            prepareValues(vf);
 
             // Run the export query and export its results.
             executeExport(repoConn);
 
             // Update all "touched" datasets.
-            updateTouchedDatasets(repoConn, valueFactory);
+            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(touchedDatasetUris, queryConf.getObjectTypeDsd(), repoConn, vf);
+            //updateTouchedDatasets(repoConn, valueFactory);
 
             // Commit the transaction.
             repoConn.commit();
@@ -561,7 +557,7 @@ public final class ExportRunner extends Thread {
 
                         if (Predicates.DATACUBE_DATA_SET.equals(predicateURI.stringValue())) {
                             if (value instanceof URI) {
-                                touchedDatasets.add((URI) value);
+                                touchedDatasetUris.add(value.stringValue());
                             }
                         }
 
@@ -604,58 +600,6 @@ public final class ExportRunner extends Thread {
             valuesByPredicate.put(predicateURI, values);
         }
         values.add(value);
-    }
-
-    private void updateTouchedDatasets(RepositoryConnection repoConn, ValueFactory vf) throws RepositoryException {
-
-        // Prepare some URIs.
-
-        URI dcTermsModifiedURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
-        Literal modifiedDateValue = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
-
-        URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
-        URI cubeDataSetURI = vf.createURI(Subjects.DATACUBE_DATA_SET);
-
-        URI dcTermsIdentifierURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
-        URI rdfsLabelURI = vf.createURI(Predicates.RDFS_LABEL);
-
-        URI cubeStructureURI = vf.createURI(Predicates.DATACUBE_STRUCTURE);
-        URI dsdURI = queryConf.getObjectTypeDsd() == null ? null : vf.createURI(queryConf.getObjectTypeDsd().getUri());
-
-        Resource[] emptyResourceArray = new Resource[0];
-
-        for (URI datasetURI : touchedDatasets) {
-
-            URI graphURI = datasetURI;
-
-            // TODO: obtain dataset identifer in a less hardcoded way.
-            String datasetIdentifier = StringUtils.substringAfterLast(datasetURI.stringValue(), "/");
-
-            // Remove all previous dcterms:modified triples of the given dataset.
-            repoConn.remove(datasetURI, dcTermsModifiedURI, null, graphURI);
-
-            // Add new dcterms:modified triple for the given dataset.
-            repoConn.add(datasetURI, dcTermsModifiedURI, modifiedDateValue, graphURI);
-
-            // Add other triples.
-
-            repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
-
-            boolean hasIdentifier = repoConn.hasStatement(datasetURI, dcTermsIdentifierURI, null, false, emptyResourceArray);
-            if (!hasIdentifier) {
-                repoConn.add(datasetURI, dcTermsIdentifierURI, vf.createLiteral(datasetIdentifier), graphURI);
-            }
-
-            boolean hasDSD = repoConn.hasStatement(datasetURI, cubeStructureURI, null, false, emptyResourceArray);
-            if (!hasDSD && dsdURI != null) {
-                repoConn.add(datasetURI, cubeStructureURI, dsdURI, graphURI);
-            }
-
-            boolean hasLabel = repoConn.hasStatement(datasetURI, rdfsLabelURI, null, false, emptyResourceArray);
-            if (!hasLabel) {
-                repoConn.add(datasetURI, rdfsLabelURI, vf.createLiteral(datasetIdentifier), graphURI);
-            }
-        }
     }
 
     /**

@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.OpenRDFException;
@@ -52,7 +51,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 public class XLWrapUploadActionBean extends AbstractActionBean {
 
     /** */
-    private static final String UPLOADED_GRAPH_ATTR = XLWrapUploadActionBean.class.getSimpleName() + ".uploadedGraph";
+    private static final String TOUCHED_GRAPHS_ATTR = XLWrapUploadActionBean.class.getSimpleName() + ".touchedGraphs";
 
     /** */
     private static final Logger LOGGER = Logger.getLogger(XLWrapUploadActionBean.class);
@@ -67,7 +66,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     private FileBean fileBean;
 
     /** */
-    private String uploadedGraphUri;
+    private Set<String> touchedGraphs;
 
     /** */
     private boolean clearGraph = false;
@@ -94,8 +93,8 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     public Resolution get() {
         HttpSession session = getContext().getRequest().getSession();
         if (session != null) {
-            uploadedGraphUri = ObjectUtils.toString(session.getAttribute(UPLOADED_GRAPH_ATTR), null);
-            session.removeAttribute(UPLOADED_GRAPH_ATTR);
+            touchedGraphs = (Set<String>) session.getAttribute(TOUCHED_GRAPHS_ATTR);
+            session.removeAttribute(TOUCHED_GRAPHS_ATTR);
         }
         return new ForwardResolution(JSP);
     }
@@ -146,10 +145,14 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             // Execute the import.
             XLWrapUtil.importMapping(uploadType, spreadsheetFile, dataGraphUri, clear, stmtListener);
 
+            // Record touched graphs in the session attributes.
+            getContext().setSessionAttribute(TOUCHED_GRAPHS_ATTR, stmtListener.getGraphs());
+
             // If this far, then lets update dataset or codelist modification date, depending on whether
             // we're uploading observations or a codelist.
             if (isObservationsUpload) {
-                //DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(targetDataset, new Date(), targetDataset);
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(stmtListener.getDatasetUris(),
+                        uploadType.getObservationsDsd());
             } else {
                 String graphUri = uploadType.getGraphUri();
                 String codelistUri = StringUtils.substringBeforeLast(graphUri, "/");
@@ -167,7 +170,6 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
                     + " items of selected type successfully imported!\n Click on on the below link to explore them further.");
 
             // Update the uploaded graph attribute in session and redirect to defaulkt event.
-            getContext().setSessionAttribute(UPLOADED_GRAPH_ATTR, isObservationsUpload ? dataGraphUri : uploadType.getGraphUri());
             return new RedirectResolution(getClass());
 
         } catch (IOException e) {
@@ -211,7 +213,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)
-                    .addParameter("uploadType", XLWrapUploadType.OBSERVATION_SCOREBOARD.name());
+                    .addParameter("uploadType", uploadType == null ? null : uploadType.name());
         } catch (DAOException e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
@@ -306,10 +308,10 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     }
 
     /**
-     * @return the uploadedGraphUri
+     * @return the touchedGraphs
      */
-    public String getUploadedGraphUri() {
-        return uploadedGraphUri;
+    public Set<String> getTouchedGraphs() {
+        return touchedGraphs;
     }
 
     /**

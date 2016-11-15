@@ -8,6 +8,7 @@ import org.apache.commons.lang.WordUtils;
 
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.common.Subjects;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 
 public enum XLWrapUploadType {
 
@@ -18,8 +19,8 @@ public enum XLWrapUploadType {
     BREAKDOWN_GROUP("Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
     UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"),
     SOURCE("Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"),
-    OBSERVATION_SCOREBOARD("Observations: Scoreboard", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION),
-    OBSERVATION_DESI("Observations: DESI", "File containing DESI observations", "", Subjects.DATACUBE_OBSERVATION);
+    OBSERVATION_SCOREBOARD("Observations: Scoreboard", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION, DSD.SCOREBOARD),
+    OBSERVATION_DESI("Observations: DESI", "File containing DESI observations", "", Subjects.DATACUBE_OBSERVATION, DSD.DESI);
 
     // @formatter:off
     /** */
@@ -43,6 +44,7 @@ public enum XLWrapUploadType {
     /** */
     private File mappingTemplate;
     private File spreadsheetTemplate;
+    private DSD observationsDsd;
 
     /**
      * Basic constructor.
@@ -111,6 +113,18 @@ public enum XLWrapUploadType {
     }
 
     /**
+     * @param title
+     * @param hint
+     * @param graphUri
+     * @param subjectsTypeUri
+     * @param observationsDsd
+     */
+    private XLWrapUploadType(String title, String hint, String graphUri, String subjectsTypeUri, DSD observationsDsd) {
+        this(title, hint, graphUri, subjectsTypeUri);
+        this.observationsDsd = observationsDsd;
+    }
+
+    /**
      * @return the title
      */
     public String getTitle() {
@@ -175,5 +189,12 @@ public enum XLWrapUploadType {
         }
 
         return null;
+    }
+
+    /**
+     * @return the observationsDsd
+     */
+    public DSD getObservationsDsd() {
+        return observationsDsd;
     }
 }
