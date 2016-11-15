@@ -128,7 +128,7 @@
                     <div class="tip-msg">
                         <strong>Tip</strong>
                         <p>
-                            All extracted content was imported into the following graph. Please click on this link to explore it further:<br/>
+                            All extracted content was imported into the following graph(s). Please click on this link below to explore further:<br/>
                             <stripes:link beanclass="${actionBean.objectsInSourceActionBeanClass.name}">
                                 <stripes:param name="uri" value="${actionBean.uploadedGraphUri}"/>
                                 <stripes:param name="search" value=""/>

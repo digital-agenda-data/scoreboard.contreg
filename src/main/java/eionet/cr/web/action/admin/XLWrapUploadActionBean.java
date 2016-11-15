@@ -9,14 +9,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.FileBean;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -39,6 +31,13 @@ import eionet.cr.util.xlwrap.XLWrapUploadType;
 import eionet.cr.util.xlwrap.XLWrapUtil;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.factsheet.ObjectsInSourceActionBean;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
  * Action bean for uploading an MS Excel or OpenDocument spreadsheet file into the RDF model and triple store. Pre-configured types
@@ -115,12 +114,13 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
         } else if (fileBean == null || fileBean.getSize() == 0) {
             addGlobalValidationError("Uploaded file missing or empty!");
             return new ForwardResolution(JSP);
-        } else if (XLWrapUploadType.OBSERVATION_SCOREBOARD.equals(uploadType)) {
-            if (StringUtils.isBlank(targetDataset)) {
-                addGlobalValidationError("Target dataset must be selected!");
-                return new ForwardResolution(JSP);
-            } else {
-                isObservationsUpload = true;
+        } else if (uploadType.name().startsWith("OBSERVATION_")) {
+            isObservationsUpload = true;
+            if (XLWrapUploadType.OBSERVATION_DESI.equals(uploadType)) {
+                if (StringUtils.isBlank(targetDataset)) {
+                    addGlobalValidationError("Target dataset must be selected!");
+                    return new ForwardResolution(JSP);
+                }
             }
         }
 
@@ -149,7 +149,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             // If this far, then lets update dataset or codelist modification date, depending on whether
             // we're uploading observations or a codelist.
             if (isObservationsUpload) {
-                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(targetDataset, new Date(), targetDataset);
+                //DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(targetDataset, new Date(), targetDataset);
             } else {
                 String graphUri = uploadType.getGraphUri();
                 String codelistUri = StringUtils.substringBeforeLast(graphUri, "/");
@@ -210,7 +210,8 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
-                    .addParameter("clearDataset", clearDataset).addParameter("uploadType", XLWrapUploadType.OBSERVATION_SCOREBOARD.name());
+                    .addParameter("clearDataset", clearDataset)
+                    .addParameter("uploadType", XLWrapUploadType.OBSERVATION_SCOREBOARD.name());
         } catch (DAOException e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());

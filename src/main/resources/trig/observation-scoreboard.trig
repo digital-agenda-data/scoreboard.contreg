@@ -46,10 +46,9 @@
 }
 
 :Data {
-    [ xl:uri "'http://semantic.digital-agenda-data.eu/data/@DATASET_IDENTIFIER@/' & URLENCODE(LCASE(IF(EMPTY(C2), '*', C2))) & '/' & URLENCODE(LCASE(IF(EMPTY(D2), 'total', D2))) & '/' & URLENCODE(LCASE(E2)) & '/' & URLENCODE(UCASE(B2)) & '/' & URLENCODE(UCASE(A2))"^^xl:Expr ] a qb:Observation ;
-    qb:dataSet "URI('http://semantic.digital-agenda-data.eu/dataset/@DATASET_IDENTIFIER@')"^^xl:Expr ;
+    [ xl:uri "'http://semantic.digital-agenda-data.eu/data/' & URLENCODE(LCASE(IF('@DATASET_IDENTIFIER@'<>'', '@DATASET_IDENTIFIER@',IF(EMPTY(C2), '*', C2)))) & '/' & URLENCODE(LCASE(IF(EMPTY(D2), 'total', D2))) & '/' & URLENCODE(LCASE(E2)) & '/' & URLENCODE(UCASE(B2)) & '/' & URLENCODE(UCASE(A2))"^^xl:Expr ] a qb:Observation ;
+    qb:dataSet "URI('http://semantic.digital-agenda-data.eu/dataset/' & URLENCODE(LCASE(IF('@DATASET_IDENTIFIER@'<>'', '@DATASET_IDENTIFIER@',IF(EMPTY(C2), '*', C2)))))"^^xl:Expr ;
     sdmx-measure:obsValue "F2"^^xl:Expr ;
-    dad-prop:indicator "URI('http://semantic.digital-agenda-data.eu/codelist/indicator/' & URLENCODE(LCASE(IF(EMPTY(C2), '*', C2))))"^^xl:Expr ;
     dad-prop:breakdown "URI('http://semantic.digital-agenda-data.eu/codelist/breakdown/' & URLENCODE(LCASE(IF(EMPTY(D2), 'total', D2))))"^^xl:Expr ;
     dad-prop:unit-measure "URI('http://semantic.digital-agenda-data.eu/codelist/unit-measure/' & URLENCODE(LCASE(E2)))"^^xl:Expr ;
     dad-prop:ref-area "URI('http://eurostat.linked-statistics.org/dic/geo#' & URLENCODE(UCASE(B2)))"^^xl:Expr ;

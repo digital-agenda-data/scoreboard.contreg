@@ -28,6 +28,9 @@ public class StatementListener implements RDFHandler {
     /** */
     private HashSet<String> subjects = new HashSet<String>();
 
+    /** */
+    private HashSet<String> datasetUris = new HashSet<String>();
+
     /**
      * @param subjectsRdfType
      */
@@ -90,6 +93,10 @@ public class StatementListener implements RDFHandler {
                 subjects.add(stmt.getSubject().stringValue());
             }
         }
+
+        if (Predicates.DATACUBE_DATA_SET.equals(predicateURI.stringValue())) {
+            datasetUris.add(stmt.getObject().stringValue());
+        }
     }
 
     /*
@@ -114,5 +121,12 @@ public class StatementListener implements RDFHandler {
      */
     public HashSet<String> getTimePeriodUris() {
         return timePeriodUris;
+    }
+
+    /**
+     * @return the datasetUris
+     */
+    public HashSet<String> getDatasetUris() {
+        return datasetUris;
     }
 }

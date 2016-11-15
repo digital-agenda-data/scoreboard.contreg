@@ -19,17 +19,16 @@ import org.apache.commons.lang.StringUtils;
 import org.openrdf.OpenRDFException;
 import org.openrdf.rio.RDFHandler;
 
-import at.jku.xlwrap.common.XLWrapException;
-import at.jku.xlwrap.exec.XLWrapMaterializer;
-import at.jku.xlwrap.map.MapTemplate;
-import at.jku.xlwrap.map.MappingParser;
-import at.jku.xlwrap.map.XLWrapMapping;
-
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
+import at.jku.xlwrap.common.XLWrapException;
+import at.jku.xlwrap.exec.XLWrapMaterializer;
+import at.jku.xlwrap.map.MapTemplate;
+import at.jku.xlwrap.map.MappingParser;
+import at.jku.xlwrap.map.XLWrapMapping;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
@@ -82,13 +81,8 @@ public class XLWrapUtil {
         try {
             Properties properties = new Properties();
             properties.setProperty(FILE_URL_PLACEHOLDER, spreadsheetFile.toURI().toURL().toString());
-            if (StringUtils.isNotBlank(targetDataset)) {
-                String datasetIdentifier = StringUtils.substringAfterLast(targetDataset, "/");
-                if (StringUtils.isBlank(datasetIdentifier)) {
-                    datasetIdentifier = "unknown_dataset";
-                }
-                properties.setProperty(DATASET_IDENTIFIER_PLACEHOLDER, datasetIdentifier);
-            }
+            String datasetIdentifier = StringUtils.trimToEmpty(StringUtils.substringAfterLast(targetDataset, "/"));
+            properties.setProperty(DATASET_IDENTIFIER_PLACEHOLDER, datasetIdentifier);
 
             createMappingFile(template, target, properties);
             String graphUri = StringUtils.isBlank(targetDataset) ? uploadType.getGraphUri() : targetDataset;
