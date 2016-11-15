@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
-import javanet.staxutils.IndentingXMLStreamWriter;
-
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -38,6 +36,7 @@ import eionet.cr.dto.SubjectDTO;
 import eionet.cr.util.URIUtil;
 import eionet.cr.util.URLUtil;
 import eionet.cr.util.Util;
+import javanet.staxutils.IndentingXMLStreamWriter;
 
 /**
  * Generates ODP (Open Data Portal, http://open-data.europa.eu) datasets' metadata packages from the metadata of
@@ -53,10 +52,6 @@ public class ODPDatasetsPacker {
 
     /** Date-time formatter compliant with XML Schema date/time representation in UTC timezone. */
     public static final DateFormat XML_SCHEMA_DATETIME_FORMAT = buildXmlSchemaDateFormat();
-
-    /** URI of the "main" dataset, as opposed to the "virtual" datasets we generate for eacg indicator. */
-    private static final String MAIN_DATASET_URI =
-            "http://semantic.digital-agenda-data.eu/dataset/digital-agenda-scoreboard-key-indicators";
 
     /** Expected charset encoding of the generated output. */
     private static final String ENCODING = "UTF-8";
@@ -81,9 +76,6 @@ public class ODPDatasetsPacker {
 
     /** List of {@link SubjectDTO} where each member represents an indicator from {@link #indicatorUris}. */
     List<SubjectDTO> indicatorSubjects;
-
-    /** A {@link SubjectDTO} representing the "main" dataset identified by {@link #MAIN_DATASET_URI}. */
-    private SubjectDTO mainDstSubject;
 
     /** A boolean indicating if {@link #prepare()} has already been called. */
     private boolean isPrepareCalled;
@@ -150,11 +142,6 @@ public class ODPDatasetsPacker {
         }
 
         HelperDAO helperDao = DAOFactory.get().getDao(HelperDAO.class);
-        mainDstSubject = helperDao.getSubject(datasetUri);
-        if (mainDstSubject == null || mainDstSubject.getPredicateCount() == 0) {
-            throw new DAOException("Could not find any metadata about the main (i.e. parent) dataset!");
-        }
-
         ScoreboardSparqlDAO ssDao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         for (SubjectDTO indSubj : indicatorSubjects) {
 
@@ -869,7 +856,7 @@ public class ODPDatasetsPacker {
 
                 String mainDatasetLink = "http://digital-agenda-data.eu/datasets/" + mainDstIdentifier.replace('-', '_');
                 if (sb.length() > 0) {
-                    sb.append("\n\n### Parent dataset\n\nThis dataset is part of of another dataset:");
+                    sb.append("\n\n### Parent dataset\n\nThis dataset is part of another dataset:");
                 }
                 sb.append("\n\n").append(mainDatasetLink);
             }
