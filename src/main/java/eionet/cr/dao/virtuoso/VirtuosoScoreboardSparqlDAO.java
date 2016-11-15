@@ -23,6 +23,7 @@ import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
@@ -37,6 +38,7 @@ import eionet.cr.dao.readers.CodelistExporter;
 import eionet.cr.dao.readers.SkosItemsReader;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.util.Bindings;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortOrder;
@@ -440,8 +442,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * @see eionet.cr.dao.ScoreboardSparqlDAO#getFilterValues(java.util.Map, eionet.cr.web.util.ObservationFilter, boolean)
      */
     @Override
-    public List<Pair<String, String>> getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter, boolean isAdmin)
-            throws DAOException {
+    public List<Pair<String, String>> getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter,
+            boolean isAdmin) throws DAOException {
 
         if (filter == null) {
             throw new IllegalArgumentException("Filter for which the values are being asked, must not be null!");
@@ -456,7 +458,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         sb.append("PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n");
         sb.append("\n");
         sb.append("select\n");
-        sb.append("  ?").append(filterAlias).append(" min(str(coalesce(?prefLabel, ?").append(filterAlias).append("))) as ?label\n");
+        sb.append("  ?").append(filterAlias).append(" min(str(coalesce(?prefLabel, ?").append(filterAlias)
+                .append("))) as ?label\n");
         sb.append("where {\n");
         sb.append("  ?s a cube:Observation.\n");
 
@@ -474,7 +477,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                         sb.append("  ?s <").append(availFilter.getPredicate()).append("> \"").append(selValue).append("\".\n");
                     }
                 } else {
-                    sb.append("  ?s <").append(availFilter.getPredicate()).append("> ?").append(availFilter.getAlias()).append(".\n");
+                    sb.append("  ?s <").append(availFilter.getPredicate()).append("> ?").append(availFilter.getAlias())
+                            .append(".\n");
                 }
             }
         }
@@ -484,8 +488,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         // If not an admin-user, allow selections from "Completed" datasets only.
         if (!isAdmin) {
             if (sb.toString().contains(" ?" + ObservationFilter.DATASET.getAlias())) {
-                sb.append("  ?").append(ObservationFilter.DATASET.getAlias()).append(" <").append(Predicates.ADMS_STATUS).append("> <")
-                        .append(Subjects.ADMS_STATUS_COMPLETED).append(">\n");
+                sb.append("  ?").append(ObservationFilter.DATASET.getAlias()).append(" <").append(Predicates.ADMS_STATUS)
+                        .append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append(">\n");
             }
         }
 
@@ -509,7 +513,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      */
     @SuppressWarnings("unchecked")
     @Override
-    public int exportCodelistItems(String itemType, File templateFile, Map<String, Integer> mappings, File targetFile) throws DAOException {
+    public int exportCodelistItems(String itemType, File templateFile, Map<String, Integer> mappings, File targetFile)
+            throws DAOException {
 
         if (StringUtils.isBlank(itemType)) {
             throw new IllegalArgumentException("Items RDF type must not be blank!");
@@ -609,11 +614,11 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     @Override
     public void fixGrouplessCodelistItems() throws DAOException {
 
-        String breakdownsSPARUL =
-                DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS.replace("@group-graph-uri@", XLWrapUploadType.BREAKDOWN_GROUP.getGraphUri());
+        String breakdownsSPARUL = DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS.replace("@group-graph-uri@",
+                XLWrapUploadType.BREAKDOWN_GROUP.getGraphUri());
 
-        String indicatorsSPARUL =
-                DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS.replace("@group-graph-uri@", XLWrapUploadType.INDICATOR_GROUP.getGraphUri());
+        String indicatorsSPARUL = DELETE_INVALID_CODELIST_GROUP_MEMBERSHIPS.replace("@group-graph-uri@",
+                XLWrapUploadType.INDICATOR_GROUP.getGraphUri());
 
         RepositoryConnection repoConn = null;
         try {
@@ -634,8 +639,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * eionet.cr.util.pagination.PagingRequest, eionet.cr.util.SortingRequest, java.lang.String[])
      */
     @Override
-    public SearchResultDTO<Pair<String, String>> getObservationPredicateValues(String predicateUri, boolean isAdmin, PagingRequest pageRequest,
-            SortingRequest sortRequest, String... labelPredicates) throws DAOException {
+    public SearchResultDTO<Pair<String, String>> getObservationPredicateValues(String predicateUri, boolean isAdmin,
+            PagingRequest pageRequest, SortingRequest sortRequest, String... labelPredicates) throws DAOException {
 
         if (!URIUtil.isURI(predicateUri)) {
             throw new IllegalArgumentException("predicateUri must not be blank and it must be a legal URI!");
@@ -650,8 +655,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         sb.append("  ?s as ?").append(PairReader.LEFTCOL).append("\n");
 
         if (ArrayUtils.isEmpty(labelPredicates)) {
-            sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?").append(PairReader.RIGHTCOL)
-                    .append("\n");
+            sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
         } else {
             sb.append("  coalesce(");
             for (int i = 0; i < labelPredicates.length; i++) {
@@ -660,8 +665,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                 }
                 sb.append("?label").append(i);
             }
-            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1)) as ?").append(PairReader.RIGHTCOL)
-                    .append("\n");
+            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1)) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
         }
 
         sb.append("where {").append("\n");
@@ -670,7 +675,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         // If not an admin-user, allow selections from "Completed" datasets only.
         if (!isAdmin) {
             sb.append("  ?subj <").append(Predicates.DATACUBE_DATA_SET).append("> ?ds .").append("\n");
-            sb.append("  ?ds <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .").append("\n");
+            sb.append("  ?ds <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .")
+                    .append("\n");
         }
 
         sb.append("  ?subj ?pred ?s").append("\n");
@@ -684,7 +690,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             bindings.setURI("labelPred" + i, labelPredicates[i]);
         }
         sb.append("}\n");
-        sb.append("order by ").append(sortRequest.getSortOrder()).append("(?").append(sortRequest.getSortingColumnName()).append(")");
+        sb.append("order by ").append(sortRequest.getSortOrder()).append("(?").append(sortRequest.getSortingColumnName())
+                .append(")");
 
         if (pageRequest != null) {
             sb.append(" limit ").append(pageRequest.getItemsPerPage()).append(" offset ").append(pageRequest.getOffset());
@@ -701,7 +708,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             // If not an admin-user, allow selections from "Completed" datasets only.
             if (!isAdmin) {
                 sb.append("  ?subj <").append(Predicates.DATACUBE_DATA_SET).append("> ?ds .").append("\n");
-                sb.append("  ?ds <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .").append("\n");
+                sb.append("  ?ds <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED)
+                        .append("> .").append("\n");
             }
 
             sb.append("  ?subj ?pred ?s").append("\n");
@@ -724,8 +732,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * eionet.cr.util.SortingRequest, java.lang.String[])
      */
     @Override
-    public SearchResultDTO<Pair<String, String>> getDistinctDatasets(boolean isAdmin, PagingRequest pageRequest, SortingRequest sortRequest,
-            String... labelPredicates) throws DAOException {
+    public SearchResultDTO<Pair<String, String>> getDistinctDatasets(boolean isAdmin, PagingRequest pageRequest,
+            SortingRequest sortRequest, String... labelPredicates) throws DAOException {
 
         if (sortRequest == null) {
             sortRequest = SortingRequest.create(PairReader.RIGHTCOL, SortOrder.ASCENDING);
@@ -738,8 +746,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         sb.append("  ?s as ?").append(PairReader.LEFTCOL).append("\n");
 
         if (ArrayUtils.isEmpty(labelPredicates)) {
-            sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?").append(PairReader.RIGHTCOL)
-                    .append("\n");
+            sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
         } else {
             sb.append("  coalesce(");
             for (int i = 0; i < labelPredicates.length; i++) {
@@ -748,8 +756,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                 }
                 sb.append("?label").append(i);
             }
-            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1)) as ?").append(PairReader.RIGHTCOL)
-                    .append("\n");
+            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1)) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
         }
 
         sb.append("where {").append("\n");
@@ -757,7 +765,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         // If not an admin-user, allow selections from "Completed" datasets only.
         if (!isAdmin) {
-            sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .").append("\n");
+            sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .")
+                    .append("\n");
         }
 
         String s = "  optional {?s ?labelPred0 ?label0}\n";
@@ -766,7 +775,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             bindings.setURI("labelPred" + i, labelPredicates[i]);
         }
         sb.append("}\n");
-        sb.append("order by ").append(sortRequest.getSortOrder()).append("(?").append(sortRequest.getSortingColumnName()).append(")");
+        sb.append("order by ").append(sortRequest.getSortOrder()).append("(?").append(sortRequest.getSortingColumnName())
+                .append(")");
 
         if (pageRequest != null) {
             sb.append(" limit ").append(pageRequest.getItemsPerPage()).append(" offset ").append(pageRequest.getOffset());
@@ -782,7 +792,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
             // If not an admin-user, allow selections from "Completed" datasets only.
             if (!isAdmin) {
-                sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .").append("\n");
+                sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED)
+                        .append("> .").append("\n");
             }
             sb.append("}");
 
@@ -993,8 +1004,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * @see eionet.cr.dao.ScoreboardSparqlDAO#deleteObservations(java.lang.String, java.util.Collection, java.util.Collection)
      */
     @Override
-    public Pair<Integer, String> deleteObservations(String datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
-            throws DAOException {
+    public Pair<Integer, String> deleteObservations(String datasetUri, Collection<String> indicatorUris,
+            Collection<String> timePeriodUris) throws DAOException {
 
         if (StringUtils.isBlank(datasetUri)) {
             throw new IllegalArgumentException("Dataset URI must not be blank!");
@@ -1028,7 +1039,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
             for (String indicatorUri : indicatorUris) {
 
-                LOGGER.debug(String.format("Deleting indicator %s of %d time periods ...", indicatorUri, noTimes ? 0 : timePeriodUris.size()));
+                LOGGER.debug(String.format("Deleting indicator %s of %d time periods ...", indicatorUri,
+                        noTimes ? 0 : timePeriodUris.size()));
 
                 int i = 0;
                 pstmt.setString(++i, datasetGraphUri);
@@ -1042,7 +1054,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                 }
 
                 updateCount += pstmt.executeUpdate();
-                if (updateCount > 0 &&!datasetUpdated) {
+                if (updateCount > 0 && !datasetUpdated) {
                     updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
                     datasetUpdated = true;
                 }
@@ -1133,5 +1145,97 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         String value = executeUniqueResultSPARQL(sparql, new SingleObjectReader<String>());
         int result = NumberUtils.toInt(value, 0);
         return result;
+    }
+
+    /**
+     *
+     * @param datasetUris
+     * @param dsd
+     * @throws RepositoryException
+     */
+    @Override
+    public void updateTouchedDatasets(Set<String> datasetUris, DSD dsd) throws RepositoryException {
+
+        if (CollectionUtils.isEmpty(datasetUris)) {
+            return;
+        }
+
+        RepositoryConnection repoConn = null;
+        try {
+            repoConn = SesameUtil.getRepositoryConnection();
+            repoConn.setAutoCommit(false);
+            ValueFactory vf = repoConn.getValueFactory();
+            updateTouchedDatasets(datasetUris, dsd, repoConn, vf);
+        } catch (Exception e) {
+            SesameUtil.rollback(repoConn);
+        } finally {
+            SesameUtil.close(repoConn);
+        }
+    }
+
+    /**
+     *
+     * @param datasetUris
+     * @param dsd
+     * @param repoConn
+     * @param vf
+     * @throws RepositoryException
+     */
+    @Override
+    public void updateTouchedDatasets(Set<String> datasetUris, DSD dsd, RepositoryConnection repoConn, ValueFactory vf)
+            throws RepositoryException {
+
+        if (CollectionUtils.isEmpty(datasetUris)) {
+            return;
+        }
+
+        // Prepare some URIs.
+
+        URI dcTermsModifiedURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
+        Literal modifiedDateValue = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
+
+        URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
+        URI cubeDataSetURI = vf.createURI(Subjects.DATACUBE_DATA_SET);
+
+        URI dcTermsIdentifierURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
+        URI rdfsLabelURI = vf.createURI(Predicates.RDFS_LABEL);
+
+        URI cubeStructureURI = vf.createURI(Predicates.DATACUBE_STRUCTURE);
+        URI dsdURI = dsd == null ? null : vf.createURI(dsd.getUri());
+
+        Resource[] emptyResourceArray = new Resource[0];
+        for (String datasetUri : datasetUris) {
+
+            URI datasetURI = vf.createURI(datasetUri);
+            URI graphURI = datasetURI;
+
+            // TODO: obtain dataset identifier in a less hardcoded way.
+            String datasetIdentifier = StringUtils.substringAfterLast(datasetUri, "/");
+
+            // Remove all previous dcterms:modified triples of the given dataset.
+            repoConn.remove(datasetURI, dcTermsModifiedURI, null, graphURI);
+
+            // Add new dcterms:modified triple for the given dataset.
+            repoConn.add(datasetURI, dcTermsModifiedURI, modifiedDateValue, graphURI);
+
+            // Add other triples.
+
+            repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
+
+            boolean alreadyHasIdentifier = repoConn.hasStatement(datasetURI, dcTermsIdentifierURI, null, false, emptyResourceArray);
+            if (!alreadyHasIdentifier) {
+                repoConn.add(datasetURI, dcTermsIdentifierURI, vf.createLiteral(datasetIdentifier), graphURI);
+            }
+
+            boolean alreadyHasDSD = repoConn.hasStatement(datasetURI, cubeStructureURI, null, false, emptyResourceArray);
+            if (!alreadyHasDSD && dsdURI != null) {
+                repoConn.add(datasetURI, cubeStructureURI, dsdURI, graphURI);
+            }
+
+            boolean alreadyHasLabel = repoConn.hasStatement(datasetURI, rdfsLabelURI, null, false, emptyResourceArray);
+            if (!alreadyHasLabel) {
+                repoConn.add(datasetURI, rdfsLabelURI, vf.createLiteral(datasetIdentifier), graphURI);
+            }
+        }
     }
 }

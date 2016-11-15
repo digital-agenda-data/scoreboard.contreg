@@ -1,6 +1,7 @@
 package eionet.cr.util.xlwrap;
 
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
@@ -23,10 +24,16 @@ public class StatementListener implements RDFHandler {
     private String subjectsRdfType;
 
     /** */
-    private HashSet<String> timePeriodUris = new HashSet<String>();
+    private Set<String> timePeriodUris = new LinkedHashSet<String>();
 
     /** */
-    private HashSet<String> subjects = new HashSet<String>();
+    private Set<String> subjects = new LinkedHashSet<String>();
+
+    /** */
+    private Set<String> datasetUris = new LinkedHashSet<String>();
+
+    /** */
+    private Set<String> graphs = new LinkedHashSet<String>();
 
     /**
      * @param subjectsRdfType
@@ -90,6 +97,12 @@ public class StatementListener implements RDFHandler {
                 subjects.add(stmt.getSubject().stringValue());
             }
         }
+
+        if (Predicates.DATACUBE_DATA_SET.equals(predicateURI.stringValue())) {
+            datasetUris.add(stmt.getObject().stringValue());
+        }
+
+        graphs.add(stmt.getContext().stringValue());
     }
 
     /*
@@ -105,14 +118,28 @@ public class StatementListener implements RDFHandler {
     /**
      * @return
      */
-    public HashSet<String> getSubjects() {
+    public Set<String> getSubjects() {
         return subjects;
     }
 
     /**
      * @return the timePeriodUris
      */
-    public HashSet<String> getTimePeriodUris() {
+    public Set<String> getTimePeriodUris() {
         return timePeriodUris;
+    }
+
+    /**
+     * @return the datasetUris
+     */
+    public Set<String> getDatasetUris() {
+        return datasetUris;
+    }
+
+    /**
+     * @return the graphs
+     */
+    public Set<String> getGraphs() {
+        return graphs;
     }
 }

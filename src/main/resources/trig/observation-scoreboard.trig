@@ -1,0 +1,58 @@
+@prefix rdfs:           <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf:            <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd:            <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl:            <http://www.w3.org/2002/07/owl#> .
+@prefix foaf:           <http://xmlns.com/foaf/0.1/> .
+@prefix xl:             <http://purl.org/NET/xlwrap#> .
+@prefix dcterms:        <http://purl.org/dc/terms/> .
+@prefix skos:           <http://www.w3.org/2004/02/skos/core#> .
+@prefix qb:             <http://purl.org/linked-data/cube#> .
+@prefix sdmx:           <http://purl.org/linked-data/sdmx#> .
+@prefix sdmx-concept:   <http://purl.org/linked-data/sdmx/2009/concept#> .
+@prefix sdmx-attribute: <http://purl.org/linked-data/sdmx/2009/attribute#> .
+@prefix sdmx-dimension: <http://purl.org/linked-data/sdmx/2009/dimension#> .
+@prefix sdmx-measure:   <http://purl.org/linked-data/sdmx/2009/measure#> .
+@prefix sdmx-code:      <http://purl.org/linked-data/sdmx/2009/code#> .
+@prefix dad-prop:       <http://semantic.digital-agenda-data.eu/def/property/> .
+@prefix dad-codelist:   <http://semantic.digital-agenda-data.eu/def/codelist/> .
+@prefix dad-class:      <http://semantic.digital-agenda-data.eu/def/class/> .
+@prefix atold:          <http://publications.europa.eu/resource/authority/file-type/> .
+@prefix rad:            <http://www.w3.org/ns/radion#> .
+@prefix adms:           <http://www.w3.org/ns/adms#> .
+@prefix eurostat-dic:   <http://eurostat.linked-statistics.org/dic/> .
+@prefix intervals:      <http://reference.data.gov.uk/def/intervals/> .
+@prefix ex:             <http://example.org/> .
+@prefix :               <http://myApplication/configuration#> .
+
+
+# mapping
+{ [] a xl:Mapping ;
+    xl:offline "false"^^xsd:boolean ;
+
+    xl:template [
+        xl:fileName "@FILE_URL@" ;
+        xl:sheetNumber "0" ;
+        xl:templateGraph :Data ;
+        xl:transform [
+            a rdf:Seq ;
+            rdf:_1 [
+                a xl:RowShift ;
+                xl:restriction "A2:H2" ;
+                xl:breakCondition "ALLEMPTY(A2:H2)" ;
+                xl:steps "1" ;
+            ] ;
+        ]
+    ] .
+}
+
+:Data {
+    [ xl:uri "'http://semantic.digital-agenda-data.eu/data/' & URLENCODE(LCASE(IF('@DATASET_IDENTIFIER@'<>'', '@DATASET_IDENTIFIER@',IF(EMPTY(C2), '*', C2)))) & '/' & URLENCODE(LCASE(IF(EMPTY(D2), 'total', D2))) & '/' & URLENCODE(LCASE(E2)) & '/' & URLENCODE(UCASE(B2)) & '/' & URLENCODE(UCASE(A2))"^^xl:Expr ] a qb:Observation ;
+    qb:dataSet "URI('http://semantic.digital-agenda-data.eu/dataset/' & URLENCODE(LCASE(IF('@DATASET_IDENTIFIER@'<>'', '@DATASET_IDENTIFIER@',IF(EMPTY(C2), '*', C2)))))"^^xl:Expr ;
+    sdmx-measure:obsValue "F2"^^xl:Expr ;
+    dad-prop:breakdown "URI('http://semantic.digital-agenda-data.eu/codelist/breakdown/' & URLENCODE(LCASE(IF(EMPTY(D2), 'total', D2))))"^^xl:Expr ;
+    dad-prop:unit-measure "URI('http://semantic.digital-agenda-data.eu/codelist/unit-measure/' & URLENCODE(LCASE(E2)))"^^xl:Expr ;
+    dad-prop:ref-area "URI('http://eurostat.linked-statistics.org/dic/geo#' & URLENCODE(UCASE(B2)))"^^xl:Expr ;
+    dad-prop:time-period "URI('http://reference.data.gov.uk/id/gregorian-' & IF(SUBSTRING(A2,'4','6')=='-0' || SUBSTRING(A2,'4','6')=='-1', 'month', IF(SUBSTRING(A2,'4','6')=='-Q', 'quarter', IF(SUBSTRING(A2,'4','6')=='-H', 'half', 'year'))) & '/' & URLENCODE(UCASE(A2)))"^^xl:Expr ;
+    dad-prop:flag "IF(EMPTY(G2), G2, URI('http://eurostat.linked-statistics.org/dic/flags#' & URLENCODE(LCASE(G2))))"^^xl:Expr ;
+    dad-prop:note "H2"^^xl:Expr ;
+}

@@ -28,19 +28,24 @@
                             $('#createNewDatasetDialog').dialog("close");
                             return true;
                         });
+                        
+                        $("#createNewDatasetSubmit").click(function() {
+                            $('#hiddenUploadType').val($('#selContentType').val());
+                            return true;
+                        });
                     });
             } ) ( jQuery );
 
             function typeChanged(selectObj){
-            	var value = selectObj.options[selectObj.selectedIndex].value;
-            	if (value == 'OBSERVATION') {
-            		document.getElementById("graphRow").style.display = 'none';
-            		document.getElementById("datasetRow").style.display = '';
-            	}
-            	else {
-            		document.getElementById("graphRow").style.display = '';
+                var value = selectObj.options[selectObj.selectedIndex].value;
+                if (value!= null && value.startsWith('OBSERVATION_')) {
+                    document.getElementById("graphRow").style.display = 'none';
+                    document.getElementById("datasetRow").style.display = '';
+                }
+                else {
+                    document.getElementById("graphRow").style.display = '';
                     document.getElementById("datasetRow").style.display = 'none';
-            	}
+                }
             }
         // ]]>
         </script>
@@ -86,7 +91,7 @@
                            <stripes:file name="fileBean" id="fileInput" size="120"/>
                         </td>
                     </tr>
-                    <tr id="graphRow" ${actionBean.uploadType eq 'OBSERVATION' ? 'style="display:none"' : ''}>
+                    <tr id="graphRow" ${fn:startsWith(actionBean.uploadType, 'OBSERVATION_') ? 'style="display:none"' : ''}>
                         <td>
                             &nbsp;
                         </td>
@@ -94,7 +99,7 @@
                             <stripes:checkbox name="clearGraph" id="chkClearGraph"/>&nbsp;<label for="chkClearGraph">Clear all previous content of selected type</label>
                         </td>
                     </tr>
-                    <tr id="datasetRow" ${actionBean.uploadType eq 'OBSERVATION' ? '' : 'style="display:none"'}>
+                    <tr id="datasetRow" ${fn:startsWith(actionBean.uploadType, 'OBSERVATION_') ? '' : 'style="display:none"'}>
                         <td>
                             <label for="selDataset" class="question required">Target dataset:</label>
                         </td>
@@ -124,20 +129,26 @@
                     </tr>
                 </table>
 
-                <c:if test="${not empty actionBean.uploadedGraphUri}">
+                <c:if test="${not empty actionBean.touchedGraphs}">
                     <div class="tip-msg">
                         <strong>Tip</strong>
                         <p>
-                            All extracted content was imported into the following graph. Please click on this link to explore it further:<br/>
-                            <stripes:link beanclass="${actionBean.objectsInSourceActionBeanClass.name}">
-                                <stripes:param name="uri" value="${actionBean.uploadedGraphUri}"/>
-                                <stripes:param name="search" value=""/>
-                                <c:if test="${fn:contains(actionBean.uploadedGraphUri, '/data/')}">
-                                    <stripes:param name="factsheetUri" value="${fn:replace(actionBean.uploadedGraphUri, '/data/','/dataset/')}"/>
-                                </c:if>
-                                <c:out value="${actionBean.uploadedGraphUri}"/>
-                            </stripes:link>
+                            All extracted content was imported into the following graph(s). Please click on the links below to explore further:
                         </p>
+                        <ul style="list-style:none;margin:0;padding:0;">
+                         <c:forEach items="${actionBean.touchedGraphs}" var="touchedGraphUri">
+                            <li>
+                                <stripes:link beanclass="${actionBean.objectsInSourceActionBeanClass.name}">
+                                    <stripes:param name="search" value=""/>
+                                    <stripes:param name="uri" value="${touchedGraphUri}"/>
+                                    <c:if test="${fn:contains(touchedGraphUri, '/data/')}">
+                                        <stripes:param name="factsheetUri" value="${fn:replace(touchedGraphUri, '/data/','/dataset/')}"/>
+                                    </c:if>
+                                    <c:out value="${touchedGraphUri}"/>
+                           </stripes:link>
+                            </li>
+                         </c:forEach>
+                        </ul>
                     </div>
                 </c:if>
 
@@ -173,11 +184,15 @@
                     <tr>
                         <td>&nbsp;</td>
                         <td style="padding-top:10px">
-                            <stripes:submit name="createNewDataset" value="Create"/>
+                            <stripes:submit id="createNewDatasetSubmit" name="createNewDataset" value="Create"/>
                             <input type="button" id="closeCreateNewDatasetDialog" value="Cancel"/>
                         </td>
                     </tr>
                 </table>
+                
+                <div style="display:none;">
+                    <stripes:hidden id="hiddenUploadType" name="uploadType"/>
+                </div>
 
             </stripes:form>
         </div>

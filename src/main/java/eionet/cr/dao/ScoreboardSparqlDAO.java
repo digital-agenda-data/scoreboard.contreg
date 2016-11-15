@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openrdf.model.ValueFactory;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
+
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
 import eionet.cr.util.pagination.PagingRequest;
@@ -73,9 +78,8 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @return
      * @throws DAOException
      */
-    List<Pair<String, String>>
-            getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter, boolean isAdmin)
-                    throws DAOException;
+    List<Pair<String, String>> getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter, boolean isAdmin)
+            throws DAOException;
 
     /**
      *
@@ -110,8 +114,7 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @throws DAOException
      *             Any sort of exception is wrapped into this one.
      */
-    int exportCodelistItems(String itemType, File templateFile, Map<String, Integer> mappings, File targetFile)
-            throws DAOException;
+    int exportCodelistItems(String itemType, File templateFile, Map<String, Integer> mappings, File targetFile) throws DAOException;
 
     /**
      * Removes all triples where the subject is the given subject URI and the predicate is dcterms:modified and the graph is the
@@ -247,9 +250,8 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @return Pair where left-side is the number of triples deleted, and right-side is the executed SPARQL delete statement.
      * @throws DAOException Any sort of exception that happens is wrapped into this one.
      */
-    Pair<Integer, String>
-            deleteObservations(String datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
-                    throws DAOException;
+    Pair<Integer, String> deleteObservations(String datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
+            throws DAOException;
 
     /**
      * Returns earliest observation year of the given indicator in the given dataset.
@@ -260,4 +262,26 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @throws DAOException Any sort of exception that happens is wrapped into this one.
      */
     int getEarliestObservationYear(String indicatorUri, String datasetUri) throws DAOException;
+
+    /**
+     * Creates repository connection and value factory and then delegates call to
+     * {@link #updateTouchedDatasets(Set, DSD, RepositoryConnection, ValueFactory)}.
+     *
+     * @param datasetUris
+     * @param dsd
+     * @throws RepositoryException
+     */
+    void updateTouchedDatasets(Set<String> datasetUris, DSD dsd) throws RepositoryException;
+
+    /**
+     * Updates given datasets after observations import into them.
+     *
+     * @param datasetUris Given dataset URIs.
+     * @param dsd The DSD of given datasets.
+     * @param repoConn
+     * @param vf
+     * @throws RepositoryException
+     */
+    void updateTouchedDatasets(Set<String> datasetUris, DSD dsd, RepositoryConnection repoConn, ValueFactory vf)
+            throws RepositoryException;
 }

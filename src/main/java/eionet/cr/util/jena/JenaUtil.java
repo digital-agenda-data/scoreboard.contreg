@@ -1,8 +1,11 @@
 package eionet.cr.util.jena;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.BNode;
 import org.openrdf.model.URI;
@@ -16,9 +19,13 @@ import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.rdf.model.impl.PropertyImpl;
 
+import eionet.cr.common.CRRuntimeException;
+import eionet.cr.common.Predicates;
 import eionet.cr.util.Pair;
 import eionet.cr.util.sesame.SesameUtil;
 
@@ -28,6 +35,9 @@ import eionet.cr.util.sesame.SesameUtil;
  * @author Jaanus
  */
 public class JenaUtil {
+
+    /** */
+    private static final Logger LOGGER = Logger.getLogger(JenaUtil.class);
 
     /**
      * Disable utility class constructor.
@@ -59,9 +69,10 @@ public class JenaUtil {
      * @return
      * @throws OpenRDFException
      */
-    public static Pair<Integer, Integer> saveModel(Model model, String graphUri, boolean clearGraph, RDFHandler stmtListener)
+    public static Pair<Integer, Integer> saveModel(Model model, String fixedGraphUri, boolean clearGraph, RDFHandler stmtListener)
             throws OpenRDFException {
 
+        HashSet<URI> clearedGraphs = new HashSet<>();
         HashSet<String> distinctNonAnonymousResources = new HashSet<String>();
         RepositoryConnection repoConn = null;
         try {
@@ -69,8 +80,12 @@ public class JenaUtil {
             repoConn.setAutoCommit(false);
 
             ValueFactory vf = repoConn.getValueFactory();
-            URI graphURI = vf.createURI(graphUri);
             int addedStmtCounter = 0;
+
+            Map<String, String> dynamicSubjectGraphs = new HashMap<>();
+            if (StringUtils.isBlank(fixedGraphUri)) {
+                fillSubjectGraphs(model, dynamicSubjectGraphs);
+            }
 
             StmtIterator statements = model.listStatements();
             while (statements.hasNext()) {
@@ -121,14 +136,35 @@ public class JenaUtil {
                     }
                 }
 
-                // If first triple to be added, and the graph should be cleared, then do so here now.
-                if (clearGraph && addedStmtCounter == 0) {
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(String.format("Processing statement: <%s>\t<%s>\t<%s>", sesameSubject.stringValue(),
+                            sesamePredicate.stringValue(), sesameObject.stringValue()));
+                }
+
+                URI graphURI = StringUtils.isBlank(fixedGraphUri) ? null : vf.createURI(fixedGraphUri);
+                if (graphURI == null) {
+                    String graphUriString = dynamicSubjectGraphs.get(sesameSubject.stringValue());
+                    if (StringUtils.isNotBlank(graphUriString)) {
+                        graphURI = vf.createURI(graphUriString);
+                    }
+                }
+
+                if (graphURI == null) {
+                    throw new CRRuntimeException("Failed to detect graph URI for subject " + sesameSubject.stringValue());
+                } else if (clearGraph && !clearedGraphs.contains(graphURI)) {
+
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace("Clearing graph: " + graphURI);
+                    }
+
                     repoConn.clear(graphURI);
+                    clearedGraphs.add(graphURI);
                 }
 
                 repoConn.add(sesameSubject, sesamePredicate, sesameObject, graphURI);
                 if (stmtListener != null) {
-                    stmtListener.handleStatement(new ContextStatementImpl(sesameSubject, sesamePredicate, sesameObject, graphURI));
+                    stmtListener
+                            .handleStatement(new ContextStatementImpl(sesameSubject, sesamePredicate, sesameObject, graphURI));
                 }
 
                 addedStmtCounter++;
@@ -153,6 +189,22 @@ public class JenaUtil {
             throw e;
         } finally {
             SesameUtil.close(repoConn);
+        }
+    }
+
+    /**
+     *
+     * @param model
+     * @param dynamicSubjectGraphs
+     */
+    private static void fillSubjectGraphs(Model model, Map<String, String> dynamicSubjectGraphs) {
+        StmtIterator datasetStatements =
+                model.listStatements((Resource) null, new PropertyImpl(Predicates.DATACUBE_DATA_SET), (RDFNode) null);
+        while (datasetStatements != null && datasetStatements.hasNext()) {
+            Statement stmt = datasetStatements.next();
+            String datasetUri = stmt.getObject().toString();
+            String graphUri = StringUtils.replace(datasetUri, "/dataset/", "/data/");
+            dynamicSubjectGraphs.put(stmt.getSubject().getURI(), graphUri);
         }
     }
 

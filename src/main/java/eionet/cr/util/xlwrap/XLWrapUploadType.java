@@ -8,17 +8,21 @@ import org.apache.commons.lang.WordUtils;
 
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.common.Subjects;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 
 public enum XLWrapUploadType {
 
-    INDICATOR("Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"), INDICATOR_GROUP(
-            "Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"), BREAKDOWN(
-            "Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"), BREAKDOWN_GROUP(
-            "Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
-    UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"), SOURCE(
-            "Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"), OBSERVATION(
-            "Observations", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION);
+    // @formatter:on
+    INDICATOR("Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"),
+    INDICATOR_GROUP("Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"),
+    BREAKDOWN("Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"),
+    BREAKDOWN_GROUP("Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
+    UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"),
+    SOURCE("Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"),
+    OBSERVATION_SCOREBOARD("Observations: Scoreboard", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION, DSD.SCOREBOARD),
+    OBSERVATION_DESI("Observations: DESI", "File containing DESI observations", "", Subjects.DATACUBE_OBSERVATION, DSD.DESI);
 
+    // @formatter:off
     /** */
     private static final String GRAPH_TEMPLATE = "http://semantic.digital-agenda-data.eu/codelist/@type@/";
     private static final String SUBJECTS_TYPE_TEMPLATE = "http://semantic.digital-agenda-data.eu/def/class/@type@";
@@ -26,6 +30,8 @@ public enum XLWrapUploadType {
     /** */
     public static final String MAPPING_FILE_EXTENSION = "trig";
     public static final String SPREADSHEET_FILE_EXTENSION = "xls";
+    public static final String SPREADSHEETS_PATH = "/spreadsheets/";
+    public static final String TRIG_FILES__PATH = "/trig/";
 
     /** */
     private String title;
@@ -38,6 +44,7 @@ public enum XLWrapUploadType {
     /** */
     private File mappingTemplate;
     private File spreadsheetTemplate;
+    private DSD observationsDsd;
 
     /**
      * Basic constructor.
@@ -65,7 +72,7 @@ public enum XLWrapUploadType {
 
         // Prepare Trig mapping template file reference.
 
-        String mappingTemplateFileName = normalizedName + "." + MAPPING_FILE_EXTENSION;
+        String mappingTemplateFileName = TRIG_FILES__PATH + normalizedName + "." + MAPPING_FILE_EXTENSION;
         URL mappingTemplateURL = getClass().getClassLoader().getResource(mappingTemplateFileName);
         if (mappingTemplateURL == null) {
             throw new CRRuntimeException("Could not locate mapping template by the name of " + mappingTemplateFileName);
@@ -78,7 +85,7 @@ public enum XLWrapUploadType {
 
         // Prepare download spreadsheet template file reference.
 
-        String spreadsheetTemplateFileName = normalizedName + "." + SPREADSHEET_FILE_EXTENSION;
+        String spreadsheetTemplateFileName = SPREADSHEETS_PATH + normalizedName + "." + SPREADSHEET_FILE_EXTENSION;
         URL spreadsheetTemplateURL = getClass().getClassLoader().getResource(spreadsheetTemplateFileName);
         if (spreadsheetTemplateURL == null) {
             throw new CRRuntimeException("Could not locate spreadsheet template by the name of " + spreadsheetTemplateFileName);
@@ -103,6 +110,18 @@ public enum XLWrapUploadType {
         this(title, hint);
         this.graphUri = graphUri;
         this.subjectsTypeUri = subjectsTypeUri;
+    }
+
+    /**
+     * @param title
+     * @param hint
+     * @param graphUri
+     * @param subjectsTypeUri
+     * @param observationsDsd
+     */
+    private XLWrapUploadType(String title, String hint, String graphUri, String subjectsTypeUri, DSD observationsDsd) {
+        this(title, hint, graphUri, subjectsTypeUri);
+        this.observationsDsd = observationsDsd;
     }
 
     /**
@@ -170,5 +189,12 @@ public enum XLWrapUploadType {
         }
 
         return null;
+    }
+
+    /**
+     * @return the observationsDsd
+     */
+    public DSD getObservationsDsd() {
+        return observationsDsd;
     }
 }
