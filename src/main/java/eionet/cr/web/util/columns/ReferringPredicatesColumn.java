@@ -63,13 +63,14 @@ public class ReferringPredicatesColumn extends SearchResultColumn {
      *
      * @see eionet.cr.web.util.search.SearchResultColumn#format(java.lang.Object)
      */
+    @Override
     public String format(Object object) {
 
         if (object instanceof SubjectDTO) {
 
             SubjectDTO subjectDTO = (SubjectDTO) object;
 
-            /* collect labels of all predicates pointing to referringToHash (ignore derived object values) */
+            // Collect labels of all predicates pointing to referringToHash (ignore derived object values).
 
             LinkedHashSet<String> labels = new LinkedHashSet<String>();
             Map<String, Collection<ObjectDTO>> predicatesObjects = subjectDTO.getPredicates();
@@ -93,11 +94,11 @@ public class ReferringPredicatesColumn extends SearchResultColumn {
                 }
             }
 
-            /* return the above-found labels as a comma-separated list */
-
-            return labels.isEmpty() ? "" : Util.toCSV(labels);
-        } else
-            return object.toString();
+            // Return the above-found labels as a comma-separated list.
+            return labels.isEmpty() ? StringUtils.EMPTY : Util.toCSV(labels);
+        } else {
+            return object == null ? StringUtils.EMPTY : object.toString();
+        }
     }
 
     /*
@@ -105,6 +106,7 @@ public class ReferringPredicatesColumn extends SearchResultColumn {
      *
      * @see eionet.cr.web.util.search.SearchResultColumn#getSortParamValue()
      */
+    @Override
     public String getSortParamValue() {
         return getClass().getSimpleName();
     }
