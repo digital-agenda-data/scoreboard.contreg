@@ -5,13 +5,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -21,6 +14,12 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractActionBean;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
  * An action that enables administrators to perform various delete operations on specified DataCube observations.
@@ -37,7 +36,7 @@ public class ObservationDeletionActionBean extends AbstractActionBean {
     private static final String DEFAULT_JSP = "/pages/admin/observationsDeletion.jsp";
 
     /** URI of the dataset where the observations should be deleted from. */
-    private String datasetUri;
+    private String datasetUris;
 
     /** Whitespace-separated URIs of indicators whose observations in specified dataset must be deleted. */
     private String indicatorUris;
@@ -67,14 +66,23 @@ public class ObservationDeletionActionBean extends AbstractActionBean {
             return resolution;
         }
 
+        // Validate supplied datasets.
+        List<String> datasetUrls = null;
+        try {
+            datasetUrls = parseUrls(datasetUris);
+            if (CollectionUtils.isEmpty(datasetUrls)) {
+                addCautionMessage("At least one dataset is mandatory!!");
+                return resolution;
+            }
+        } catch (MalformedURLException e) {
+            addCautionMessage("At least one of the supplied indicators is invalid URL!");
+            return resolution;
+        }
+
         // Validate supplied indicators.
         List<String> indicatorUrls = null;
         try {
             indicatorUrls = parseUrls(indicatorUris);
-            if (CollectionUtils.isEmpty(indicatorUrls)) {
-                addCautionMessage("No indicators supplied!");
-                return resolution;
-            }
         } catch (MalformedURLException e) {
             addCautionMessage("At least one of the supplied indicators is invalid URL!");
             return resolution;
@@ -92,7 +100,7 @@ public class ObservationDeletionActionBean extends AbstractActionBean {
         // Perform execution.
         try {
             ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
-            Pair<Integer, String> resultPair = dao.deleteObservations(datasetUri, indicatorUrls, timePeriodUrls);
+            Pair<Integer, String> resultPair = dao.deleteObservations(datasetUrls, indicatorUrls, timePeriodUrls);
             int updateCount = resultPair.getLeft().intValue();
             executedSparql = resultPair.getRight();
             addSystemMessage("Operation successfully executed! Number of deleted triples: " + updateCount);
@@ -156,17 +164,17 @@ public class ObservationDeletionActionBean extends AbstractActionBean {
     }
 
     /**
-     * @return the datasetUri
+     * @return the datasetUris
      */
-    public String getDatasetUri() {
-        return datasetUri;
+    public String getDatasetUris() {
+        return datasetUris;
     }
 
     /**
-     * @param datasetUri the datasetUri to set
+     * @param datasetUris the datasetUris to set
      */
-    public void setDatasetUri(String datasetUri) {
-        this.datasetUri = datasetUri;
+    public void setDatasetUris(String datasetUri) {
+        this.datasetUris = datasetUri;
     }
 
     /**

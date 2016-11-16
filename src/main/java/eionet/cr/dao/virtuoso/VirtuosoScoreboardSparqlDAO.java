@@ -1048,24 +1048,15 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         String sql = DELETE_OBSERVATIONS;
 
         boolean indicatorsGiven = CollectionUtils.isNotEmpty(indicatorUris);
-        if (!indicatorsGiven) {
+        if (indicatorsGiven) {
             sql = sql.replace("#indic", "");
         }
 
         boolean timePeriodsGiven = CollectionUtils.isNotEmpty(timePeriodUris);
-        if (!timePeriodsGiven) {
+        if (timePeriodsGiven) {
             sql = sql.replace("#time", "");
+            sql = sql.replace("@TIME_PERIOD_IRIS@", Util.csv("iri(??)", timePeriodUris.size()));
         }
-
-//        boolean noTimes = CollectionUtils.isEmpty(timePeriodUris);
-//        String datasetGraphUri = StringUtils.replace(datasetUri, "/dataset/", "/data/");
-//
-//        if (noTimes) {
-//            sql = DELETE_OBSERVATIONS_OF_INDICATOR;
-//        } else {
-//            sql = DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIMES;
-//            sql = sql.replace("@TIME_PERIOD_IRIS@", Util.csv("iri(??)", timePeriodUris.size()));
-//        }
 
         int updateCount = 0;
         Connection conn = null;
@@ -1074,13 +1065,12 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         try {
             conn = SesameUtil.getSQLConnection();
-
             pstmt = conn.prepareStatement(sql);
-            boolean datasetUpdated = false;
 
             for (String datasetUri : datasetUris) {
 
                 String datasetGraphUri = StringUtils.replace(datasetUri, "/dataset/", "/data/");
+                boolean datasetUpdated = false;
 
                 if (indicatorsGiven) {
                     // Do it for each indicator.
@@ -1098,6 +1088,10 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                         }
 
                         updateCount += pstmt.executeUpdate();
+                        if (updateCount > 0 && !datasetUpdated) {
+                            updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
+                            datasetUpdated = true;
+                        }
                     }
                 } else {
                     // Do it for given dataset and / or time period.
@@ -1113,9 +1107,11 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                     }
 
                     updateCount += pstmt.executeUpdate();
+                    if (updateCount > 0 && !datasetUpdated) {
+                        updateDatasetModificationDate(conn, datasetUri, datasetUri);
+                        datasetUpdated = true;
+                    }
                 }
-
-                //updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
             }
 
             LOGGER.debug(String.format("A total of %d triples deleted!", updateCount));
