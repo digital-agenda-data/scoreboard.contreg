@@ -250,7 +250,7 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @return Pair where left-side is the number of triples deleted, and right-side is the executed SPARQL delete statement.
      * @throws DAOException Any sort of exception that happens is wrapped into this one.
      */
-    Pair<Integer, String> deleteObservations(String datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
+    Pair<Integer, String> deleteObservations(Collection<String> datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
             throws DAOException;
 
     /**
