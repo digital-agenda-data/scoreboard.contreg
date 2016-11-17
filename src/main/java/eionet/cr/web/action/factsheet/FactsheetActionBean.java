@@ -106,6 +106,9 @@ public class FactsheetActionBean extends AbstractActionBean {
     /** Name of the resource file containing the list of fully editable types. */
     private static final String FULLY_EDITABLE_TYPES_FILE_NAME = "fully-editable-types.txt";
 
+    /** Name of the resource file containing the common properties manually addible to any subjects. */
+    private static final String COMMON_ADDIBLE_PROPERTIES_FILE = "common-addible-properties.xml";
+
     /** Name of the resource file containing the configuration properties manually addible to datasets. */
     private static final String DATASET_ADDIBLE_PROPERTIES_FILE = "dataset-addible-properties.xml";
 
@@ -119,7 +122,7 @@ public class FactsheetActionBean extends AbstractActionBean {
     private static final String ADDBL_PROPS_SESSION_ATTR_PREFIX = "addibleProperties_";
 
     /** */
-    private static final List<HTMLSelectOption> DATACUBE_DATASET_ADDBL_PROPS = createDataCubeDatasetAddibleProperties2();
+    private static final List<HTMLSelectOption> DATACUBE_DATASET_ADDBL_PROPS = createDataCubeDatasetAddibleProperties();
 
     /** */
     private static final List<HTMLSelectOption> COMMON_ADDBL_PROPS = createCommonAddibleProperties();
@@ -1062,12 +1065,26 @@ public class FactsheetActionBean extends AbstractActionBean {
      *
      * @return
      */
-    private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties2() {
+    private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties() {
+        return loadAddibleProperties(DATASET_ADDIBLE_PROPERTIES_FILE);
+    }
 
+    /**
+     * @return
+     */
+    private static List<HTMLSelectOption> createCommonAddibleProperties() {
+        return loadAddibleProperties(COMMON_ADDIBLE_PROPERTIES_FILE);
+    }
+
+    /**
+     *
+     * @param configurationFileName
+     * @return
+     */
+    private static List<HTMLSelectOption> loadAddibleProperties(String configurationFileName) {
         List<HTMLSelectOption> resultList = new ArrayList<>();
-
         try {
-            XMLConfiguration config = new XMLConfiguration(DATASET_ADDIBLE_PROPERTIES_FILE);
+            XMLConfiguration config = new XMLConfiguration(configurationFileName);
             config.setThrowExceptionOnMissing(true);
             List<HierarchicalConfiguration> props = config.configurationsAt("property");
             for (HierarchicalConfiguration prop : props) {
@@ -1079,138 +1096,10 @@ public class FactsheetActionBean extends AbstractActionBean {
                         htmlSelectOption.getLabel(), htmlSelectOption.getTitle()));
             }
         } catch (ConfigurationException e) {
-            LOGGER.error("Failed to load XML-formatted properties from " + DATASET_ADDIBLE_PROPERTIES_FILE, e);
+            LOGGER.error("Failed to load XML-formatted properties from " + configurationFileName, e);
         }
 
         return resultList;
-    }
-
-    /**
-     *
-     * @return
-     */
-    private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties() {
-
-        ArrayList<HTMLSelectOption> result = new ArrayList<HTMLSelectOption>();
-
-        HTMLSelectOption option = new HTMLSelectOption(Predicates.DCTERMS_TITLE, "Title");
-        option.setTitle("DublinCore title. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.RDFS_LABEL, "Label");
-        option.setTitle("RDF Schema label, i.e. a human-readable name that applications "
-                + "can use for displaying in user interfaces. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.FOAF_NAME, "Name");
-        option.setTitle("FOAF name, i.e. a name for some thing as defined in FOAF vocabulary. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_DESCRIPTION, "Description");
-        option.setTitle("DublinCore description, i.e. a human-readable description of the resource. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.ECODP_KEYWORD, "Keyword");
-        option.setTitle("A word or phrase used to succinctly describe an asset. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_PUBLISHER, "Publisher");
-        option.setTitle("DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. "
-                + "May be any free text, but it is advised to use URLs.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_LICENSE, "License");
-        option.setTitle("A legal document giving official permission to do something with the resource. "
-                + "Usually a URL pointing to the document.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.FOAF_PAGE, "Page");
-        option.setTitle("FOAF page, i.e. a URL pointing to the web page or document about the resource.");
-        result.add(option);
-
-        return result;
-    }
-
-    /**
-     * @return
-     */
-    private static List<HTMLSelectOption> createCommonAddibleProperties() {
-
-        ArrayList<HTMLSelectOption> result = new ArrayList<HTMLSelectOption>();
-
-        HTMLSelectOption option = new HTMLSelectOption(Predicates.RDFS_LABEL, "Title");
-        option.setTitle("RDF Schema label, i.e. a human-readable name that applications "
-                + "can use for displaying in user interfaces. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.CR_TAG, "Tag");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.RDFS_COMMENT, "Comment");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_TITLE, "Title");
-        option.setTitle("DublinCore title. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_ABSTRACT, "Abstract");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_CONTRIBUTOR, "Contributor");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_CREATOR, "Creator");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_DATE, "Date");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_DESCRIPTION, "Description");
-        option.setTitle("DublinCore description, i.e. a human-readable description of the resource. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_FORMAT, "Format");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_IDENTIFIER, "Identifier");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_LANGUAGE, "Language");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_LICENSE, "Licenese");
-        option.setTitle("A legal document giving official permission to do something with the resource. "
-                + "Usually a URL pointing to the document.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_MODIFIED, "Modified");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_PUBLISHER, "Publisher");
-        option.setTitle("DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. "
-                + "May be any free text, but it is advised to use URLs.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_RIGHTS, "Rights");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_SOURCE, "Source");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_SUBJECT, "Subject");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.RDFS_DOMAIN, "rdfs:domain");
-        result.add(option);
-
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_ALT_LABEL, "altLabel"));
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_PREF_LABEL, "prefLabel"));
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_NOTATION, "notation"));
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_NOTE, "notes"));
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_DEFINITION, "definition"));
-        result.add(HTMLSelectOption.createFromUri(Predicates.SKOS_HAS_TOP_CONCEPT, "hasTopConcept"));
-
-        return result;
     }
 
     /**
