@@ -36,16 +36,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.HandlesEvent;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.SimpleError;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
 import org.apache.commons.beanutils.BeanComparator;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -88,6 +78,15 @@ import eionet.cr.web.util.HTMLSelectOption;
 import eionet.cr.web.util.tabs.FactsheetTabMenuHelper;
 import eionet.cr.web.util.tabs.TabElement;
 import eionet.cr.web.util.tabs.TabId;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.SimpleError;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
  * Factsheet.
@@ -454,7 +453,7 @@ public class FactsheetActionBean extends AbstractActionBean {
 
         String dctModifiedSubjectUri = null;
 
-        if (types.contains(Subjects.DATACUBE_DATA_SET)) {
+        if (types.contains(Subjects.DATACUBE_DATA_SET) || types.contains(Subjects.DCAT_DATASET)) {
             dctModifiedSubjectUri = uri;
         } else if (types.contains(Subjects.DATACUBE_OBSERVATION)) {
             if (currSubj != null) {

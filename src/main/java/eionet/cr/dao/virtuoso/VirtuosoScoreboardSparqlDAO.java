@@ -420,6 +420,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             // Add properties for the dataset itself
             repoConn.add(identifierURI, identifierPredicateURI, identifierURI, graphURI);
             repoConn.add(identifierURI, typePredicateURI, vf.createURI(Subjects.DATACUBE_DATA_SET), graphURI);
+            repoConn.add(identifierURI, typePredicateURI, vf.createURI(Subjects.DCAT_DATASET), graphURI);
             repoConn.add(identifierURI, titlePredicateURI, vf.createLiteral(dctermsTitle), graphURI);
             repoConn.add(identifierURI, labelPredicateURI, vf.createLiteral(identifier), graphURI);
             repoConn.add(identifierURI, distributionPredicateURI, distributionURI, graphURI);
@@ -1250,6 +1251,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
         URI cubeDataSetURI = vf.createURI(Subjects.DATACUBE_DATA_SET);
+        URI dcatDatasetURI = vf.createURI(Subjects.DCAT_DATASET);
 
         URI dcTermsIdentifierURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
         URI rdfsLabelURI = vf.createURI(Predicates.RDFS_LABEL);
@@ -1275,6 +1277,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             // Add other triples.
 
             repoConn.add(datasetURI, rdfTypeURI, cubeDataSetURI, graphURI);
+            repoConn.add(datasetURI, rdfTypeURI, dcatDatasetURI, graphURI);
 
             boolean alreadyHasIdentifier = repoConn.hasStatement(datasetURI, dcTermsIdentifierURI, null, false, emptyResourceArray);
             if (!alreadyHasIdentifier) {

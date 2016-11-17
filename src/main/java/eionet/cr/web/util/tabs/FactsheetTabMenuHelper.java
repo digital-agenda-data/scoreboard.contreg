@@ -261,7 +261,8 @@ public final class FactsheetTabMenuHelper {
      * @return
      */
     private boolean displayObjectsInSourceTab() {
-        return uriIsHarvestSource || uriIsGraph || rdfTypes.contains(Subjects.DATACUBE_DATA_SET) || isScoreboardCodelist();
+        return uriIsHarvestSource || uriIsGraph || rdfTypes.contains(Subjects.DATACUBE_DATA_SET)
+                || rdfTypes.contains(Subjects.DCAT_DATASET) || isScoreboardCodelist();
     }
 
     /**
@@ -275,7 +276,7 @@ public final class FactsheetTabMenuHelper {
         String factsheetUri = null;
         String graphUri = subject.getUri();
 
-        if (rdfTypes.contains(Subjects.DATACUBE_DATA_SET)) {
+        if (rdfTypes.contains(Subjects.DATACUBE_DATA_SET) || rdfTypes.contains(Subjects.DCAT_DATASET)) {
             tabTitle = "Dataset contents";
             factsheetUri = graphUri;
             graphUri = StringUtils.replace(graphUri, "/dataset/", "/data/");
@@ -295,13 +296,6 @@ public final class FactsheetTabMenuHelper {
         }
 
         return tab;
-    }
-
-    /**
-     * @return
-     */
-    private boolean isDataCubeDataset() {
-        return rdfTypes.contains(Subjects.DATACUBE_DATA_SET);
     }
 
     /**
@@ -337,6 +331,7 @@ public final class FactsheetTabMenuHelper {
         HashMap<String, String> map = new HashMap<String, String>();
 
         map.put(Subjects.DATACUBE_DATA_SET, "Dataset");
+        map.put(Subjects.DCAT_DATASET, "Dataset");
         map.put(Subjects.DATACUBE_OBSERVATION, "Observation");
         map.put(Subjects.DAS_INDICATOR_GROUP, "Indicator group");
         map.put(Subjects.DAS_INDICATOR, "Indicator");
