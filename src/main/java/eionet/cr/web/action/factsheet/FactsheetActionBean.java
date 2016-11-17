@@ -38,6 +38,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanComparator;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.HierarchicalConfiguration;
+import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -103,6 +106,9 @@ public class FactsheetActionBean extends AbstractActionBean {
     /** Name of the resource file containing the list of fully editable types. */
     private static final String FULLY_EDITABLE_TYPES_FILE_NAME = "fully-editable-types.txt";
 
+    /** Name of the resource file containing the configuration properties manually addible to datasets. */
+    private static final String DATASET_ADDIBLE_PROPERTIES_FILE = "dataset-addible-properties.xml";
+
     /** */
     private static final Logger LOGGER = Logger.getLogger(FactsheetActionBean.class);
 
@@ -113,7 +119,7 @@ public class FactsheetActionBean extends AbstractActionBean {
     private static final String ADDBL_PROPS_SESSION_ATTR_PREFIX = "addibleProperties_";
 
     /** */
-    private static final List<HTMLSelectOption> DATACUBE_DATASET_ADDBL_PROPS = createDataCubeDatasetAddibleProperties();
+    private static final List<HTMLSelectOption> DATACUBE_DATASET_ADDBL_PROPS = createDataCubeDatasetAddibleProperties2();
 
     /** */
     private static final List<HTMLSelectOption> COMMON_ADDBL_PROPS = createCommonAddibleProperties();
@@ -427,11 +433,8 @@ public class FactsheetActionBean extends AbstractActionBean {
         // Since user registrations URI was used as triple source, add it to HARVEST_SOURCE too
         // (but set interval minutes to 0, to avoid it being background-harvested)
         if (sourceUri != null && sourceUri.equals(getUser().getRegistrationsUri())) {
-            DAOFactory
-            .get()
-            .getDao(HarvestSourceDAO.class)
-            .addSourceIgnoreDuplicate(
-                    HarvestSourceDTO.create(sourceUri, true, 0, getUser().getUserName()));
+            DAOFactory.get().getDao(HarvestSourceDAO.class)
+                    .addSourceIgnoreDuplicate(HarvestSourceDTO.create(sourceUri, true, 0, getUser().getUserName()));
         }
 
         return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
@@ -468,7 +471,8 @@ public class FactsheetActionBean extends AbstractActionBean {
             if (i < 0) {
                 dctModifiedSubjectUri = uri;
             } else {
-                dctModifiedSubjectUri = StringUtils.substringBefore(uri, CODELIST_SUBSTRING) + CODELIST_SUBSTRING + tail.substring(0, i) ;
+                dctModifiedSubjectUri =
+                        StringUtils.substringBefore(uri, CODELIST_SUBSTRING) + CODELIST_SUBSTRING + tail.substring(0, i);
             }
         }
 
@@ -726,8 +730,8 @@ public class FactsheetActionBean extends AbstractActionBean {
      */
     public boolean isCurrentlyHarvested() {
 
-        return uri == null ? false : (CurrentHarvests.contains(uri) || UrgentHarvestQueue.isInQueue(uri) || CurrentLoadedDatasets
-                .contains(uri));
+        return uri == null ? false
+                : (CurrentHarvests.contains(uri) || UrgentHarvestQueue.isInQueue(uri) || CurrentLoadedDatasets.contains(uri));
     }
 
     /**
@@ -1052,6 +1056,33 @@ public class FactsheetActionBean extends AbstractActionBean {
         }
 
         return new RedirectResolution(getClass()).addParameter("uri", uri);
+    }
+
+    /**
+     *
+     * @return
+     */
+    private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties2() {
+
+        List<HTMLSelectOption> resultList = new ArrayList<>();
+
+        try {
+            XMLConfiguration config = new XMLConfiguration(DATASET_ADDIBLE_PROPERTIES_FILE);
+            config.setThrowExceptionOnMissing(true);
+            List<HierarchicalConfiguration> props = config.configurationsAt("property");
+            for (HierarchicalConfiguration prop : props) {
+
+                HTMLSelectOption htmlSelectOption =
+                        new HTMLSelectOption(prop.getString("uri"), prop.getString("label"), prop.getString("title"));
+                resultList.add(htmlSelectOption);
+                System.out.println(String.format("Found property %s: label = %s, title = %s", htmlSelectOption.getValue(),
+                        htmlSelectOption.getLabel(), htmlSelectOption.getTitle()));
+            }
+        } catch (ConfigurationException e) {
+            LOGGER.error("Failed to load XML-formatted properties from " + DATASET_ADDIBLE_PROPERTIES_FILE, e);
+        }
+
+        return resultList;
     }
 
     /**

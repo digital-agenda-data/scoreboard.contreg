@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<properties>
+    <property>
+        <uri>http://purl.org/dc/terms/title</uri>
+        <label>Title</label>
+        <title>DublinCore title. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://www.w3.org/2000/01/rdf-schema#label</uri>
+        <label>Label</label>
+        <title>RDF Schema label, i.e. a human-readable name that applications can use for displaying in user interfaces. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://xmlns.com/foaf/0.1/name</uri>
+        <label>Name</label>
+        <title>FOAF name, i.e. a name for some thing as defined in FOAF vocabulary. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://purl.org/dc/terms/description</uri>
+        <label>Description</label>
+        <title>DublinCore description, i.e. a human-readable description of the resource. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://ec.europa.eu/open-data/ontologies/ec-odp#keyword</uri>
+        <label>Keyword</label>
+        <title>A word or phrase used to succinctly describe an asset. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://purl.org/dc/terms/publisher</uri>
+        <label>Publisher</label>
+        <title>DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. May be any free text, but it is advised to use URLs.</title>
+    </property>
+    <property>
+        <uri>http://purl.org/dc/terms/license</uri>
+        <label>License</label>
+        <title>A legal document giving official permission to do something with the resource. Usually a URL pointing to the document.</title>
+    </property>
+    <property>
+        <uri>http://xmlns.com/foaf/0.1/page</uri>
+        <label>Page</label>
+        <title>FOAF page, i.e. a URL pointing to the web page or document about the resource.</title>
+    </property>
+</properties>
