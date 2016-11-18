@@ -22,8 +22,13 @@
     </property>
     <property>
         <uri>http://ec.europa.eu/open-data/ontologies/ec-odp#keyword</uri>
-        <label>Keyword</label>
-        <title>A word or phrase used to succinctly describe an asset. May be any free text.</title>
+        <label>Keyword (for ODP)</label>
+        <title>A word or phrase used to succinctly describe an asset in Open Data Portal. May be any free text.</title>
+    </property>
+    <property>
+        <uri>http://www.w3.org/ns/dcat#keyword</uri>
+        <label>Keyword (DCAT)</label>
+        <title>A keyword or tag describing the dataset. May be any free text.</title>
     </property>
     <property>
         <uri>http://purl.org/dc/terms/publisher</uri>
@@ -39,5 +44,10 @@
         <uri>http://xmlns.com/foaf/0.1/page</uri>
         <label>Page</label>
         <title>FOAF page, i.e. a URL pointing to the web page or document about the resource.</title>
+    </property>
+    <property>
+        <uri>http://www.w3.org/ns/dcat#landingPage</uri>
+        <label>Landing page</label>
+        <title>A Web page that can be navigated to in a Web browser to gain access to the dataset, its distributions and/or additional information.</title>
     </property>
 </properties>

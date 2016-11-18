@@ -165,6 +165,8 @@ public interface Predicates {
 
     String DCAT_DISTRIBUTION = "http://www.w3.org/ns/dcat#distribution";
     String DCAT_ACCESS_URL = "http://www.w3.org/ns/dcat#accessURL";
+    String DCAT_CONTACT_POINT = "http://www.w3.org/ns/dcat#contactPoint";
+    String DCAT_KEYWORD = "http://www.w3.org/ns/dcat#keyword";
 
     String ECODP_KEYWORD = "http://ec.europa.eu/open-data/ontologies/ec-odp#keyword";
     String ECODP_FORMAT = "http://ec.europa.eu/open-data/ontologies/ec-odp#format";
