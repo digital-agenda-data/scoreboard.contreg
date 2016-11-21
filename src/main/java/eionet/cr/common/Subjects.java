@@ -90,6 +90,20 @@ public interface Subjects {
 
     String DCAT_WEB_SERVICE = "http://www.w3.org/ns/dcat#WebService";
     String DCAT_DATASET = "http://www.w3.org/ns/dcat#Dataset";
+    String DCAT_DISTRIBUTION = "http://www.w3.org/ns/dcat#Distribution";
 
     String ADMS_STATUS_COMPLETED = "http://purl.org/adms/status/Completed";
+
+    String PUBLICATIONS_ACCESS_RIGHTS = "http://publications.europa.eu/resource/authority/access-right/PUBLIC";
+    String PUBLICATIONS_ENGLISH = "http://publications.europa.eu/resource/authority/language/ENG";
+    String PUBLICATIONS_CNECT = "http://publications.europa.eu/resource/authority/corporate-body/CNECT";
+    String PUBLICATIONS_CNECT_F4 = "http://publications.europa.eu/resource/authority/corporate-body/F4";
+    String PUBLICATIONS_SUBJECT = "http://purl.org/linked-data/sdmx/2009/subject#3.3.3";
+    String PUBLICATIONS_THEME_GOVE = "http://publications.europa.eu/resource/authority/data-theme/GOVE";
+    String PUBLICATIONS_THEME_SOCI = "http://publications.europa.eu/resource/authority/data-theme/SOCI";
+    String PUBLICATIONS_THEME_TECH = "http://publications.europa.eu/resource/authority/data-theme/TECH";
+    String PUBLICATIONS_RDF_TURTLE = "http://publications.europa.eu/resource/authority/file-type/RDF_TURTLE";
+    String PUBLICATIONS_DOWNLOADABLE_FILE = "http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE";
+
+    String DIGITAL_AGENDA_PAGE = "http://digital-agenda-data.eu/";
 }

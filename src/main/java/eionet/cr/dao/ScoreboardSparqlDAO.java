@@ -44,6 +44,12 @@ public interface ScoreboardSparqlDAO extends DAO {
     /** URI of the indicator sources codelist. */
     String IND_SOURCE_CODELIST_URI = "http://semantic.digital-agenda-data.eu/codelist/source";
 
+    /** */
+    String DATASET_DISTRIBUTION_ACCESS_URL_TEMPLATE = "http://digital-agenda-data.eu/datasets/<dataset-identifier>#<distribution-type>";
+
+    /** */
+    String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
+
     /**
      * Return URI-label pairs of codelists that have type skos:conceptScheme and whose URI starts with the given
      * input string.
@@ -84,12 +90,13 @@ public interface ScoreboardSparqlDAO extends DAO {
     /**
      *
      * @param identifier
-     * @param dctermsTitle
-     * @param dctermsDescription
+     * @param title
+     * @param description
+     * @param dsdUri
      * @return
      * @throws DAOException
      */
-    String createDataset(String identifier, String dctermsTitle, String dctermsDescription) throws DAOException;
+    String createDataset(String identifier, String title, String description, String dsdUri) throws DAOException;
 
     /**
      *

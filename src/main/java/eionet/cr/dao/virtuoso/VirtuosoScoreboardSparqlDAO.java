@@ -1,6 +1,10 @@
 package eionet.cr.dao.virtuoso;
 
 import java.io.File;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
@@ -16,11 +20,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
+import org.apache.velocity.Template;
+import org.apache.velocity.VelocityContext;
+import org.apache.velocity.app.VelocityEngine;
+import org.apache.velocity.runtime.RuntimeConstants;
+import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Resource;
@@ -29,6 +39,7 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.openrdf.rio.RDFFormat;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
@@ -379,72 +390,191 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         return list;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eionet.cr.dao.ScoreboardSparqlDAO#createDataCubeDataset(java.lang.String, java.lang.String, java.lang.String)
+    /**
+     * {@inheritDoc}
      */
     @Override
-    public String createDataset(String identifier, String dctermsTitle, String dctermsDescription) throws DAOException {
+    public String createDataset(String identifier, String title, String description, String dsdUri) throws DAOException {
+
+        //dataset-status
+
+        if (StringUtils.isBlank(identifier)) {
+            throw new IllegalArgumentException("Dataset identifier must not be blank!");
+        }
+
+        if (StringUtils.isBlank(title)) {
+            title = identifier;
+        }
 
         // Assume input validations have been done by the caller!
 
+        VelocityEngine ve = new VelocityEngine();
+        ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        ve.init();
+
+        final Template template = ve.getTemplate(DATASET_METADATA_TTL_TEMPLATE_FILE);
+        final VelocityContext context = new VelocityContext();
+
+        context.put("dataset-identifier", identifier);
+        context.put("dataset-title", title);
+        context.put("dataset-modified-dateTime", Util.virtuosoDateToString(new Date()));
+
+        if (StringUtils.isNotBlank(description)) {
+            context.put("dataset-description", description);
+        }
+        if (StringUtils.isNotBlank(dsdUri)) {
+            context.put("dataset-dsd", dsdUri);
+        }
+
+
+        String datasetUri = DATASET_URI_PREFIX + identifier;
+
         RepositoryConnection repoConn = null;
+        Writer writer = null;
+        Reader reader = null;
         try {
-            repoConn = SesameUtil.getRepositoryConnection();
-            repoConn.setAutoCommit(false);
-            ValueFactory vf = repoConn.getValueFactory();
-
-            // Predicate URIs.
-            URI identifierPredicateURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
-            URI typePredicateURI = vf.createURI(Predicates.RDF_TYPE);
-            URI titlePredicateURI = vf.createURI(Predicates.DCTERMS_TITLE);
-            URI descriptionPredicateURI = vf.createURI(Predicates.DCTERMS_DESCRIPTION);
-            URI distributionPredicateURI = vf.createURI(Predicates.DCAT_DISTRIBUTION);
-            URI accessUrlPredicateURI = vf.createURI(Predicates.DCAT_ACCESS_URL);
-            URI modifiedPredicateURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
-            URI labelPredicateURI = vf.createURI(Predicates.RDFS_LABEL);
-            URI dcFormatPredicateURI = vf.createURI(Predicates.DCTERMS_FORMAT);
-            URI ecodpFormatPredicateURI = vf.createURI(Predicates.ECODP_FORMAT);
-            URI dsdPredicateURI = vf.createURI(Predicates.DATACUBE_STRUCTURE);
-
-            // Some value URIs
-            URI identifierURI = vf.createURI(DATASET_URI_PREFIX + identifier);
-            // URI graphURI = vf.createURI(StringUtils.substringBeforeLast(DATASET_URI_PREFIX, "/"));
-            URI graphURI = identifierURI;
-            URI distributionURI = vf.createURI(identifierURI + "/distribution");
-            URI accessURL = vf.createURI(StringUtils.replace(identifierURI.stringValue(), "/dataset/", "/data/"));
-            URI dcFormatUri = vf.createURI("http://publications.europa.eu/resource/authority/file-type/RDF_XML");
-            Literal dateModified = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
-
-            // Add properties for the dataset itself
-            repoConn.add(identifierURI, identifierPredicateURI, identifierURI, graphURI);
-            repoConn.add(identifierURI, typePredicateURI, vf.createURI(Subjects.DATACUBE_DATA_SET), graphURI);
-            repoConn.add(identifierURI, typePredicateURI, vf.createURI(Subjects.DCAT_DATASET), graphURI);
-            repoConn.add(identifierURI, titlePredicateURI, vf.createLiteral(dctermsTitle), graphURI);
-            repoConn.add(identifierURI, labelPredicateURI, vf.createLiteral(identifier), graphURI);
-            repoConn.add(identifierURI, distributionPredicateURI, distributionURI, graphURI);
-            repoConn.add(identifierURI, modifiedPredicateURI, dateModified, graphURI);
-            repoConn.add(identifierURI, dsdPredicateURI, vf.createURI(DEFAULT_DSD_URI), graphURI);
-            if (StringUtils.isNotBlank(dctermsDescription)) {
-                repoConn.add(identifierURI, descriptionPredicateURI, vf.createLiteral(dctermsDescription), graphURI);
+            writer = new StringWriter();
+            template.merge(context, writer);
+            String str = writer.toString();
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("Going to load new dataset's metadata:\n" + str);
             }
+            reader = new StringReader(str);
 
-            // Add properties for linked resources
-            repoConn.add(distributionURI, typePredicateURI, vf.createURI(Subjects.DCAT_WEB_SERVICE), graphURI);
-            repoConn.add(distributionURI, accessUrlPredicateURI, accessURL, graphURI);
-            repoConn.add(distributionURI, dcFormatPredicateURI, dcFormatUri, graphURI);
-            repoConn.add(distributionURI, ecodpFormatPredicateURI, vf.createLiteral("rdf/xml"), graphURI);
-
-            repoConn.commit();
-            return identifierURI.stringValue();
-
-        } catch (RepositoryException e) {
-            SesameUtil.rollback(repoConn);
-            throw new DAOException(e.getMessage(), e);
+            repoConn = SesameUtil.getRepositoryConnection();
+            ValueFactory vf = repoConn.getValueFactory();
+            repoConn.add(reader, datasetUri, RDFFormat.TURTLE, vf.createURI(datasetUri));
+        } catch (Exception e) {
+            throw new DAOException("Failure when creating dataset metadata", e);
         } finally {
             SesameUtil.close(repoConn);
+            IOUtils.closeQuietly(reader);
+            IOUtils.closeQuietly(writer);
         }
+
+        return datasetUri;
+
+//        RepositoryConnection repoConn = null;
+//        try {
+//            repoConn = SesameUtil.getRepositoryConnection();
+//            repoConn.setAutoCommit(false);
+//            ValueFactory vf = repoConn.getValueFactory();
+//
+//            URI identifierURI = vf.createURI(DATASET_URI_PREFIX + identifier);
+//            URI graphURI = identifierURI;
+//
+//            // User-input values.
+//
+//            URI identifierPredicateURI = vf.createURI(Predicates.DCTERMS_IDENTIFIER);
+//            repoConn.add(identifierURI, identifierPredicateURI, identifierURI, graphURI);
+//
+//            URI labelPredicateURI = vf.createURI(Predicates.RDFS_LABEL);
+//            repoConn.add(identifierURI, labelPredicateURI, vf.createLiteral(identifier), graphURI);
+//
+//            URI titlePredicateURI = vf.createURI(Predicates.DCTERMS_TITLE);
+//            repoConn.add(identifierURI, titlePredicateURI, vf.createLiteral(dctermsTitle), graphURI);
+//
+//            if (StringUtils.isNotBlank(dctermsDescription)) {
+//                URI descriptionPredicateURI = vf.createURI(Predicates.DCTERMS_DESCRIPTION);
+//                repoConn.add(identifierURI, descriptionPredicateURI, vf.createLiteral(dctermsDescription), graphURI);
+//            }
+//
+//            // RDF type (cube:DataSet & dcat:Dataset).
+//
+//            URI rdfTypePredicateURI = vf.createURI(Predicates.RDF_TYPE);
+//            repoConn.add(identifierURI, rdfTypePredicateURI, vf.createURI(Subjects.DATACUBE_DATA_SET), graphURI);
+//            repoConn.add(identifierURI, rdfTypePredicateURI, vf.createURI(Subjects.DCAT_DATASET), graphURI);
+//
+//            // The DSD.
+//
+//            URI dsdPredicateURI = vf.createURI(Predicates.DATACUBE_STRUCTURE);
+//            repoConn.add(identifierURI, dsdPredicateURI, vf.createURI(DEFAULT_DSD_URI), graphURI);
+//
+//            // The modified date.
+//
+//            Literal dateModified = vf.createLiteral(Util.virtuosoDateToString(new Date()), XMLSchema.DATETIME);
+//            URI modifiedPredicateURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
+//            repoConn.add(identifierURI, modifiedPredicateURI, dateModified, graphURI);
+//
+//            // Access rights.
+//
+//            URI accessRightsPredicateURI = vf.createURI(Predicates.DCTERMS_ACCESS_RIGHTES);
+//            repoConn.add(identifierURI, accessRightsPredicateURI, vf.createURI(Subjects.PUBLICATIONS_ACCESS_RIGHTS), graphURI);
+//
+//            // Language.
+//
+//            URI languagePredicateURI = vf.createURI(Predicates.DCTERMS_LANGUAGE);
+//            repoConn.add(identifierURI, languagePredicateURI, vf.createURI(Subjects.PUBLICATIONS_ENGLISH), graphURI);
+//
+//            // Publisher.
+//
+//            URI publisherPredicateURI = vf.createURI(Predicates.DCTERMS_PUBLISHER);
+//            repoConn.add(identifierURI, publisherPredicateURI, vf.createURI(Subjects.PUBLICATIONS_CNECT), graphURI);
+//
+//            // Subject.
+//
+//            URI subjectPredicateURI = vf.createURI(Predicates.DCTERMS_SUBJECT);
+//            repoConn.add(identifierURI, subjectPredicateURI, vf.createURI(Subjects.PUBLICATIONS_SUBJECT), graphURI);
+//
+//            // Contact point.
+//
+//            URI contactPointPredicateURI = vf.createURI(Predicates.DCAT_CONTACT_POINT);
+//            repoConn.add(identifierURI, contactPointPredicateURI, vf.createURI(Subjects.PUBLICATIONS_CNECT_F4), graphURI);
+//
+//            // Landing page.
+//
+//            URI landingPagePredicateURI = vf.createURI(Predicates.DCAT_LANDING_PAGE);
+//            repoConn.add(identifierURI, landingPagePredicateURI, vf.createURI(Subjects.DIGITAL_AGENDA_PAGE), graphURI);
+//
+//            // FOAF page.
+//
+//            URI foafPagePredicateURI = vf.createURI(Predicates.FOAF_PAGE);
+//            repoConn.add(identifierURI, foafPagePredicateURI, vf.createURI(Subjects.DIGITAL_AGENDA_PAGE), graphURI);
+//
+//            // Themes.
+//
+//            URI themePredicateURI = vf.createURI(Predicates.DCAT_THEME);
+//            repoConn.add(identifierURI, themePredicateURI, vf.createURI(Subjects.PUBLICATIONS_THEME_GOVE), graphURI);
+//            repoConn.add(identifierURI, themePredicateURI, vf.createURI(Subjects.PUBLICATIONS_THEME_SOCI), graphURI);
+//            repoConn.add(identifierURI, themePredicateURI, vf.createURI(Subjects.PUBLICATIONS_THEME_TECH), graphURI);
+//
+//            // The download distribution and its properties.
+//
+//            URI distributionURI = vf.createURI(identifierURI + "/distribution/download");
+//            URI distributionPredicateURI = vf.createURI(Predicates.DCAT_DISTRIBUTION);
+//            repoConn.add(identifierURI, distributionPredicateURI, distributionURI, graphURI);
+//
+//            repoConn.add(distributionURI, rdfTypePredicateURI, vf.createURI(Subjects.DCAT_DISTRIBUTION), graphURI);
+//            repoConn.add(distributionURI, vf.createURI(Predicates.DCTERMS_TYPE), vf.createURI(Subjects.PUBLICATIONS_DOWNLOADABLE_FILE), graphURI);
+//
+//            URI accessUrlPredicateURI = vf.createURI(Predicates.DCAT_ACCESS_URL);
+//            URI accessURL = vf.createURI(DATASET_DISTRIBUTION_ACCESS_URL_TEMPLATE.replace("<dataset-identifier>", identifier)
+//                    .replace("<distribution-type>", "download"));
+//            repoConn.add(distributionURI, accessUrlPredicateURI, accessURL, graphURI);
+//
+//            repoConn.add(distributionURI, vf.createURI(Predicates.DCTERMS_DESCRIPTION), vf.createLiteral("Download instructions"), graphURI);
+//
+//            URI dcFormatPredicateURI = vf.createURI(Predicates.DCTERMS_FORMAT);
+//            repoConn.add(distributionURI, dcFormatPredicateURI, vf.createURI(Subjects.PUBLICATIONS_RDF_TURTLE), graphURI);
+//
+//            URI mediaTypePredicateURI = vf.createURI(Predicates.DCAT_MEDIA_TYPE);
+//            repoConn.add(distributionURI, mediaTypePredicateURI, vf.createLiteral("text/turtle"), graphURI);
+//
+//            URI ecodpFormatPredicateURI = vf.createURI(Predicates.ECODP_FORMAT);
+//            repoConn.add(distributionURI, ecodpFormatPredicateURI, vf.createLiteral("rdf/xml"), graphURI);
+//
+//            repoConn.add(distributionURI, rdfTypePredicateURI, vf.createURI(Subjects.DCAT_WEB_SERVICE), graphURI);
+//
+//            repoConn.commit();
+//            return identifierURI.stringValue();
+//
+//        } catch (RepositoryException e) {
+//            SesameUtil.rollback(repoConn);
+//            throw new DAOException(e.getMessage(), e);
+//        } finally {
+//            SesameUtil.close(repoConn);
+//        }
     }
 
     /*

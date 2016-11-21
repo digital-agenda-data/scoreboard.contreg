@@ -209,7 +209,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
 
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription);
+            String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)

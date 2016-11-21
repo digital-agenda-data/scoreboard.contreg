@@ -61,6 +61,8 @@ public interface Predicates {
     String DCTERMS_IDENTIFIER = "http://purl.org/dc/terms/identifier";
     String DCTERMS_FORMAT = "http://purl.org/dc/terms/format";
     String DCTERMS_ACCRUAL_PERIODICITY = "http://purl.org/dc/terms/accrualPeriodicity";
+    String DCTERMS_ACCESS_RIGHTES = "http://purl.org/dc/terms/accessRights";
+    String DCTERMS_TYPE = "http://purl.org/dc/terms/type";
 
     String RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
     String RDF_VALUE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#value";
@@ -167,6 +169,9 @@ public interface Predicates {
     String DCAT_ACCESS_URL = "http://www.w3.org/ns/dcat#accessURL";
     String DCAT_CONTACT_POINT = "http://www.w3.org/ns/dcat#contactPoint";
     String DCAT_KEYWORD = "http://www.w3.org/ns/dcat#keyword";
+    String DCAT_LANDING_PAGE = "http://www.w3.org/ns/dcat#landingPage";
+    String DCAT_THEME = "http://www.w3.org/ns/dcat#theme";
+    String DCAT_MEDIA_TYPE = "http://www.w3.org/ns/dcat#mediaType";
 
     String ECODP_KEYWORD = "http://ec.europa.eu/open-data/ontologies/ec-odp#keyword";
     String ECODP_FORMAT = "http://ec.europa.eu/open-data/ontologies/ec-odp#format";
