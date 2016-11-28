@@ -165,7 +165,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
         }
         LOGGER.debug("spreadsheetTemplate = " + spreadsheetTemplate);
 
-        File destFile = TempFilePathGenerator.generate(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
+        File destFile = TempFilePathGenerator.generateWithExtension(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
         try {
             FileUtils.copyFile(spreadsheetTemplate, destFile);
         } catch (IOException e) {

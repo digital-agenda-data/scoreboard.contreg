@@ -123,7 +123,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             }
         }
 
-        File spreadsheetFile = TempFilePathGenerator.generate("xls");
+        File spreadsheetFile = TempFilePathGenerator.generateWithExtension("xls");
         try {
             fileBean.save(spreadsheetFile);
         } catch (IOException e) {

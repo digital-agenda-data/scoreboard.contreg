@@ -11,6 +11,7 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 
+import eionet.cr.dto.DatasetDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.staging.exp.ObjectTypes.DSD;
@@ -97,6 +98,14 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @throws DAOException
      */
     String createDataset(String identifier, String title, String description, String dsdUri) throws DAOException;
+
+    /**
+     *
+     * @param datasets
+     * @return
+     * @throws DAOException
+     */
+    List<String> createDatasets(Collection<DatasetDTO> datasets) throws DAOException;
 
     /**
      *

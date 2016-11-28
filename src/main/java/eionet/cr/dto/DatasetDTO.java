@@ -23,6 +23,8 @@ package eionet.cr.dto;
 
 import java.util.Date;
 
+import org.apache.commons.lang.StringUtils;
+
 /**
  * Dataset DTO object.
  *
@@ -39,12 +41,56 @@ public class DatasetDTO {
     /** Last modified date. */
     private Date modified;
 
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof DatasetDTO) {
-            return uri.equals(((DatasetDTO) o).getUri());
+    /** */
+    private String identifier;
+    private String title;
+    private String description;
+    private String dsdUri;
+
+    /**
+     *
+     * @param identifier
+     * @param title
+     * @param description
+     * @param dsdUri
+     * @return
+     */
+    public static DatasetDTO createNew(String identifier, String title, String description, String dsdUri) {
+
+        if (StringUtils.isBlank(identifier)) {
+            throw new IllegalArgumentException("Dataset identifier must not be blank!");
         }
-        return false;
+
+        if (StringUtils.isBlank(title)) {
+            title = identifier;
+        }
+
+        DatasetDTO dto = new DatasetDTO();
+        dto.setIdentifier(identifier);
+        dto.setTitle(title);
+        dto.setDescription(description);
+        dto.setDsdUri(dsdUri);
+        return dto;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean equals(Object obj) {
+
+        if (!(obj instanceof DatasetDTO)) {
+            return false;
+        } else if (obj == this) {
+            return true;
+        }
+
+        DatasetDTO other = (DatasetDTO) obj;
+        if (uri != null) {
+            return StringUtils.equals(uri, other.getUri());
+        } else {
+            return StringUtils.equals(identifier, other.getIdentifier());
+        }
     }
 
     @Override
@@ -94,4 +140,59 @@ public class DatasetDTO {
         this.modified = modified;
     }
 
+    /**
+     * @return the identifier
+     */
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    /**
+     * @param identifier the identifier to set
+     */
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
+
+    /**
+     * @return the title
+     */
+    public String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title the title to set
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the dsdUri
+     */
+    public String getDsdUri() {
+        return dsdUri;
+    }
+
+    /**
+     * @param dsdUri the dsdUri to set
+     */
+    public void setDsdUri(String dsdUri) {
+        this.dsdUri = dsdUri;
+    }
 }

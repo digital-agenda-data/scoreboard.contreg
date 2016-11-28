@@ -72,7 +72,7 @@ public final class TempFilePathGenerator {
      * @param extension
      * @return
      */
-    public static File generate(String extension) {
+    public static File generateWithExtension(String extension) {
 
         String fileName = PREFIX + System.currentTimeMillis() + DASH + UUID.randomUUID() + PERIOD + extension;
         return new File(GeneralConfig.getRequiredProperty(GeneralConfig.HARVESTER_FILES_LOCATION), fileName);

@@ -76,7 +76,7 @@ public class XLWrapUtil {
             RDFHandler stmtListener) throws IOException, XLWrapException, OpenRDFException {
 
         File template = uploadType.getMappingTemplate();
-        File target = TempFilePathGenerator.generate(XLWrapUploadType.MAPPING_FILE_EXTENSION);
+        File target = TempFilePathGenerator.generateWithExtension(XLWrapUploadType.MAPPING_FILE_EXTENSION);
 
         try {
             Properties properties = new Properties();
