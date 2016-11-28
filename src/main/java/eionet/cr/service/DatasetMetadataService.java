@@ -60,15 +60,16 @@ public class DatasetMetadataService {
     /**
      *
      * @param file
+     * @return
      * @throws ServiceException
      */
-    public void importFile(File file) throws ServiceException {
+    public int importFile(File file) throws ServiceException {
 
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
             Workbook workbook = new XSSFWorkbook(inputStream);
-            importWorkbook(workbook);
+            return importWorkbook(workbook);
         } catch (IOException e) {
             throw new ServiceException("IO error when reading from file: " + file, e);
         } finally {
@@ -96,21 +97,21 @@ public class DatasetMetadataService {
             throw new ServiceException("Could not detect supported columns in first row of first sheet!");
         }
 
-        List<Map<RdfTemplateVariable, String>> maps = new ArrayList<>();
+        List<Map<RdfTemplateVariable, String>> rowMaps = new ArrayList<>();
         while (rowIterator.hasNext()) {
 
             Row row = rowIterator.next();
             Map<RdfTemplateVariable, String> rowMap = getRowMap(columnsMap, row);
             if (!rowMap.isEmpty()) {
-                maps.add(rowMap);
+                rowMaps.add(rowMap);
             }
         }
 
-        if (maps.size() > 0) {
-            createDatasets(maps);
+        if (rowMaps.size() > 0) {
+            createDatasets(rowMaps);
         }
 
-        return maps.size();
+        return rowMaps.size();
     }
 
     /**

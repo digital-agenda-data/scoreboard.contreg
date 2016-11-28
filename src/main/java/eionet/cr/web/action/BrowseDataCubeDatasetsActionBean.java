@@ -1,5 +1,7 @@
 package eionet.cr.web.action;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,11 +12,13 @@ import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
+import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.DatasetMetadataService;
+import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
 import eionet.cr.util.pagination.PagingRequest;
@@ -22,6 +26,7 @@ import eionet.cr.util.sql.PairReader;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
 import eionet.cr.web.util.CustomPaginatedList;
 import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
@@ -40,8 +45,8 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     private static final Logger LOGGER = Logger.getLogger(BrowseDataCubeDatasetsActionBean.class);
 
     /** */
-    private static final String[] LABEL_PREDICATES = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.DC_TITLE,
-            Predicates.FOAF_NAME};
+    private static final String[] LABEL_PREDICATES =
+            {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.DC_TITLE, Predicates.FOAF_NAME};
 
     /** */
     private static final List<HashMap<String, String>> AVAIL_COLUMNS = createAvailColumns();
@@ -56,6 +61,9 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     private String identifier;
     private String dctermsTitle;
     private String dctermsDescription;
+
+    /** File bean for importing datasets metadata. */
+    private FileBean importFileBean;
 
     /**
      *
@@ -127,6 +135,54 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
         if (StringUtils.isBlank(dctermsTitle)) {
             addGlobalValidationError("The title is mandatory!");
+        }
+
+        getContext().setSourcePageResolution(defaultEvent());
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Resolution importNew() {
+
+        File tempFile = TempFilePathGenerator.generateWithExtension("xls");
+        try {
+            importFileBean.save(tempFile);
+        } catch (IOException e) {
+            addCautionMessage("Failed saving the file to a temporary location!");
+            LOGGER.error("Failed saving " + importFileBean.getFileName() + " to " + tempFile);
+            return new RedirectResolution(getClass());
+        }
+
+        try {
+            int nrOfDatasets = DatasetMetadataService.newInstance().importFile(tempFile);
+            addSystemMessage(String.format("A total of %d datasets were imported!", nrOfDatasets));
+        } catch (Exception e) {
+            LOGGER.error("Datasets import failed with technical error", e);
+            addWarningMessage("Datasets import failed with technical error: " + e.getMessage());
+        } finally {
+            FileDeletionJob.register(tempFile);
+        }
+
+        return new RedirectResolution(getClass());
+    }
+
+    /**
+     *
+     * @throws DAOException
+     */
+    @ValidationMethod(on = {"importNew"})
+    public void validateImportNew() throws DAOException {
+
+        if (getUser() == null || !getUser().isAdministrator()) {
+            addGlobalValidationError("You are not authorized for this operation!");
+            getContext().setSourcePageResolution(new RedirectResolution(getClass()));
+            return;
+        }
+
+        if (importFileBean == null || importFileBean.getSize() == 0) {
+            addGlobalValidationError("Uploaded file missing or empty!");
         }
 
         getContext().setSourcePageResolution(defaultEvent());
@@ -224,5 +280,12 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
+    }
+
+    /**
+     * @param importFileBean the importFileBean to set
+     */
+    public void setImportFileBean(FileBean fileBean) {
+        this.importFileBean = fileBean;
     }
 }

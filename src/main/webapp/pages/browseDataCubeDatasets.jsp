@@ -26,6 +26,24 @@
                             $('#creationDialog').dialog("close");
                             return true;
                         });
+                        
+                        //////////////////////////////////////////////////
+                        
+                        $("#importLink").click(function() {
+                            $('#importDialog').dialog('option','width', 800);
+                            $('#importDialog').dialog('open');
+                            return false;
+                        });
+                        
+                        $('#importDialog').dialog({
+                            autoOpen: false,
+                            width: 800
+                        });
+
+                        $("#closeImportDialog").click(function() {
+                            $('#importDialog').dialog("close");
+                            return true;
+                        });
 
                     });
             } ) ( jQuery );
@@ -40,13 +58,14 @@
     <c:set var="registrationsAllowed" value='${crfn:userHasPermission(pageContext.session, "/registrations", "u")}'/>
 
     <c:if test="${registrationsAllowed}">
-	    <ul id="dropdown-operations">
-	        <li><a href="#">Operations</a>
-	            <ul>
-	                <li><a href="#" id="creationLink" title="Create a new dataset">New dataset</a></li>
-	            </ul>
-	        </li>
-	    </ul>
+        <ul id="dropdown-operations">
+            <li><a href="#">Operations</a>
+                <ul>
+                    <li><a href="#" id="creationLink" title="Create a new dataset">New dataset</a></li>
+                    <li><a href="#" id="importLink" title="Import multiple datasets metadata">Import datasets</a></li>
+                </ul>
+            </li>
+        </ul>
     </c:if>
 
     <%-- Title and intro. --%>
@@ -81,7 +100,7 @@
                     </c:if>
                     <c:if test="${empty column.isFactsheetLink}">
                         <c:out value="${dataset.right}"/>
-	                </c:if>
+                    </c:if>
 
                 </display:column>
 
@@ -131,6 +150,37 @@
                     <td style="padding-top:10px">
                         <stripes:submit name="createNew" value="Create"/>
                         <input type="button" id="closeCreationDialog" value="Cancel"/>
+                    </td>
+                </tr>
+            </table>
+
+        </stripes:form>
+    </div>
+    
+    <%-- Datasets metadata importing dialog. Hidden unless activated. --%>
+    
+    <div id="importDialog" title="Import datasets">
+        <stripes:form beanclass="${actionBean['class'].name}" method="post">
+
+            <p>
+                You can import the metadata of multiple datasets with a specially designed Excel spreadsheet file below.<br/>
+                Select the file and click "Import". You will get feedback on import results.
+            </p>
+
+            <table>
+                <tr>
+                    <td style="text-align:right">
+                        <label for="fileInput" class="question required">Spreadsheet file:</label>
+                    </td>
+                    <td>
+                       <stripes:file name="importFileBean" id="fileInput" size="120"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td style="padding-top:10px">
+                        <stripes:submit name="importNew" value="Import"/>
+                        <input type="button" id="closeImportDialog" value="Cancel"/>
                     </td>
                 </tr>
             </table>
