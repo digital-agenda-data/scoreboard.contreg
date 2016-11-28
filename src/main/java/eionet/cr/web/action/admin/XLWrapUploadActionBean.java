@@ -22,6 +22,7 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
+import eionet.cr.service.DatasetMetadataService;
 import eionet.cr.staging.util.TimePeriodsHarvester;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
@@ -209,12 +210,15 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
 
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            //String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+
+            String datasetUri = DatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)
                     .addParameter("uploadType", uploadType == null ? null : uploadType.name());
-        } catch (DAOException e) {
+        } catch (Exception e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
             return new ForwardResolution(JSP);

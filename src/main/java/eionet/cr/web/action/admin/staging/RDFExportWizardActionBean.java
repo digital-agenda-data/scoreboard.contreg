@@ -52,6 +52,7 @@ import eionet.cr.dao.StagingDatabaseDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.StagingDatabaseDTO;
 import eionet.cr.dto.StagingDatabaseTableColumnDTO;
+import eionet.cr.service.DatasetMetadataService;
 import eionet.cr.staging.exp.ExportRunner;
 import eionet.cr.staging.exp.ObjectProperty;
 import eionet.cr.staging.exp.ObjectType;
@@ -325,13 +326,14 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            //String datasetUri = dao.createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            String datasetUri = DatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             if (queryConf == null) {
                 queryConf = new QueryConfiguration();
             }
             queryConf.setDatasetUriTemplate(datasetUri);
-        } catch (DAOException e) {
+        } catch (Exception e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
         }

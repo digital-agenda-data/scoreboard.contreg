@@ -5,13 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -21,12 +14,19 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
+import eionet.cr.service.DatasetMetadataService;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
 import eionet.cr.util.pagination.PagingRequest;
 import eionet.cr.util.sql.PairReader;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
 import eionet.cr.web.util.CustomPaginatedList;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
  * An action bean enabling to browse subjects whose rdf:type is that of {@link Subjects.DATACUBE_DATA_SET}.
@@ -88,9 +88,9 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     public Resolution createNew() {
 
         try {
-            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).createDataset(identifier, dctermsTitle, dctermsDescription, null);
+            DatasetMetadataService.newInstance().createDataset(identifier, dctermsTitle, dctermsDescription, null);
             addSystemMessage("A new dataset with identifier \"" + identifier + "\" successfully created!");
-        } catch (DAOException e) {
+        } catch (Exception e) {
             LOGGER.error("Dataset creation failed with technical error", e);
             addWarningMessage("Dataset creation failed with technical error: " + e.getMessage());
         }
