@@ -65,6 +65,9 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     /** File bean for importing datasets metadata. */
     private FileBean importFileBean;
 
+    /** */
+    private boolean clearExisting;
+
     /**
      *
      * @return
@@ -156,7 +159,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         }
 
         try {
-            int nrOfDatasets = DatasetMetadataService.newInstance().importFile(tempFile);
+            int nrOfDatasets = DatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, clearExisting);
             addSystemMessage(String.format("A total of %d datasets were imported!", nrOfDatasets));
         } catch (Exception e) {
             LOGGER.error("Datasets import failed with technical error", e);
@@ -287,5 +290,12 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setImportFileBean(FileBean fileBean) {
         this.importFileBean = fileBean;
+    }
+
+    /**
+     * @param clearExisting the clearExisting to set
+     */
+    public void setClearExisting(boolean clearExisting) {
+        this.clearExisting = clearExisting;
     }
 }

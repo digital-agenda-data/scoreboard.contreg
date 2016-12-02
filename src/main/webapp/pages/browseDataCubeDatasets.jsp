@@ -178,6 +178,12 @@
                 </tr>
                 <tr>
                     <td>&nbsp;</td>
+                    <td>
+                       <input type="checkbox" name="clearExisting" id="chkClear" value="true"/><label for="chkClear">&nbsp;clear existing metadata of imported datasets</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
                     <td style="padding-top:10px">
                         <stripes:submit name="importNew" value="Import"/>
                         <input type="button" id="closeImportDialog" value="Cancel"/>

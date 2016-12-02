@@ -41,14 +41,16 @@
     dcterms:subject sdmx-subject:3.3.3 ;
         # TODO: here all concepts from dcat:theme could be listed
 
-    dcterms:license <http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright> ;
+    dcterms:license    #if(!$DATASET_LICENSE || "$DATASET_LICENSE.trim()" == "")<http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright>#{else}<${DATASET_LICENSE}>#end ;
+    
 # DCAT-AP recommended properties
     dcat:contactPoint   <http://publications.europa.eu/resource/authority/corporate-body/CNECT/F4> ;
     dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/download> ;
     dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/visualisation> ;
     dcat:keyword    
         "information-society"@en ,
-        "digital agenda"@en ;
+        "digital agenda"@en ,
+        "${DATASET_KEYWORD}"@en ;
 
     dcterms:publisher   <http://publications.europa.eu/resource/authority/corporate-body/CNECT> ;
     dcat:theme  
@@ -60,23 +62,24 @@
     dcterms:accessRights    <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
     dcat:landingPage    <http://digital-agenda-data.eu/> ;
     foaf:page   <http://digital-agenda-data.eu/> ;
-    dcat:accrualPeriodicity <http://publications.europa.eu/resource/authority/frequency/ANNUAL_2> ;
+    dcat:accrualPeriodicity    #if(!$DATASET_PERIODICITY || "$DATASET_PERIODICITY.trim()" == "")<http://publications.europa.eu/resource/authority/frequency/ANNUAL_2>#{else}<${DATASET_PERIODICITY}>#end ;
     dcterms:language <http://publications.europa.eu/resource/authority/language/ENG> ;
     dcterms:spatial  <http://publications.europa.eu/resource/authority/country/EUR> ;
     dcterms:temporal    [ schema:startDate "2002-01-01"^^xsd:date ] ;
     dcterms:identifier  "${DATASET_IDENTIFIER}" ;
-    #adms:identifier    [ skos:notation "${DATASET_IDENTIFIER}" ]
-    dcterms:issued  "2011-05-01T00:00:00Z"^^xsd:dateTime ;
+#   adms:identifier    [ skos:notation "${DATASET_IDENTIFIER}" ]
+#   dcterms:issued  "2011-05-01T00:00:00Z"^^xsd:dateTime ;
+    dcterms:issued    #if(!$DATASET_ISSUED || "$DATASET_ISSUED.trim()" == "")"2011-05-01T00:00:00Z"^^xsd:dateTime#{else}"${DATASET_ISSUED}"#end ;
     dcterms:modified    "${DATASET_MODIFIED}"^^xsd:dateTime ;
 
 # QB
-    qb:structure    #if(!$dataset-dsd || "$dataset-dsd.trim()" == "")<http://semantic.digital-agenda-data.eu/def/dsd/scoreboard>#{else}${dataset-dsd}#end ;
+    qb:structure    #if(!$DATASET_DSD || "$DATASET_DSD.trim()" == "")<http://semantic.digital-agenda-data.eu/def/dsd/scoreboard>#{else}<${DATASET_DSD}>#end ;
 
 # Linked data
     foaf:isPrimaryTopicOf   <http://semantic.digital-agenda-data.eu/API/dataset/${DATASET_IDENTIFIER}.rdf> ;
 
 # ODP
-    adms:status #if(!$dataset-status || "$dataset-status.trim()" == "")<http://purl.org/adms/status/UnderDevelopment>#{else}${dataset-status}#end .
+    adms:status #if(!$DATASET_STATUS || "$DATASET_STATUS.trim()" == "")<http://purl.org/adms/status/UnderDevelopment>#{else}<${DATASET_STATUS}>#end .
 
 # RELATED ENTITIES
 
