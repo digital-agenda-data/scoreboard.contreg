@@ -135,7 +135,7 @@ public class UploadCSVActionBean extends AbstractActionBean {
     /** Available scripts. */
     private List<ScriptTemplateDTO> scriptTemplates;
 
-    /** SpreadsheetImportColumn labels detected in the uploaded file (titles without type and language code). */
+    /** SpreadsheetColumn labels detected in the uploaded file (titles without type and language code). */
     private List<String> columnLabels;
 
     /**

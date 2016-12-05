@@ -70,7 +70,7 @@ import eionet.cr.web.util.CharsetToolkit;
  */
 public class CsvImportHelper {
 
-    /** SpreadsheetImportColumn name for empty name. */
+    /** SpreadsheetColumn name for empty name. */
     public static final String EMPTY_COLUMN = "Empty";
 
     /** */
@@ -79,7 +79,7 @@ public class CsvImportHelper {
     /** Columns detected in the uploaded file (it's the titles of the columns). */
     private List<String> columns;
 
-    /** SpreadsheetImportColumn labels detected in the uploaded file (titles without type and language code). */
+    /** SpreadsheetColumn labels detected in the uploaded file (titles without type and language code). */
     private List<String> columnLabels;
 
     /** The columns (i.e. column titles) forming the contained objects' unique identifiers. */

@@ -9,6 +9,9 @@ import eionet.cr.common.CRException;
  */
 public class ResultSetReaderException extends CRException {
 
+    /**  */
+    private static final long serialVersionUID = -4972271259022517448L;
+
     /**
      *
      */

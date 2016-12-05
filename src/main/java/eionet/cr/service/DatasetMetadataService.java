@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
@@ -38,6 +39,7 @@ import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.rio.RDFFormat;
 
 import eionet.cr.dao.DAOException;
+import eionet.cr.dao.readers.DatasetMetadataExportReader;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 
@@ -47,11 +49,26 @@ import eionet.cr.util.sesame.SesameUtil;
  */
 public class DatasetMetadataService {
 
+    // @formatter:off
+
     /** */
     private static final String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
 
     /** */
-    private static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
+    public static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
+
+    /** */
+    private static final String EXPORT_DATASETS_METADATA_SPARQL = "" +
+            "PREFIX cube: <http://purl.org/linked-data/cube#> \n" +
+            "select \n" +
+            "  ?s ?p ?o \n" +
+            "where { \n" +
+            "  ?s a cube:DataSet . \n" +
+            "  ?s ?p ?o \n" +
+            "} \n" +
+            "order by ?s ?p ?o";
+
+    // @formatter:on
 
     /**
      *
@@ -131,7 +148,8 @@ public class DatasetMetadataService {
                     String datasetUri = DATASET_URI_PREFIX + datasetMap.get(RdfTemplateVariable.DATASET_IDENTIFIER);
                     URI graphURI = vf.createURI(datasetUri);
 
-                    // If clear requested and this dataset's metadata not yet added (because it could be added multiple times, e.g. for each row
+                    // If clear requested and this dataset's metadata not yet added (because it could be added multiple times, e.g.
+                    // for each row
                     // in imported spreadsheet file), then clear the graph.
                     if (clear && !datasetUris.contains(datasetUri)) {
                         repoConn.clear(graphURI);
@@ -175,12 +193,47 @@ public class DatasetMetadataService {
 
     /**
      *
+     * @param propertiesToColumns
+     * @param templateFile
+     * @param targetFile
+     * @return
+     * @throws ServiceException
+     */
+    public int exportDatasetsMetadata(Map<String, Integer> propertiesToColumns, File templateFile, File targetFile)
+            throws ServiceException {
+
+        if (templateFile == null || !templateFile.exists() || !templateFile.isFile()) {
+            throw new IllegalArgumentException("The given spreadsheet template must not be null and the file must exist!");
+        }
+
+        if (MapUtils.isEmpty(propertiesToColumns)) {
+            throw new IllegalArgumentException("The given map of property-to-column mappings must not be null nor empty!");
+        }
+
+        RepositoryConnection repoConn = null;
+        try {
+            repoConn = SesameUtil.getRepositoryConnection();
+
+            DatasetMetadataExportReader exporter = new DatasetMetadataExportReader(templateFile, targetFile);
+            SesameUtil.executeQuery(EXPORT_DATASETS_METADATA_SPARQL, exporter, repoConn);
+            exporter.saveAndClose();
+            return exporter.getExportedCount();
+
+        } catch (Exception e) {
+            throw new ServiceException(e.toString(), e);
+        } finally {
+            SesameUtil.close(repoConn);
+        }
+    }
+
+    /**
+     *
      * @param workbook
      * @throws ServiceException
      */
     private int importWorkbook(Workbook workbook, boolean clear) throws ServiceException {
 
-        Map<Integer, SpreadsheetImportColumn> columnsMap = new HashMap<>();
+        Map<Integer, SpreadsheetColumn> columnsMap = new HashMap<>();
 
         Sheet firstSheet = workbook.getSheetAt(0);
         Iterator<Row> rowIterator = firstSheet.iterator();
@@ -217,7 +270,7 @@ public class DatasetMetadataService {
      * @param row
      * @return
      */
-    private Map<RdfTemplateVariable, String> getRowMap(Map<Integer, SpreadsheetImportColumn> columnsMap, Row row) {
+    private Map<RdfTemplateVariable, String> getRowMap(Map<Integer, SpreadsheetColumn> columnsMap, Row row) {
         Map<RdfTemplateVariable, String> rowMap = new HashMap<>();
 
         Iterator<Cell> cellIterator = row.cellIterator();
@@ -225,7 +278,7 @@ public class DatasetMetadataService {
 
             Cell cell = cellIterator.next();
             int columnIndex = cell.getColumnIndex();
-            SpreadsheetImportColumn column = columnsMap.get(columnIndex);
+            SpreadsheetColumn column = columnsMap.get(columnIndex);
             if (column != null) {
                 String strValue = StringUtils.trimToEmpty(cell.getStringCellValue());
                 rowMap.put(column.getRdfTemplateVariable(), strValue);
@@ -239,7 +292,7 @@ public class DatasetMetadataService {
      * @param columnsMap
      * @param row
      */
-    private void loadColumns(Map<Integer, SpreadsheetImportColumn> columnsMap, Row row) {
+    private void loadColumns(Map<Integer, SpreadsheetColumn> columnsMap, Row row) {
         Iterator<Cell> cellIterator = row.cellIterator();
         while (cellIterator.hasNext()) {
 
@@ -249,7 +302,7 @@ public class DatasetMetadataService {
                 if (StringUtils.isNotBlank(cellValue)) {
                     String columnName = cellValue.trim().replace(' ', '_').replace('-', '_').toUpperCase();
                     try {
-                        SpreadsheetImportColumn column = SpreadsheetImportColumn.valueOf(columnName);
+                        SpreadsheetColumn column = SpreadsheetColumn.valueOf(columnName);
                         if (column != null) {
                             columnsMap.put(cell.getColumnIndex(), column);
                         }
@@ -264,16 +317,12 @@ public class DatasetMetadataService {
     /**
      * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
      */
-    public static enum SpreadsheetImportColumn {
+    public static enum SpreadsheetColumn {
 
-        IDENTIFIER(RdfTemplateVariable.DATASET_IDENTIFIER),
-        TITLE(RdfTemplateVariable.DATASET_TITLE),
-        DESCRIPTION(RdfTemplateVariable.DATASET_DESCRIPTION),
-        KEYWORD(RdfTemplateVariable.DATASET_KEYWORD),
-        DATE_ISSUED(RdfTemplateVariable.DATASET_ISSUED),
-        DSD_URI(RdfTemplateVariable.DATASET_DSD),
-        LICENSE_URI(RdfTemplateVariable.DATASET_LICENSE),
-        STATUS_URI(RdfTemplateVariable.DATASET_STATUS),
+        IDENTIFIER(RdfTemplateVariable.DATASET_IDENTIFIER), TITLE(RdfTemplateVariable.DATASET_TITLE),
+        DESCRIPTION(RdfTemplateVariable.DATASET_DESCRIPTION), KEYWORD(RdfTemplateVariable.DATASET_KEYWORD),
+        DATE_ISSUED(RdfTemplateVariable.DATASET_ISSUED), DSD_URI(RdfTemplateVariable.DATASET_DSD),
+        LICENSE_URI(RdfTemplateVariable.DATASET_LICENSE), STATUS_URI(RdfTemplateVariable.DATASET_STATUS),
         PERIODICITY_URI(RdfTemplateVariable.DATASET_PERIODICITY);
 
         RdfTemplateVariable rdfTemplateVariable;
@@ -281,7 +330,7 @@ public class DatasetMetadataService {
         /**
          * @param rdfTemplateVariable
          */
-        SpreadsheetImportColumn(RdfTemplateVariable rdfTemplateVariable) {
+        SpreadsheetColumn(RdfTemplateVariable rdfTemplateVariable) {
             this.rdfTemplateVariable = rdfTemplateVariable;
         }
 

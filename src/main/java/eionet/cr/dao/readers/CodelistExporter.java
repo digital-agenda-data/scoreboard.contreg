@@ -12,7 +12,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
@@ -142,10 +141,6 @@ public class CodelistExporter extends SPARQLResultSetBaseReader {
         String subjectUri = getStringValue(bindingSet, "s");
         if (subjectUri == null) {
             return;
-        }
-
-        if (subjectUri.equals("http://semantic.digital-agenda-data.eu/codelist/breakdown/10_c19_23")) {
-            System.out.println();
         }
 
         if (!subjectUri.equals(currentSubjectUri)) {

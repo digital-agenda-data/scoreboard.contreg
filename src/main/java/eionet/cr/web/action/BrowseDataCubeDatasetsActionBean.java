@@ -173,6 +173,15 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
     /**
      *
+     * @return
+     */
+    public Resolution export() {
+        addWarningMessage("Not implemented yet!");
+        return defaultEvent();
+    }
+
+    /**
+     *
      * @throws DAOException
      */
     @ValidationMethod(on = {"importNew"})

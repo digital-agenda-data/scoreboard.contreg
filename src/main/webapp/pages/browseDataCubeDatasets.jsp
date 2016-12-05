@@ -63,6 +63,7 @@
                 <ul>
                     <li><a href="#" id="creationLink" title="Create a new dataset">New dataset</a></li>
                     <li><a href="#" id="importLink" title="Import multiple datasets metadata">Import datasets</a></li>
+                    <li><stripes:link class="link-plain" beanclass="${actionBean['class'].name}" event="export">Export datasets</stripes:link></li>
                 </ul>
             </li>
         </ul>

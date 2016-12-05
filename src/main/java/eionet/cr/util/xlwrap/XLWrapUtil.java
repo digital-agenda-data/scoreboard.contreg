@@ -176,7 +176,7 @@ public class XLWrapUtil {
     /**
      * Parses the given Trig (http://wifo5-03.informatik.uni-mannheim.de/bizer/trig/) file, gets the first template mapping (see
      * http://xlwrap.sourceforge.net/ for more background), and from that extracts a mapping of RDF properties to spreadsheet
-     * columns. The extracted mapping is returned as a map where keys represent the RDF properties and teh values represent the
+     * columns. The extracted mapping is returned as a map where keys represent the RDF properties and the values represent the
      * 0-based indexes of corresponding spreadsheet columns.
      *
      * @param trigFile The Trig file to parse.
