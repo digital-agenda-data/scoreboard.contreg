@@ -17,13 +17,11 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.openrdf.model.BNode;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Value;
@@ -46,15 +44,9 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
     private static final Logger LOGGER = Logger.getLogger(DatasetMetadataExportReader.class);
 
     /** */
-    private static final String METADATA_SHEET_NAME = "METADATA";
+    private static final String DATA_SHEET_NAME = "METADATA";
 
-    /** */
-    private static final String CONFIGURATION_SHEET_NAME = "CONFIGURATION";
-
-    /** */
-    private static final String METADATA_SHEET_DEFAULT_INDEX = "0";
-
-    /** Maps RDF properties of datasets to corresponding columns (by column name) of targetFile spreadsheet. */
+    /** Maps RDF properties of datasets to corresponding columns (by column index) of targetFile spreadsheet. */
     private Map<String, Integer> propertiesToColumns;
 
     /** The targetFile spreadsheet file where the exported workbook will be saved to. */
@@ -80,52 +72,30 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
     private Workbook workbook;
 
     /** The sheet where the datasets metadata should be written into. */
-    private Sheet metadataSheet;
+    private Sheet dataSheet;
 
     /**
-     * @param templateFile The spreadsheet template reference.
-     * @param targetFile The targetFile spreadsheet file where the exported workbook will be saved to.
      *
-     * @throws DAOException
+     * Class constructor.
+     *
+     * @param workbook
+     * @param targetFile
+     * @throws ResultSetReaderException
      */
-    public DatasetMetadataExportReader(File templateFile, File targetFile) throws ResultSetReaderException {
+    public DatasetMetadataExportReader(Workbook workbook, Map<String, Integer> propertiesToColumns, File targetFile)
+            throws ResultSetReaderException {
 
-        if (templateFile == null || !templateFile.exists() || !templateFile.isFile()) {
-            throw new IllegalArgumentException("The given spreadsheet template must not be null and the file must exist!");
-        }
-
-        if (targetFile == null || !targetFile.getParentFile().exists()) {
-            throw new IllegalArgumentException("The given spreadsheet targetFile file must not be null and its path must exist!");
-        }
+        this.workbook = workbook;
         this.targetFile = targetFile;
+        this.propertiesToColumns = propertiesToColumns;
 
-        try {
-            workbook = WorkbookFactory.create(templateFile);
-        } catch (InvalidFormatException e) {
-            throw new ResultSetReaderException("Failed to recognize workbook at " + templateFile, e);
-        } catch (IOException e) {
-            throw new ResultSetReaderException("IOException when trying to create workbook object from " + templateFile, e);
-        }
-
-        Sheet configurationSheet = workbook.getSheet(CONFIGURATION_SHEET_NAME);
-        if (configurationSheet == null) {
-            throw new ResultSetReaderException(
-                    String.format("Could not find %s sheet in the template file!", CONFIGURATION_SHEET_NAME));
-        }
-
-        metadataSheet = workbook.getSheet(METADATA_SHEET_NAME);
-        if (metadataSheet == null) {
-            metadataSheet = workbook.getSheetAt(0);
-            if (metadataSheet == null) {
+        dataSheet = workbook.getSheet(DATA_SHEET_NAME);
+        if (dataSheet == null) {
+            dataSheet = workbook.getSheetAt(0);
+            if (dataSheet == null) {
                 throw new ResultSetReaderException(
-                        String.format("Could not find metadata sheet neither by name (%s), nor by index (%d)!", METADATA_SHEET_NAME,
-                                METADATA_SHEET_DEFAULT_INDEX));
+                        String.format("Could not find data sheet neither by name (%s), nor by index (%d)!", DATA_SHEET_NAME, 0));
             }
-        }
-
-        propertiesToColumns = extractPropertiesToColumnsMapping(configurationSheet);
-        if (MapUtils.isEmpty(propertiesToColumns)) {
-            throw new ResultSetReaderException("Did not find any columns-to-properties mappings in the template's configuration sheet!");
         }
     }
 
@@ -283,9 +253,9 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
         }
 
         int rowIndex = worksheetRowsAdded + 1;
-        Row row = metadataSheet.getRow(rowIndex);
+        Row row = dataSheet.getRow(rowIndex);
         if (row == null) {
-            row = metadataSheet.createRow(rowIndex);
+            row = dataSheet.createRow(rowIndex);
         }
 
         LOGGER.trace("Populating metadata row at position " + worksheetRowsAdded);
@@ -314,7 +284,7 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
 
         if (maxLines > 1) {
             maxLines = Math.min(maxLines, 30);
-            float defaultRowHeightInPoints = metadataSheet.getDefaultRowHeightInPoints();
+            float defaultRowHeightInPoints = dataSheet.getDefaultRowHeightInPoints();
             row.setHeightInPoints(maxLines * defaultRowHeightInPoints);
         }
     }
@@ -330,7 +300,7 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(targetFile);
-            metadataSheet.showInPane((short) 1, (short) 0);
+            dataSheet.showInPane((short) 1, (short) 0);
             workbook.write(fos);
         } catch (IOException e) {
             throw new ResultSetReaderException("Error when saving workbook to " + targetFile, e);
@@ -359,14 +329,5 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
      */
     public int getExportedCount() {
         return exportedCount;
-    }
-
-    /**
-     *
-     * @param configurationSheet
-     * @return
-     */
-    private Map<String, Integer> extractPropertiesToColumnsMapping(Sheet configurationSheet) {
-        return null;
     }
 }

@@ -1,12 +1,18 @@
 package eionet.cr.web.action;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -18,6 +24,7 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.DatasetMetadataService;
+import eionet.cr.service.ServiceException;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
@@ -30,6 +37,7 @@ import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.validation.ValidationMethod;
 
@@ -174,10 +182,48 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     /**
      *
      * @return
+     * @throws ServiceException
      */
-    public Resolution export() {
-        addWarningMessage("Not implemented yet!");
-        return defaultEvent();
+    public Resolution export() throws ServiceException {
+
+        Pair<Integer, File> pair = DatasetMetadataService.newInstance().exportDatasetsMetadata();
+        int exportedCount = pair.getLeft();
+        LOGGER.debug("Number of exported datasets: " + exportedCount);
+        File targetFile = pair.getRight();
+        return streamToResponse(targetFile, DatasetMetadataService.DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME);
+    }
+
+    /**
+     *
+     * @param file
+     * @param targetName
+     * @return
+     */
+    private StreamingResolution streamToResponse(final File file, String targetName) {
+
+        return new StreamingResolution("application/vnd.ms-excel") {
+
+            /*
+             * (non-Javadoc)
+             *
+             * @see net.sourceforge.stripes.action.StreamingResolution#stream(javax.servlet.http.HttpServletResponse)
+             */
+            @Override
+            public void stream(HttpServletResponse response) throws Exception {
+
+                InputStream inputStream = null;
+                OutputStream outputStream = null;
+                try {
+                    inputStream = new FileInputStream(file);
+                    outputStream = response.getOutputStream();
+                    IOUtils.copy(inputStream, outputStream);
+                } finally {
+                    IOUtils.closeQuietly(inputStream);
+                    IOUtils.closeQuietly(outputStream);
+                    FileDeletionJob.register(file);
+                }
+            }
+        }.setFilename(StringUtils.isBlank(targetName) ? file.getName() : targetName);
     }
 
     /**

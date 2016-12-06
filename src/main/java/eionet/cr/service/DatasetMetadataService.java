@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,7 +21,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Cell;
@@ -38,9 +40,13 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.rio.RDFFormat;
 
+import eionet.cr.common.CRRuntimeException;
+import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.readers.DatasetMetadataExportReader;
+import eionet.cr.util.Pair;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
+import eionet.cr.util.xlwrap.XLWrapUploadType;
 
 /**
  *
@@ -51,13 +57,13 @@ public class DatasetMetadataService {
     // @formatter:off
 
     /** */
+    public static final String DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME = "datasets.xlsx";
+
+    /** */
     private static final String DATA_SHEET_NAME = "DATA";
 
     /** */
     private static final String CONFIGURATION_SHEET_NAME = "CONFIGURATION";
-
-    /** */
-    private static final String METADATA_SHEET_DEFAULT_INDEX = "0";
 
     /** */
     private static final String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
@@ -200,32 +206,68 @@ public class DatasetMetadataService {
 
     /**
      *
+     * @return
+     * @throws ServiceException
+     */
+    public Pair<Integer, File> exportDatasetsMetadata() throws ServiceException {
+
+        URL templateURL = getClass().getClassLoader()
+                .getResource(XLWrapUploadType.SPREADSHEETS_PATH + DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME);
+        if (templateURL == null) {
+            throw new CRRuntimeException(
+                    "Could not locate spreadsheet template by the name of " + DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME);
+        }
+
+        try {
+            File templateFile = new File(templateURL.toURI());
+            File targetFile = TempFilePathGenerator.generateWithExtension(FilenameUtils.getExtension(templateFile.getName()));
+            FileUtils.copyFile(templateFile, targetFile);
+
+            int exportedCount = exportDatasetsMetadata(templateFile, targetFile);
+            return new Pair<Integer, File>(exportedCount, targetFile);
+        } catch (ServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     *
      * @param propertiesToColumns
      * @param templateFile
      * @param targetFile
      * @return
      * @throws ServiceException
      */
-    public int exportDatasetsMetadata(Map<String, Integer> propertiesToColumns, File templateFile, File targetFile)
-            throws ServiceException {
+    public int exportDatasetsMetadata(File templateFile, File targetFile) throws ServiceException {
 
         if (templateFile == null || !templateFile.exists() || !templateFile.isFile()) {
             throw new IllegalArgumentException("The given spreadsheet template must not be null and the file must exist!");
         }
 
-        if (MapUtils.isEmpty(propertiesToColumns)) {
-            throw new IllegalArgumentException("The given map of property-to-column mappings must not be null nor empty!");
+        if (targetFile == null || !targetFile.getParentFile().exists()) {
+            throw new IllegalArgumentException("The given spreadsheet targetFile file must not be null and its path must exist!");
         }
 
         RepositoryConnection repoConn = null;
         try {
+            Workbook workbook = WorkbookFactory.create(templateFile);
+            Map<String, Integer> rdfPropertiesToColumnIndexes = getRdfPropertiesToColumnIndexes(workbook);
+            if (rdfPropertiesToColumnIndexes.isEmpty()) {
+                throw new ServiceException("Failed to detect rdf-properties-to-column-indexes mappings from template file!");
+            }
+
+            DatasetMetadataExportReader exporter =
+                    new DatasetMetadataExportReader(workbook, rdfPropertiesToColumnIndexes, targetFile);
             repoConn = SesameUtil.getRepositoryConnection();
 
-            DatasetMetadataExportReader exporter = new DatasetMetadataExportReader(templateFile, targetFile);
             SesameUtil.executeQuery(EXPORT_DATASETS_METADATA_SPARQL, exporter, repoConn);
             exporter.saveAndClose();
             return exporter.getExportedCount();
 
+        } catch (ServiceException e) {
+            throw e;
         } catch (Exception e) {
             throw new ServiceException(e.toString(), e);
         } finally {
@@ -290,7 +332,8 @@ public class DatasetMetadataService {
      * @param columnsToVariables
      * @return
      */
-    private Map<String, String> getVariablesMap(Row row, Map<Integer, String> indexesToColumns, Map<String, String> columnsToVariables) {
+    private Map<String, String> getVariablesMap(Row row, Map<Integer, String> indexesToColumns,
+            Map<String, String> columnsToVariables) {
 
         Map<String, String> rowMap = new HashMap<>();
 
@@ -374,6 +417,45 @@ public class DatasetMetadataService {
         }
 
         return dataSheet;
+    }
+
+    /**
+     *
+     * @param workbook
+     * @return
+     * @throws ServiceException
+     */
+    private Map<String, Integer> getRdfPropertiesToColumnIndexes(Workbook workbook) throws ServiceException {
+
+        Map<String, String> columnsToRdfProperties =
+                getTemplateColumnMappings(workbook, TemplateColumnProperty.COLUMN_TITLE, TemplateColumnProperty.RDF_PROPERTY_URI);
+        if (columnsToRdfProperties.isEmpty()) {
+            throw new ServiceException("Could not detect column-to-property mappings!");
+        }
+
+        Sheet dataSheet = getDataSheet(workbook);
+        if (dataSheet == null) {
+            throw new IllegalArgumentException("Failed to find data sheet!");
+        }
+
+        Map<String, Integer> rdfPropertiesToColumnIndexes = new HashMap<>();
+
+        Iterator<Row> rows = dataSheet.iterator();
+        if (rows.hasNext()) {
+            Iterator<Cell> firstRowCells = rows.next().cellIterator();
+            while (firstRowCells.hasNext()) {
+                Cell cell = firstRowCells.next();
+                String columnTitle = cell == null ? null : StringUtils.trimToNull(cell.getStringCellValue());
+                if (columnTitle != null) {
+                    String rdfProperty = columnsToRdfProperties.get(columnTitle);
+                    if (StringUtils.isNotBlank(rdfProperty)) {
+                        rdfPropertiesToColumnIndexes.put(rdfProperty, cell.getColumnIndex());
+                    }
+                }
+            }
+        }
+
+        return rdfPropertiesToColumnIndexes;
     }
 
     /**
