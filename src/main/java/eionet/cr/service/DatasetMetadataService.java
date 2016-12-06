@@ -2,7 +2,6 @@ package eionet.cr.service;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -14,6 +13,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -27,7 +27,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -38,7 +38,6 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.rio.RDFFormat;
 
-import eionet.cr.dao.DAOException;
 import eionet.cr.dao.readers.DatasetMetadataExportReader;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
@@ -50,6 +49,15 @@ import eionet.cr.util.sesame.SesameUtil;
 public class DatasetMetadataService {
 
     // @formatter:off
+
+    /** */
+    private static final String DATA_SHEET_NAME = "DATA";
+
+    /** */
+    private static final String CONFIGURATION_SHEET_NAME = "CONFIGURATION";
+
+    /** */
+    private static final String METADATA_SHEET_DEFAULT_INDEX = "0";
 
     /** */
     private static final String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
@@ -89,11 +97,11 @@ public class DatasetMetadataService {
      */
     public String createDataset(String identifier, String title, String description, String dsdUri) throws ServiceException {
 
-        Map<RdfTemplateVariable, String> map = new HashMap<>();
-        map.put(RdfTemplateVariable.DATASET_IDENTIFIER, identifier);
-        map.put(RdfTemplateVariable.DATASET_TITLE, title);
-        map.put(RdfTemplateVariable.DATASET_DESCRIPTION, description);
-        map.put(RdfTemplateVariable.DATASET_DSD, dsdUri);
+        Map<String, String> map = new HashMap<>();
+        map.put(RdfTemplateVariable.DATASET_IDENTIFIER.name(), identifier);
+        map.put(RdfTemplateVariable.DATASET_TITLE.name(), title);
+        map.put(RdfTemplateVariable.DATASET_DESCRIPTION.name(), description);
+        map.put(RdfTemplateVariable.DATASET_DSD.name(), dsdUri);
         Set<String> datasetUris = createDatasets(Arrays.asList(map), false);
 
         return datasetUris.isEmpty() ? StringUtils.EMPTY : datasetUris.iterator().next();
@@ -104,9 +112,8 @@ public class DatasetMetadataService {
      * @param datasetMaps
      * @return
      * @throws ServiceException
-     * @throws DAOException
      */
-    public Set<String> createDatasets(List<Map<RdfTemplateVariable, String>> datasetMaps, boolean clear) throws ServiceException {
+    public Set<String> createDatasets(List<Map<String, String>> datasetMaps, boolean clear) throws ServiceException {
 
         if (CollectionUtils.isEmpty(datasetMaps)) {
             return Collections.emptySet();
@@ -127,13 +134,13 @@ public class DatasetMetadataService {
             ValueFactory vf = repoConn.getValueFactory();
 
             Set<String> datasetUris = new HashSet<>();
-            for (Map<RdfTemplateVariable, String> datasetMap : datasetMaps) {
+            for (Map<String, String> datasetMap : datasetMaps) {
 
                 VelocityContext context = new VelocityContext();
-                for (Entry<RdfTemplateVariable, String> entry : datasetMap.entrySet()) {
-                    RdfTemplateVariable variable = entry.getKey();
+                for (Entry<String, String> entry : datasetMap.entrySet()) {
+                    String variable = entry.getKey();
                     String value = entry.getValue();
-                    context.put(variable.name(), value);
+                    context.put(variable, value);
                 }
                 context.put(RdfTemplateVariable.DATASET_MODIFIED.name(), modifiedDateStr);
 
@@ -145,7 +152,7 @@ public class DatasetMetadataService {
                     String str = writer.toString();
                     reader = new StringReader(str);
 
-                    String datasetUri = DATASET_URI_PREFIX + datasetMap.get(RdfTemplateVariable.DATASET_IDENTIFIER);
+                    String datasetUri = DATASET_URI_PREFIX + datasetMap.get(RdfTemplateVariable.DATASET_IDENTIFIER.name());
                     URI graphURI = vf.createURI(datasetUri);
 
                     // If clear requested and this dataset's metadata not yet added (because it could be added multiple times, e.g.
@@ -182,10 +189,10 @@ public class DatasetMetadataService {
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
-            Workbook workbook = new XSSFWorkbook(inputStream);
+            Workbook workbook = WorkbookFactory.create(inputStream);
             return importWorkbook(workbook, clear);
-        } catch (IOException e) {
-            throw new ServiceException("IO error when reading from file: " + file, e);
+        } catch (Exception e) {
+            throw new ServiceException("Error when reading from file: " + file, e);
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -233,31 +240,43 @@ public class DatasetMetadataService {
      */
     private int importWorkbook(Workbook workbook, boolean clear) throws ServiceException {
 
-        Map<Integer, SpreadsheetColumn> columnsMap = new HashMap<>();
-
-        Sheet firstSheet = workbook.getSheetAt(0);
-        Iterator<Row> rowIterator = firstSheet.iterator();
-        if (rowIterator.hasNext()) {
-            Row firstRow = rowIterator.next();
-            loadColumns(columnsMap, firstRow);
+        Map<String, String> columnsToVariables = getTemplateColumnMappings(workbook, TemplateColumnProperty.COLUMN_TITLE,
+                TemplateColumnProperty.RDF_TEMPLATE_VARIABLE);
+        if (columnsToVariables.isEmpty()) {
+            throw new ServiceException("Could not detect column-to-variable mappings!");
         }
 
-        if (columnsMap.isEmpty()) {
-            throw new ServiceException("Could not detect supported columns in first row of first sheet!");
+        Sheet dataSheet = getDataSheet(workbook);
+        if (dataSheet == null) {
+            throw new IllegalArgumentException("Failed to find data sheet!");
         }
 
-        List<Map<RdfTemplateVariable, String>> rowMaps = new ArrayList<>();
-        while (rowIterator.hasNext()) {
+        Map<Integer, String> indexesToColumns = new HashMap<>();
 
-            Row row = rowIterator.next();
-            Map<RdfTemplateVariable, String> rowMap = getRowMap(columnsMap, row);
-            if (!rowMap.isEmpty()) {
-                rowMaps.add(rowMap);
+        Iterator<Row> rows = dataSheet.iterator();
+        if (rows.hasNext()) {
+            Iterator<Cell> firstRowCells = rows.next().cellIterator();
+            while (firstRowCells.hasNext()) {
+                Cell cell = firstRowCells.next();
+                String strValue = cell == null ? null : StringUtils.trimToNull(cell.getStringCellValue());
+                if (strValue != null) {
+                    indexesToColumns.put(cell.getColumnIndex(), strValue);
+                }
             }
         }
 
-        if (rowMaps.size() > 0) {
-            Set<String> datasetUris = createDatasets(rowMaps, clear);
+        List<Map<String, String>> datasetMaps = new ArrayList<>();
+        while (rows.hasNext()) {
+
+            Row row = rows.next();
+            Map<String, String> datasetMap = getVariablesMap(row, indexesToColumns, columnsToVariables);
+            if (!datasetMap.isEmpty()) {
+                datasetMaps.add(datasetMap);
+            }
+        }
+
+        if (datasetMaps.size() > 0) {
+            Set<String> datasetUris = createDatasets(datasetMaps, clear);
             return datasetUris.size();
         } else {
             return 0;
@@ -266,22 +285,27 @@ public class DatasetMetadataService {
 
     /**
      *
-     * @param columnsMap
      * @param row
+     * @param indexesToColumns
+     * @param columnsToVariables
      * @return
      */
-    private Map<RdfTemplateVariable, String> getRowMap(Map<Integer, SpreadsheetColumn> columnsMap, Row row) {
-        Map<RdfTemplateVariable, String> rowMap = new HashMap<>();
+    private Map<String, String> getVariablesMap(Row row, Map<Integer, String> indexesToColumns, Map<String, String> columnsToVariables) {
 
-        Iterator<Cell> cellIterator = row.cellIterator();
-        while (cellIterator.hasNext()) {
+        Map<String, String> rowMap = new HashMap<>();
 
-            Cell cell = cellIterator.next();
+        Iterator<Cell> cells = row.cellIterator();
+        while (cells.hasNext()) {
+
+            Cell cell = cells.next();
             int columnIndex = cell.getColumnIndex();
-            SpreadsheetColumn column = columnsMap.get(columnIndex);
+            String column = indexesToColumns.get(columnIndex);
             if (column != null) {
-                String strValue = StringUtils.trimToEmpty(cell.getStringCellValue());
-                rowMap.put(column.getRdfTemplateVariable(), strValue);
+                String variable = columnsToVariables.get(column);
+                if (variable != null) {
+                    String strValue = StringUtils.trimToEmpty(cell.getStringCellValue());
+                    rowMap.put(variable, strValue);
+                }
             }
         }
         return rowMap;
@@ -289,57 +313,67 @@ public class DatasetMetadataService {
 
     /**
      *
-     * @param columnsMap
-     * @param row
+     * @param workbook
+     * @return
      */
-    private void loadColumns(Map<Integer, SpreadsheetColumn> columnsMap, Row row) {
-        Iterator<Cell> cellIterator = row.cellIterator();
-        while (cellIterator.hasNext()) {
+    private Map<String, String> getTemplateColumnMappings(Workbook workbook, TemplateColumnProperty keyProperty,
+            TemplateColumnProperty valueProperty) {
 
-            Cell cell = cellIterator.next();
-            if (Cell.CELL_TYPE_STRING == cell.getCellType()) {
-                String cellValue = cell.getStringCellValue();
-                if (StringUtils.isNotBlank(cellValue)) {
-                    String columnName = cellValue.trim().replace(' ', '_').replace('-', '_').toUpperCase();
-                    try {
-                        SpreadsheetColumn column = SpreadsheetColumn.valueOf(columnName);
-                        if (column != null) {
-                            columnsMap.put(cell.getColumnIndex(), column);
-                        }
-                    } catch (Exception e) {
-                        // Ignore.
-                    }
-                }
+        Sheet sheet = workbook.getSheet(CONFIGURATION_SHEET_NAME);
+        if (sheet == null) {
+            throw new IllegalArgumentException("Failed to find sheet by the name " + CONFIGURATION_SHEET_NAME);
+        }
+
+        Iterator<Row> rows = sheet.rowIterator();
+        if (!rows.hasNext()) {
+            throw new IllegalArgumentException("Missing first row in sheet " + CONFIGURATION_SHEET_NAME);
+        }
+
+        Map<String, Integer> columnTitlesToIndexes = new HashMap<>();
+        Iterator<Cell> firstRowCells = rows.next().cellIterator();
+        while (firstRowCells.hasNext()) {
+            Cell cell = firstRowCells.next();
+            String strValue = cell == null ? null : StringUtils.trimToNull(cell.getStringCellValue());
+            if (strValue != null) {
+                columnTitlesToIndexes.put(strValue, cell.getColumnIndex());
             }
         }
+
+        if (columnTitlesToIndexes.isEmpty()) {
+            throw new IllegalArgumentException("Expected some column titles in the first row in sheet " + CONFIGURATION_SHEET_NAME);
+        }
+
+        Map<String, String> mappings = new LinkedHashMap<>();
+        while (rows.hasNext()) {
+
+            Row row = rows.next();
+            try {
+                String key = row.getCell(columnTitlesToIndexes.get(keyProperty.name())).getStringCellValue();
+                String value = row.getCell(columnTitlesToIndexes.get(valueProperty.name())).getStringCellValue();
+                if (StringUtils.isNotBlank(key) && StringUtils.isNotBlank(value)) {
+                    mappings.put(key, value);
+                }
+            } catch (NullPointerException e) {
+                // Ignore deliberately.
+            }
+        }
+
+        return mappings;
     }
 
     /**
-     * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
+     *
+     * @param workbook
+     * @return
      */
-    public static enum SpreadsheetColumn {
+    private Sheet getDataSheet(Workbook workbook) {
 
-        IDENTIFIER(RdfTemplateVariable.DATASET_IDENTIFIER), TITLE(RdfTemplateVariable.DATASET_TITLE),
-        DESCRIPTION(RdfTemplateVariable.DATASET_DESCRIPTION), KEYWORD(RdfTemplateVariable.DATASET_KEYWORD),
-        DATE_ISSUED(RdfTemplateVariable.DATASET_ISSUED), DSD_URI(RdfTemplateVariable.DATASET_DSD),
-        LICENSE_URI(RdfTemplateVariable.DATASET_LICENSE), STATUS_URI(RdfTemplateVariable.DATASET_STATUS),
-        PERIODICITY_URI(RdfTemplateVariable.DATASET_PERIODICITY);
-
-        RdfTemplateVariable rdfTemplateVariable;
-
-        /**
-         * @param rdfTemplateVariable
-         */
-        SpreadsheetColumn(RdfTemplateVariable rdfTemplateVariable) {
-            this.rdfTemplateVariable = rdfTemplateVariable;
+        Sheet dataSheet = workbook.getSheet(DATA_SHEET_NAME);
+        if (dataSheet == null) {
+            dataSheet = workbook.getSheetAt(0);
         }
 
-        /**
-         * @return the rdfTemplateVariable
-         */
-        public RdfTemplateVariable getRdfTemplateVariable() {
-            return rdfTemplateVariable;
-        }
+        return dataSheet;
     }
 
     /**
@@ -348,5 +382,12 @@ public class DatasetMetadataService {
     public static enum RdfTemplateVariable {
         DATASET_IDENTIFIER, DATASET_TITLE, DATASET_DESCRIPTION, DATASET_DSD, DATASET_MODIFIED, DATASET_KEYWORD, DATASET_ISSUED,
         DATASET_LICENSE, DATASET_STATUS, DATASET_PERIODICITY;
+    }
+
+    /**
+     * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
+     */
+    public static enum TemplateColumnProperty {
+        COLUMN_TITLE, RDF_PROPERTY_URI, RDF_TEMPLATE_VARIABLE;
     }
 }

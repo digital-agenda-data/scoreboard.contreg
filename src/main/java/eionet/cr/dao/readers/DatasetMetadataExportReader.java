@@ -107,11 +107,6 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
             throw new ResultSetReaderException("IOException when trying to create workbook object from " + templateFile, e);
         }
 
-        int numberOfSheets = workbook.getNumberOfSheets();
-        if (numberOfSheets <= 0) {
-            throw new ResultSetReaderException("The template file must have at least one sheet!");
-        }
-
         Sheet configurationSheet = workbook.getSheet(CONFIGURATION_SHEET_NAME);
         if (configurationSheet == null) {
             throw new ResultSetReaderException(
