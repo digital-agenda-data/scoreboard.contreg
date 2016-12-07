@@ -819,14 +819,14 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?")
                     .append(PairReader.RIGHTCOL).append("\n");
         } else {
-            sb.append("  coalesce(");
+            sb.append("  min(coalesce(");
             for (int i = 0; i < labelPredicates.length; i++) {
                 if (i > 0) {
                     sb.append(", ");
                 }
                 sb.append("?label").append(i);
             }
-            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1)) as ?")
+            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1))) as ?")
                     .append(PairReader.RIGHTCOL).append("\n");
         }
 
