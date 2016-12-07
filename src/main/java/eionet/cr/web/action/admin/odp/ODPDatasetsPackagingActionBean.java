@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
@@ -16,7 +17,6 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
-import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.util.Pair;
 import eionet.cr.util.odp.ODPAction;
 import eionet.cr.util.odp.ODPDatasetsPacker;
@@ -49,14 +49,11 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
     private static final String[] LABEL_PREDICATES = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.DC_TITLE,
             Predicates.FOAF_NAME};
 
-    /** The list of indicators matching the applied filters. */
-    private List<SkosItemDTO> filteredIndicators;
-
-    /** The list of URIs of indicators selected by the user for the submitted bulk operation. */
-    private List<String> selectedIndicators;
-
     /** */
     private List<Pair<String, String>> datasets;
+
+    /** */
+    private List<String> selectedDatasets;
 
     /** */
     private ODPAction odpAction;
@@ -78,8 +75,27 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
      */
     public Resolution packAll() throws DAOException {
 
-        addWarningMessage("Not implemented yet!");
-        return new ForwardResolution(DATASETS_JSP);
+        List<Pair<String, String>> datasetPairs = getDatasets();
+        if (CollectionUtils.isEmpty(datasetPairs)) {
+            addCautionMessage("Found no datasets to pack!");
+            return new ForwardResolution(DATASETS_JSP);
+        }
+
+        List<String> datasetUris = new ArrayList<>();
+        for (Pair<String, String> pair : datasetPairs) {
+            datasetUris.add(pair.getLeft());
+        }
+
+        if (true) {
+            addCautionMessage(String.format("Found %d datasets to pack with action=%s, but packing not implemented yet :)", datasetUris.size(), odpAction));
+            return new ForwardResolution(DATASETS_JSP);
+        }
+
+        try {
+            return generateAndStream(datasetUris);
+        } catch (DAOException e) {
+            return new ForwardResolution(DATASETS_JSP);
+        }
     }
 
     /**
@@ -88,8 +104,21 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
      */
     public Resolution packSelected() throws DAOException {
 
-        addWarningMessage("Not implemented yet!");
-        return new ForwardResolution(DATASETS_JSP);
+        if (CollectionUtils.isEmpty(selectedDatasets)) {
+            addCautionMessage("No datasets selected!!");
+            return new ForwardResolution(DATASETS_JSP);
+        }
+
+        if (true) {
+            addCautionMessage(String.format("%d datasets selected with action=%s, but packing not implemented yet :)", selectedDatasets.size(), odpAction));
+            return new ForwardResolution(DATASETS_JSP);
+        }
+
+        try {
+            return generateAndStream(selectedDatasets);
+        } catch (DAOException e) {
+            return new ForwardResolution(DATASETS_JSP);
+        }
     }
 
     /**
@@ -185,5 +214,12 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
      */
     public void setOdpAction(ODPAction odpAction) {
         this.odpAction = odpAction;
+    }
+
+    /**
+     * @param selectedDatasets the selectedDatasets to set
+     */
+    public void setSelectedDatasets(List<String> selectedDatasets) {
+        this.selectedDatasets = selectedDatasets;
     }
 }
