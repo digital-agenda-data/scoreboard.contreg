@@ -2,21 +2,13 @@ package eionet.cr.web.action.admin.odp;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
@@ -31,37 +23,31 @@ import eionet.cr.util.odp.ODPDatasetsPacker;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.StreamingResolution;
+import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.validation.ValidationMethod;
 
 /**
- * Action bean for generating ODP (Open Data Portal, http://open-data.europa.eu) datasets' metadata packages from the metadata of
- * a selected set of indicators.
+ * Action bean for generating datasets' metadata packages for uploading into ODP (Open Data Portal, http://open-data.europa.eu).
  *
  * @author Jaanus
  */
 @UrlBinding("/admin/odpPackaging.action")
 public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
 
-    /** Static logger for this class. */
+    /** */
     private static final Logger LOGGER = Logger.getLogger(ODPDatasetsPackagingActionBean.class);
 
-    /** The JSP listing the available indicator and enabling their packaging into ODP datasets. */
-    private static final String INDICATORS_JSP = "/pages/admin/odp/indicators2.jsp";
+    /** */
+    private static final String DATASETS_JSP = "/pages/admin/odp/datasets.jsp";
 
     /** */
     private static final String[] LABEL_PREDICATES = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.DC_TITLE,
             Predicates.FOAF_NAME};
-
-    /** User-submitted values of the "indicator group" filter. */
-    private List<String> filterIndGroup;
-
-    /** User-submitted values of the "indicator source" filter. */
-    private List<String> filterIndSource;
-
-    /** Available indicator groups to filter by. */
-    private List<SkosItemDTO> indGroups;
-
-    /** Available indicator sources to filter by. */
-    private List<SkosItemDTO> indSources;
 
     /** The list of indicators matching the applied filters. */
     private List<SkosItemDTO> filteredIndicators;
@@ -73,38 +59,16 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
     private List<Pair<String, String>> datasets;
 
     /** */
-    private String filterDataset;
-
-    /** */
-    private String prevFilterDataset;
-
-    /** */
     private ODPAction odpAction;
 
-    /** */
-    private String zipWhich;
-
     /**
-     * Default event: lists indicators by the given filters.
-     *
      * @return Resolution to go to.
      * @throws DAOException In case data access error occurs.
      */
     @DefaultHandler
-    public Resolution listIndicators() throws DAOException {
+    public Resolution defaultHandler() throws DAOException {
 
-        if (StringUtils.isBlank(filterDataset)) {
-            List<Pair<String, String>> availableDatasets = getDatasets();
-            if (CollectionUtils.isNotEmpty(availableDatasets)) {
-                filterDataset = availableDatasets.iterator().next().getLeft();
-            }
-        }
-
-        if (!StringUtils.equals(filterDataset, prevFilterDataset)) {
-            filterIndSource = null;
-        }
-
-        return new ForwardResolution(INDICATORS_JSP);
+        return new ForwardResolution(DATASETS_JSP);
     }
 
     /**
@@ -112,75 +76,31 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
      * @return
      * @throws DAOException
      */
-    public Resolution download() throws DAOException {
+    public Resolution packAll() throws DAOException {
 
-        if (StringUtils.isBlank(filterDataset)) {
-            addCautionMessage("No dataset selected!");
-            return new ForwardResolution(INDICATORS_JSP);
-        }
-
-        if (StringUtils.equals(zipWhich, "SELECTED")) {
-            return zipSelected();
-        } else {
-            return zipAll();
-        }
+        addWarningMessage("Not implemented yet!");
+        return new ForwardResolution(DATASETS_JSP);
     }
 
     /**
-     * Event handler for zipping the metadata of the user-selected indicators.
-     *
-     * @return Resolution to go to.
-     * @throws DAOException In case data access error occurs.
+     * @return
+     * @throws DAOException
      */
-    public Resolution zipSelected() throws DAOException {
+    public Resolution packSelected() throws DAOException {
 
-        LOGGER.trace("zipSelected(), selected indicators: " + selectedIndicators);
-
-        if (CollectionUtils.isEmpty(selectedIndicators)) {
-            addCautionMessage("No indicators selected!");
-            return new ForwardResolution(INDICATORS_JSP);
-        }
-
-        return generateAndStream(selectedIndicators);
+        addWarningMessage("Not implemented yet!");
+        return new ForwardResolution(DATASETS_JSP);
     }
 
     /**
-     * Event handler for zipping the metadata of *all* indicators matching the given filters.
      *
-     * @return Resolution to go to.
-     * @throws DAOException In case data access error occurs.
+     * @param datasetUris
+     * @return
+     * @throws DAOException
      */
-    public Resolution zipAll() throws DAOException {
+    private StreamingResolution generateAndStream(List<String> datasetUris) throws DAOException {
 
-        List<SkosItemDTO> indicatorSkosItems = getFilteredIndicators();
-        if (CollectionUtils.isEmpty(indicatorSkosItems)) {
-            addCautionMessage("No indicators to ZIP!");
-            return new ForwardResolution(INDICATORS_JSP);
-        }
-
-        List<String> indicatorUris = new ArrayList<String>();
-        for (SkosItemDTO indicatorSkosItem : indicatorSkosItems) {
-            indicatorUris.add(indicatorSkosItem.getUri());
-        }
-
-        try {
-            return generateAndStream(indicatorUris);
-        } catch (DAOException e) {
-            return new ForwardResolution(INDICATORS_JSP);
-        }
-    }
-
-    /**
-     * Utility method for generating metadata for the given indicators and streaming it into the {@link StreamingResolution}
-     * returned by this method.
-     *
-     * @param indicatorUris The URIs of the indicators.
-     * @return StreamingResolution where the output is written into.
-     * @throws DAOException In case data access problem occurs.
-     */
-    private StreamingResolution generateAndStream(List<String> indicatorUris) throws DAOException {
-
-        final ODPDatasetsPacker packer = new ODPDatasetsPacker(filterDataset, indicatorUris, odpAction);
+        final ODPDatasetsPacker packer = new ODPDatasetsPacker(datasetUris, odpAction);
         try {
             packer.prepare();
         } catch (DAOException e) {
@@ -192,6 +112,7 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
             throw e;
         }
 
+        String filename = String.format("ODP-%s-%s.zip", getUserName(), DateFormatUtils.format(new Date(), "yyyy.MM.dd-HHmm"));
         return new StreamingResolution("application/zip") {
             @Override
             public void stream(HttpServletResponse response) throws Exception {
@@ -204,109 +125,7 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
                     IOUtils.closeQuietly(outputStream);
                 }
             }
-        }.setFilename("scoreboard.zip");
-    }
-
-    /**
-     * Getter for the {@link #filterIndGroup}.
-     *
-     * @return the filterIndGroup
-     */
-    public List<String> getFilterIndGroup() {
-        return filterIndGroup;
-    }
-
-    /**
-     * Setter for the {@link #filterIndGroup}.
-     *
-     * @param filterIndGroup the filterIndGroup to set
-     */
-    public void setFilterIndGroup(List<String> filterIndGroup) {
-        this.filterIndGroup = filterIndGroup;
-    }
-
-    /**
-     * Getter for the {@link #filterIndSource}.
-     *
-     * @return the filterIndSource
-     */
-    public List<String> getFilterIndSource() {
-        return filterIndSource;
-    }
-
-    /**
-     * Setter for the {@link #filterIndSource}.
-     *
-     * @param filterIndSource the filterIndSource to set
-     */
-    public void setFilterIndSource(List<String> filterIndSource) {
-        this.filterIndSource = filterIndSource;
-    }
-
-    /**
-     * Returns all possible indicator groups to choose from.
-     *
-     * @return Indicator groups, each represented with a {@link SkosItemDTO}.
-     *
-     * @throws DAOException If data access error occurs.
-     */
-    public List<SkosItemDTO> getIndGroups() throws DAOException {
-
-        // Lazy initialization.
-        if (indGroups == null) {
-            indGroups =
-                    DAOFactory.get().getDao(ScoreboardSparqlDAO.class)
-                            .getCodelistItems(ScoreboardSparqlDAO.IND_GROUP_CODELIST_URI);
-        }
-        return indGroups;
-    }
-
-    /**
-     * Returns all possible indicator sources to choose from.
-     *
-     * @return Indicator sources, each represented with a {@link SkosItemDTO}.
-     * @throws DAOException If data access error occurs.
-     */
-    public List<SkosItemDTO> getIndSources() throws DAOException {
-
-        // Lazy initialization.
-        if (indSources == null) {
-
-            List<Pair<String, String>> availableDatasets = getDatasets();
-            if (CollectionUtils.isNotEmpty(availableDatasets)) {
-                String datasetUri = availableDatasets.iterator().next().getLeft();
-                for (Pair<String, String> availableDataset : availableDatasets) {
-                    if (StringUtils.equals(filterDataset, availableDataset.getLeft())) {
-                        datasetUri = availableDataset.getLeft();
-                        break;
-                    }
-                }
-                indSources = DAOFactory.get().getDao(ScoreboardSparqlDAO.class).getIndicatorSourcesUsedInDataset(datasetUri);
-            } else {
-                indSources = new ArrayList<SkosItemDTO>();
-            }
-        }
-        return indSources;
-    }
-
-    /**
-     * Returns the list of indicators matching the applied filters. If no filters applied, returns all known indicators.
-     * This is a lazy-initialization getter for the filteredIndicators.
-     *
-     * @return the filteredIndicators
-     * @throws DAOException If data access error occurs.
-     */
-    public List<SkosItemDTO> getFilteredIndicators() throws DAOException {
-
-        if (filteredIndicators == null) {
-            if (StringUtils.isBlank(filterDataset)) {
-                filteredIndicators = new ArrayList<SkosItemDTO>();
-            } else {
-                filteredIndicators =
-                        DAOFactory.get().getDao(ScoreboardSparqlDAO.class).getIndicators(filterDataset, filterIndSource);
-            }
-        }
-        return filteredIndicators;
+        }.setFilename(filename);
     }
 
     /**
@@ -333,15 +152,6 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
     }
 
     /**
-     * Setter for the selectedIndicators.
-     *
-     * @param selectedIndicators the selectedIndicators to set
-     */
-    public void setSelectedIndicators(List<String> selectedIndicators) {
-        this.selectedIndicators = selectedIndicators;
-    }
-
-    /**
      * @return the datasets
      * @throws DAOException
      */
@@ -353,27 +163,6 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
             datasets = searchResult == null ? new ArrayList<Pair<String, String>>() : searchResult.getItems();
         }
         return datasets;
-    }
-
-    /**
-     * @return the filterDataset
-     */
-    public String getFilterDataset() {
-        return filterDataset;
-    }
-
-    /**
-     * @param filterDataset the filterDataset to set
-     */
-    public void setFilterDataset(String filterDataset) {
-        this.filterDataset = filterDataset;
-    }
-
-    /**
-     * @param prevFilterDataset the prevFilterDataset to set
-     */
-    public void setPrevFilterDataset(String prevFilterDataset) {
-        this.prevFilterDataset = prevFilterDataset;
     }
 
     /**
@@ -396,12 +185,5 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
      */
     public void setOdpAction(ODPAction odpAction) {
         this.odpAction = odpAction;
-    }
-
-    /**
-     * @param zipWhich the zipWhich to set
-     */
-    public void setZipWhich(String zipWhich) {
-        this.zipWhich = zipWhich;
     }
 }

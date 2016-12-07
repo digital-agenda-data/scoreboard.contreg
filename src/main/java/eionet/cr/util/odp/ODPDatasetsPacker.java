@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 
-import javanet.staxutils.IndentingXMLStreamWriter;
-
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -38,6 +36,7 @@ import eionet.cr.dto.SubjectDTO;
 import eionet.cr.util.URIUtil;
 import eionet.cr.util.URLUtil;
 import eionet.cr.util.Util;
+import javanet.staxutils.IndentingXMLStreamWriter;
 
 /**
  * Generates ODP (Open Data Portal, http://open-data.europa.eu) datasets' metadata packages from the metadata of
@@ -105,6 +104,16 @@ public class ODPDatasetsPacker {
 
     /** */
     private ODPAction odpAction;
+
+    /**
+     *
+     * Class constructor.
+     * @param datasetUris
+     * @param odpAction
+     */
+    public ODPDatasetsPacker(List<String> datasetUris, ODPAction odpAction) {
+        throw new UnsupportedOperationException("Constructor not implemented!");
+    }
 
     /**
      * Main constructor for generating ODP dataset metadata package for the given indicators.
