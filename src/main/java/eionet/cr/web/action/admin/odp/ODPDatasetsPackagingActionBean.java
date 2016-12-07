@@ -86,10 +86,10 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
             datasetUris.add(pair.getLeft());
         }
 
-        if (true) {
-            addCautionMessage(String.format("Found %d datasets to pack with action=%s, but packing not implemented yet :)", datasetUris.size(), odpAction));
-            return new ForwardResolution(DATASETS_JSP);
-        }
+//        if (true) {
+//            addCautionMessage(String.format("Found %d datasets to pack with action=%s, but packing not implemented yet :)", datasetUris.size(), odpAction));
+//            return new ForwardResolution(DATASETS_JSP);
+//        }
 
         try {
             return generateAndStream(datasetUris);
@@ -109,10 +109,10 @@ public class ODPDatasetsPackagingActionBean extends AbstractActionBean {
             return new ForwardResolution(DATASETS_JSP);
         }
 
-        if (true) {
-            addCautionMessage(String.format("%d datasets selected with action=%s, but packing not implemented yet :)", selectedDatasets.size(), odpAction));
-            return new ForwardResolution(DATASETS_JSP);
-        }
+//        if (true) {
+//            addCautionMessage(String.format("%d datasets selected with action=%s, but packing not implemented yet :)", selectedDatasets.size(), odpAction));
+//            return new ForwardResolution(DATASETS_JSP);
+//        }
 
         try {
             return generateAndStream(selectedDatasets);

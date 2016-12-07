@@ -19,7 +19,7 @@ import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.util.Pair;
 import eionet.cr.util.odp.ODPAction;
-import eionet.cr.util.odp.ODPDatasetsPacker;
+import eionet.cr.util.odp.ODPDatasetsPackerOld;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.admin.AdminWelcomeActionBean;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
@@ -179,7 +179,7 @@ public class ODPDatasetsPackagingActionBeanOld extends AbstractActionBean {
      */
     private StreamingResolution generateAndStream(List<String> indicatorUris) throws DAOException {
 
-        final ODPDatasetsPacker packer = new ODPDatasetsPacker(filterDataset, indicatorUris, odpAction);
+        final ODPDatasetsPackerOld packer = new ODPDatasetsPackerOld(filterDataset, indicatorUris, odpAction);
         try {
             packer.prepare();
         } catch (DAOException e) {
