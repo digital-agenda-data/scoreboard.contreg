@@ -151,8 +151,12 @@ public class ODPDatasetsPacker {
 
         Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
 
+        ODPDataset odpDataset = new ODPDataset();
+        odpDataset.setUri(datasetSubject.getUri());
+        odpDataset.setIdentifier(datasetIdentifier);
+
         Map<String, Object> data = new HashMap<String, Object>();
-        data.put("datasetNotation", datasetIdentifier);
+        data.put("dataset", odpDataset);
 
         Writer writer = new OutputStreamWriter(zipOutput, Charset.forName("UTF-8"));
         template.process(data, writer);
