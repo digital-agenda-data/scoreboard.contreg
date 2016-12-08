@@ -6,6 +6,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,7 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.SearchDAO;
 import eionet.cr.dto.SubjectDTO;
 import eionet.cr.util.URIUtil;
+import eionet.cr.util.Util;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -154,6 +158,46 @@ public class ODPDatasetsPacker {
         ODPDataset odpDataset = new ODPDataset();
         odpDataset.setUri(datasetSubject.getUri());
         odpDataset.setIdentifier(datasetIdentifier);
+
+        String title = datasetSubject.getObjectValue(Predicates.DCTERMS_TITLE);
+        if (StringUtils.isBlank(title)) {
+            title = datasetSubject.getObjectValue(Predicates.RDFS_LABEL);
+            if (StringUtils.isBlank(title)) {
+                title = datasetIdentifier;
+            }
+        }
+        odpDataset.setTitle(title);
+
+        String description = datasetSubject.getObjectValue(Predicates.DCTERMS_DESCRIPTION);
+        if (StringUtils.isBlank(title)) {
+            description = title;
+        }
+        odpDataset.setDescription(description);
+
+        String modifiedDate = StringUtils.EMPTY;
+        List<String> modifiedDates = datasetSubject.getObjectValues(Predicates.DCTERMS_MODIFIED);
+        if (CollectionUtils.isNotEmpty(modifiedDates)) {
+            Collections.sort(modifiedDates);
+            modifiedDate = modifiedDates.get(modifiedDates.size() - 1).trim();
+        }
+        if (StringUtils.isBlank(modifiedDate)) {
+            modifiedDate = Util.virtuosoDateToString(new Date());
+        }
+        odpDataset.setModified(modifiedDate);
+
+        String issuedDate = StringUtils.EMPTY;
+        List<String> issuedDates = datasetSubject.getObjectValues(Predicates.DCTERMS_ISSUED);
+        if (CollectionUtils.isNotEmpty(issuedDates)) {
+            Collections.sort(issuedDates);
+            issuedDate = modifiedDates.get(modifiedDates.size() - 1).trim();
+        }
+        if (StringUtils.isBlank(issuedDate)) {
+            issuedDate = Util.virtuosoDateToString(new Date());
+        }
+        odpDataset.setIssued(issuedDate);
+
+        List<String> spatialUris = Arrays.asList("http://eurostat.linked-statistics.org/dic/geo#AL", "http://eurostat.linked-statistics.org/dic/geo#AT");
+        odpDataset.setSpatialUris(spatialUris);
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("dataset", odpDataset);
