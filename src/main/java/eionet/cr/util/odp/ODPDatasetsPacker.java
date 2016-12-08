@@ -6,7 +6,6 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -23,6 +22,7 @@ import org.apache.log4j.Logger;
 import eionet.cr.common.Predicates;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.SearchDAO;
 import eionet.cr.dto.SubjectDTO;
 import eionet.cr.util.URIUtil;
@@ -58,6 +58,9 @@ public class ODPDatasetsPacker {
     /** */
     private List<SubjectDTO> datasetSubjects;
 
+    /** */
+    private Map<String, List<String>> datasetSpatialUris = new HashMap<>();
+
     /**
      * @param datasetUris
      * @param odpAction
@@ -85,6 +88,23 @@ public class ODPDatasetsPacker {
         datasetSubjects = DAOFactory.get().getDao(SearchDAO.class).getSubjectsData(datasetUris, null);
         if (CollectionUtils.isEmpty(datasetSubjects)) {
             throw new DAOException("Could not find any metadata about the given datasets!");
+        }
+
+        ScoreboardSparqlDAO ssDao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
+        for (SubjectDTO datasetSubject : datasetSubjects) {
+
+            String datasetUri = datasetSubject.getUri();
+
+            List<String> odpCountryUris = new ArrayList<>();
+            List<String> refAreaUris = ssDao.getDistinctUsedRefAreas(datasetUri, null);
+            for (String refAreaUri : refAreaUris) {
+                String odpCountryUri = ODPCountryMappings.getMappingFor(refAreaUri);
+                if (StringUtils.isNotBlank(odpCountryUri)) {
+                    odpCountryUris.add(odpCountryUri);
+                }
+            }
+
+            datasetSpatialUris.put(datasetUri, odpCountryUris);
         }
     }
 
@@ -156,7 +176,8 @@ public class ODPDatasetsPacker {
         Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
 
         ODPDataset odpDataset = new ODPDataset();
-        odpDataset.setUri(datasetSubject.getUri());
+        String datasetUri = datasetSubject.getUri();
+        odpDataset.setUri(datasetUri);
         odpDataset.setIdentifier(datasetIdentifier);
 
         String title = datasetSubject.getObjectValue(Predicates.DCTERMS_TITLE);
@@ -196,8 +217,8 @@ public class ODPDatasetsPacker {
         }
         odpDataset.setIssued(issuedDate);
 
-        List<String> spatialUris = Arrays.asList("http://eurostat.linked-statistics.org/dic/geo#AL", "http://eurostat.linked-statistics.org/dic/geo#AT");
-        odpDataset.setSpatialUris(spatialUris);
+        List<String> spatialUris = datasetSpatialUris.get(datasetUri);
+        odpDataset.setSpatialUris(spatialUris == null ? new ArrayList<String>() : spatialUris);
 
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("dataset", odpDataset);

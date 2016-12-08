@@ -197,10 +197,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "SELECT DISTINCT ?refArea WHERE {\n" +
             "  ?s a cube:Observation .\n" +
             "  ?s cube:dataSet ?dst .\n" +
-            "  ?s dad-prop:indicator ?ind .\n" +
             "  ?s dad-prop:ref-area ?refArea\n" +
-            "  @FILTER_DATASET@\n" +
-            "  @FILTER_INDICATOR@\n" +
+            "  filter(?dst = ?dstUri) \n" +
             "}\n" +
             "ORDER BY ?refArea";
 
@@ -974,24 +972,14 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     @Override
     public List<String> getDistinctUsedRefAreas(String datasetUri, String indicatorUri) throws DAOException {
 
-        String sparql = GET_DISTINCT_USED_REF_AREAS;
+        if (StringUtils.isBlank(datasetUri)) {
+            throw new IllegalArgumentException("Dataset URI must not be blank!");
+        }
+
         Bindings bindings = new Bindings();
+        bindings.setURI("dstUri", datasetUri);
 
-        if (StringUtils.isNotBlank(datasetUri)) {
-            sparql = StringUtils.replace(sparql, "@FILTER_DATASET@", "filter (?dst = ?dstUri)");
-            bindings.setURI("dstUri", datasetUri);
-        } else {
-            sparql = StringUtils.replace(sparql, "@FILTER_DATASET@", StringUtils.EMPTY);
-        }
-
-        if (StringUtils.isNotBlank(indicatorUri)) {
-            sparql = StringUtils.replace(sparql, "@FILTER_INDICATOR@", "filter (?ind = ?indUri)");
-            bindings.setURI("indUri", indicatorUri);
-        } else {
-            sparql = StringUtils.replace(sparql, "@FILTER_INDICATOR@", StringUtils.EMPTY);
-        }
-
-        List<String> returnList = executeSPARQL(sparql, bindings, new SingleObjectReader<String>());
+        List<String> returnList = executeSPARQL(GET_DISTINCT_USED_REF_AREAS, bindings, new SingleObjectReader<String>());
         return returnList;
     }
 
