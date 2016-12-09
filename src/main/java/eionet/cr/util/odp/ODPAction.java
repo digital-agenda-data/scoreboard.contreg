@@ -13,11 +13,11 @@ public enum ODPAction {
 
     // @formatter:off
 
-    ADD_DRAFT("Add/replace with status Draft"),
-    ADD_PUBLISHED("Add/replace with status Published"),
-    SET_DRAFT("Set status to Draft"),
-    SET_PUBLISHED("Set status to Published"),
-    REMOVE("Remove");
+    ADD_DRAFT("Add/replace with status Draft", "add-replace", "draft"),
+    ADD_PUBLISHED("Add/replace with status Published", "add-replace", "published"),
+    SET_DRAFT("Set status to Draft", "change-status", "draft"),
+    SET_PUBLISHED("Set status to Published", "change-status", "published"),
+    REMOVE("Remove", "remove", null);
 
     // @formatter:on
 
@@ -26,18 +26,18 @@ public enum ODPAction {
 
     /** */
     private String label;
-
-    /** */
     private String nameCamelCase;
+    private String tagLocalName;
+    private String objectStatus;
 
     /**
-     *
-     * Class constructor.
-     *
      * @param label
      */
-    ODPAction(String label) {
+    ODPAction(String label, String tagLocalName, String objectStatus) {
+
         this.label = label;
+        this.tagLocalName = tagLocalName;
+        this.objectStatus = objectStatus;
     }
 
     /**
@@ -45,6 +45,14 @@ public enum ODPAction {
      */
     public String getLabel() {
         return label;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getIdPrefix() {
+        return getNameCamelCase();
     }
 
     /**
@@ -60,5 +68,19 @@ public enum ODPAction {
             nameCamelCase = StringUtils.uncapitalize(separatorsRemoved);
         }
         return nameCamelCase;
+    }
+
+    /**
+     * @return the tagLocalName
+     */
+    public String getTagLocalName() {
+        return tagLocalName;
+    }
+
+    /**
+     * @return the objectStatus
+     */
+    public String getObjectStatus() {
+        return objectStatus;
     }
 }

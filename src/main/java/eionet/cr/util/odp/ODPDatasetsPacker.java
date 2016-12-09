@@ -17,7 +17,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.dao.DAOException;
@@ -38,10 +37,13 @@ import freemarker.template.Version;
 public class ODPDatasetsPacker {
 
     /** */
-    private static final Logger LOGGER = Logger.getLogger(ODPDatasetsPacker.class);
+    private static final String UTF_8 = "UTF-8";
 
     /** */
     private static final String DATASET_TEMPLATE_PATH = "freemarker/odp-dataset-template.ftl";
+
+    /** */
+    private static final String MANIFEST_TEMPLATE_PATH = "freemarker/odp-manifest-template.ftl";
 
     /** */
     private static final Configuration TEMPLATES_CONFIGURATION = createTemplatesConfiguration();
@@ -126,10 +128,13 @@ public class ODPDatasetsPacker {
             zipOutput = new ZipArchiveOutputStream(outputStream);
 
             int i = 0;
+            List<ODPDataset> odpDatasets = new ArrayList<>();
             for (SubjectDTO datasetSubject : datasetSubjects) {
-                createAndWriteDatasetEntry(zipOutput, datasetSubject, i++);
+                ODPDataset odpDataset = createAndWriteDatasetEntry(zipOutput, datasetSubject, i++);
+                odpDatasets.add(odpDataset);
             }
-            // TODO: create and write manifestEntry
+
+            createAndWriteManifestEntry(zipOutput, odpDatasets);
         } finally {
             IOUtils.closeQuietly(zipOutput);
         }
@@ -140,11 +145,12 @@ public class ODPDatasetsPacker {
      * @param zipOutput
      * @param datasetSubject
      * @param datasetIndex
+     * @return
      * @throws IOException
      * @throws TemplateException
      * @throws DAOException
      */
-    private void createAndWriteDatasetEntry(ZipArchiveOutputStream zipOutput, SubjectDTO datasetSubject, int datasetIndex)
+    private ODPDataset createAndWriteDatasetEntry(ZipArchiveOutputStream zipOutput, SubjectDTO datasetSubject, int datasetIndex)
             throws IOException, TemplateException, DAOException {
 
         String datasetUri = datasetSubject.getUri();
@@ -158,20 +164,24 @@ public class ODPDatasetsPacker {
 
         ZipArchiveEntry entry = new ZipArchiveEntry("datasets/" + datasetIdentifier + ".rdf");
         zipOutput.putArchiveEntry(entry);
-        writeDatasetEntry(zipOutput, datasetIdentifier, datasetSubject, datasetIndex);
+        ODPDataset odpDataset = writeDatasetEntry(zipOutput, datasetIdentifier, datasetSubject, datasetIndex);
         zipOutput.closeArchiveEntry();
+
+        return odpDataset;
     }
 
     /**
      *
      * @param zipOutput
-     * @param datasetIdentifier TODO
+     * @param datasetIdentifier
      * @param datasetSubject
      * @param index
+     * @return
      * @throws IOException
      * @throws TemplateException
      */
-    private void writeDatasetEntry(ZipArchiveOutputStream zipOutput, String datasetIdentifier, SubjectDTO datasetSubject, int index) throws IOException, TemplateException {
+    private ODPDataset writeDatasetEntry(ZipArchiveOutputStream zipOutput, String datasetIdentifier, SubjectDTO datasetSubject,
+            int index) throws IOException, TemplateException {
 
         Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
 
@@ -223,8 +233,42 @@ public class ODPDatasetsPacker {
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("dataset", odpDataset);
 
-        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName("UTF-8"));
+        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
         template.process(data, writer);
+
+        return odpDataset;
+    }
+
+    /**
+     *
+     * @param zipOutput
+     * @param odpDatasets
+     * @throws IOException
+     * @throws TemplateException
+     */
+    private void createAndWriteManifestEntry(ZipArchiveOutputStream zipOutput, List<ODPDataset> odpDatasets)
+            throws IOException, TemplateException {
+
+        List<ODPManifestEntry> manifestEntries = new ArrayList<>();
+        for (ODPDataset odpDataset : odpDatasets) {
+
+            ODPManifestEntry entry = new ODPManifestEntry();
+            entry.setDataset(odpDataset);
+            entry.setOdpAction(odpAction);
+            manifestEntries.add(entry);
+        }
+
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("manifestEntries", manifestEntries);
+
+        ZipArchiveEntry entry = new ZipArchiveEntry("manifest.xml");
+        zipOutput.putArchiveEntry(entry);
+
+        Template template = TEMPLATES_CONFIGURATION.getTemplate(MANIFEST_TEMPLATE_PATH);
+        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
+        template.process(data, writer);
+
+        zipOutput.closeArchiveEntry();
     }
 
     /**
@@ -245,15 +289,14 @@ public class ODPDatasetsPacker {
      */
     public static void main(String[] args) throws IOException, TemplateException {
 
-//        FreeMarker Template example: ${message}
-//    ${messageMore}
-//    =======================
-//    ===  County List   ====
-//    =======================
-//    <#list countries as country>
-//        ${country_index + 1}. ${country}
-//    </#list>
-
+        // FreeMarker Template example: ${message}
+        // ${messageMore}
+        // =======================
+        // === County List ====
+        // =======================
+        // <#list countries as country>
+        // ${country_index + 1}. ${country}
+        // </#list>
 
         Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
 
