@@ -44,6 +44,25 @@
                             $('#importDialog').dialog("close");
                             return true;
                         });
+                        
+                        // Actions for the display/closing of the "create new catalog" popup
+                        
+                        $("#createNewCatalogLink").click(function() {
+                            $('#createNewCatalogDialog').dialog('option','width', 800);
+                            $('#createNewCatalogDialog').dialog('open');
+                            return false;
+                        });
+
+                        $('#createNewCatalogDialog').dialog({
+                            autoOpen: false,
+                            width: 800
+                        });
+
+                        $("#closeCreateNewCatalogDialog").click(function() {
+                            $('#createNewCatalogDialog').dialog("close");
+                            return true;
+                        });
+
 
                     });
             } ) ( jQuery );
@@ -64,6 +83,7 @@
                     <li><a href="#" id="creationLink" title="Create a new dataset">New dataset</a></li>
                     <li><a href="#" id="importLink" title="Import multiple datasets metadata">Import datasets</a></li>
                     <li><stripes:link class="link-plain" beanclass="${actionBean['class'].name}" event="export">Export datasets</stripes:link></li>
+                    <li><a href="#" id="createNewCatalogLink" title="Create a new catalog">New catalog</a></li>
                 </ul>
             </li>
         </ul>
@@ -133,7 +153,7 @@
 
             <table>
                 <tr>
-                    <td><stripes:label for="txtTitle" class="question required" title="The dataset's unique identifier used by the system to distinguish it from others. Only digits, latin letters, underscores and dashes allowed! Will go into the dataset URI and also into the property identified by http://purl.org/dc/terms/identifier">Identifier:</stripes:label></td>
+                    <td><stripes:label for="txtIdentifier" class="question required" title="The dataset's unique identifier used by the system to distinguish it from others. Only digits, latin letters, underscores and dashes allowed! Will go into the dataset URI and also into the property identified by http://purl.org/dc/terms/identifier">Identifier:</stripes:label></td>
                     <td><stripes:text name="identifier" id="txtIdentifier" size="60"/></td>
                 </tr>
                 <tr>
@@ -177,6 +197,24 @@
                        <stripes:file name="importFileBean" id="fileInput" size="120"/>
                     </td>
                 </tr>
+                <tr id="catalogRow">
+                    <td>
+                        <label for="selCatalog" class="question required">Target catalog:</label>
+                    </td>
+                    <td>
+                        <stripes:select name="targetCatalogUri" id="selCatalog">
+                            <c:if test="${empty actionBean.catalogs}">
+                                <stripes:option value="" label=" - none found - "/>
+                            </c:if>
+                            <c:if test="${not empty actionBean.catalogs}">
+                                <stripes:option value="" label=""/>
+                                <c:forEach items="${actionBean.catalogs}" var="catalog">
+                                    <stripes:option value="${catalog.left}" label="${catalog.right}"/>
+                                </c:forEach>
+                            </c:if>
+                        </stripes:select>
+                    </td>
+                </tr>
                 <tr>
                     <td>&nbsp;</td>
                     <td>
@@ -188,6 +226,42 @@
                     <td style="padding-top:10px">
                         <stripes:submit name="importNew" value="Import"/>
                         <input type="button" id="closeImportDialog" value="Cancel"/>
+                    </td>
+                </tr>
+            </table>
+
+        </stripes:form>
+    </div>
+    
+    <%-- The "create new" catalog dialogue. --%>
+    
+    <div id="createNewCatalogDialog" title="Create a new catalog">
+        <stripes:form beanclass="${actionBean['class'].name}" method="post">
+            <p>
+                Use the following properties to create a new dataset catalog.<br/>
+                Mandatory catalog properties are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>.<br/>
+                More properties can be edited on the catalog's view page once the catalog is created. 
+            </p>
+            <table>
+                <tr>
+                    <td><stripes:label for="txtCatalogIdentifier" class="question required" title="The catalog's unique identifier used by the system to distinguish it from others. Only digits, latin letters, underscores and dashes allowed!">Identifier:</stripes:label></td>
+                    <td><stripes:text name="catalogIdentifier" id="txtCatalogIdentifier" size="60"/></td>
+                </tr>
+                <tr>
+                    <td><stripes:label for="txtCatalogTitle" class="question required" title="User-friendly title of the catalog. Should not be too long, as it is typically displayed in seacrh result sets. Any free text allowed here.">Title:</stripes:label></td>
+                    <td><stripes:text name="catalogTitle" id="txtCatalogTitle" size="80"/></td>
+                </tr>
+                <tr>
+                    <td><stripes:label for="txtCatalogDescription" class="question" title="Humanly understandable detailed description of the catalog. Any free text allowed here.">Description:</stripes:label></td>
+                    <td>
+                        <stripes:textarea id="txtCatalogDescription" name="catalogDescription" cols="80" rows="10"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td style="padding-top:10px">
+                        <stripes:submit name="createNewCatalog" value="Create"/>
+                        <input type="button" id="closeCreateNewCatalogDialog" value="Cancel"/>
                     </td>
                 </tr>
             </table>

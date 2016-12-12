@@ -21,6 +21,7 @@ import eionet.cr.common.Subjects;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.CubeDatasetMetadataService;
@@ -75,6 +76,12 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
     /** */
     private boolean clearExisting;
+
+    /** */
+    private List<Pair<String, String>> catalogs;
+
+    /** */
+    private String targetCatalogUri;
 
     /**
      *
@@ -167,7 +174,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         }
 
         try {
-            int nrOfDatasets = CubeDatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, clearExisting);
+            int nrOfDatasets = CubeDatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, targetCatalogUri, clearExisting);
             addSystemMessage(String.format("A total of %d datasets were imported!", nrOfDatasets));
         } catch (Exception e) {
             LOGGER.error("Datasets import failed with technical error", e);
@@ -251,6 +258,24 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public CustomPaginatedList<Pair<String, String>> getDatasets() {
         return datasets;
+    }
+
+    /**
+     *
+     * @return
+     * @throws DAOException
+     */
+    public List<Pair<String, String>> getCatalogs() throws DAOException {
+
+        if (catalogs == null) {
+            String[] labels = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.FOAF_NAME};
+            HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
+            SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DCAT_CATALOG, null, null, labels);
+            if (searchResult != null) {
+                catalogs = searchResult.getItems();
+            }
+        }
+        return catalogs;
     }
 
     /**
@@ -352,5 +377,19 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setClearExisting(boolean clearExisting) {
         this.clearExisting = clearExisting;
+    }
+
+    /**
+     * @return the targetCatalogUri
+     */
+    public String getTargetCatalogUri() {
+        return targetCatalogUri;
+    }
+
+    /**
+     * @param targetCatalogUri the targetCatalogUri to set
+     */
+    public void setTargetCatalogUri(String targetCatalogUri) {
+        this.targetCatalogUri = targetCatalogUri;
     }
 }

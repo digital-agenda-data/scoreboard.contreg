@@ -127,17 +127,19 @@ public class CubeDatasetMetadataService {
         dataset.setDescription(description);
         dataset.setDsdUri(dsdUri);
 
-        Set<String> datasetUris = createDatasets(Arrays.asList(dataset), false);
+        Set<String> datasetUris = createDatasets(Arrays.asList(dataset), null, false);
         return datasetUris.isEmpty() ? StringUtils.EMPTY : datasetUris.iterator().next();
     }
 
     /**
      *
      * @param datasets
+     * @param targetCatalogUri
      * @return
      * @throws ServiceException
      */
-    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, boolean clear) throws ServiceException {
+    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String targetCatalogUri, boolean clear)
+            throws ServiceException {
 
         if (CollectionUtils.isEmpty(datasets)) {
             return Collections.emptySet();
@@ -183,9 +185,17 @@ public class CubeDatasetMetadataService {
                     datasetUris.add(datasetUri);
                     repoConn.add(reader, datasetUri, RDFFormat.TURTLE, graphURI);
 
-                    String catalogIdentifier = dataset.getCatalogIdentifier();
-                    if (StringUtils.isNotBlank(catalogIdentifier)) {
-                        URI catalogURI = vf.createURI(CATALOG_URI_PREFIX + catalogIdentifier);
+                    URI catalogURI = null;
+                    if (StringUtils.isNotBlank(targetCatalogUri)) {
+                        catalogURI = vf.createURI(targetCatalogUri);
+                    } else {
+                        String catalogIdentifier = dataset.getCatalogIdentifier();
+                        if (StringUtils.isNotBlank(catalogIdentifier)) {
+                            catalogURI = vf.createURI(CATALOG_URI_PREFIX + catalogIdentifier);
+                        }
+                    }
+
+                    if (catalogURI != null) {
                         repoConn.add(catalogURI, dcatDatasetPropertyURI, graphURI, graphURI);
                         repoConn.add(catalogURI, rdfTypeURI, dcatCatalogClassURI, catalogURI);
                     }
@@ -206,16 +216,17 @@ public class CubeDatasetMetadataService {
     /**
      *
      * @param file
+     * @param targetCatalogUri
      * @return
      * @throws ServiceException
      */
-    public int importDatasetsSpreadsheet(File file, boolean clear) throws ServiceException {
+    public int importDatasetsSpreadsheet(File file, String targetCatalogUri, boolean clear) throws ServiceException {
 
         FileInputStream inputStream = null;
         try {
             inputStream = new FileInputStream(file);
             Workbook workbook = WorkbookFactory.create(inputStream);
-            return importWorkbook(workbook, clear);
+            return importWorkbook(workbook, targetCatalogUri, clear);
         } catch (Exception e) {
             throw new ServiceException("Technical error when importing from file: " + file, e);
         } finally {
@@ -299,12 +310,13 @@ public class CubeDatasetMetadataService {
     /**
      *
      * @param workbook
+     * @param targetCatalogUri
      * @throws ServiceException
      */
-    private int importWorkbook(Workbook workbook, boolean clear) throws ServiceException {
+    private int importWorkbook(Workbook workbook, String targetCatalogUri, boolean clear) throws ServiceException {
 
-        Map<String, String> columnsToBeanProperties =
-                getTemplateColumnMappings(workbook, SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.BEAN_PROPERTY);
+        Map<String, String> columnsToBeanProperties = getTemplateColumnMappings(workbook,
+                SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.BEAN_PROPERTY);
         if (columnsToBeanProperties.isEmpty()) {
             throw new ServiceException("Could not detect column-to-bean-property mappings!");
         }
@@ -338,7 +350,7 @@ public class CubeDatasetMetadataService {
         }
 
         if (datasets.size() > 0) {
-            Set<String> datasetUris = createDatasets(datasets, clear);
+            Set<String> datasetUris = createDatasets(datasets, targetCatalogUri, clear);
             return datasetUris.size();
         } else {
             return 0;
@@ -469,8 +481,8 @@ public class CubeDatasetMetadataService {
      */
     private Map<String, Integer> getRdfPropertiesToColumnIndexes(Workbook workbook) throws ServiceException {
 
-        Map<String, String> columnsToRdfProperties =
-                getTemplateColumnMappings(workbook, SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.RDF_PROPERTY_URI);
+        Map<String, String> columnsToRdfProperties = getTemplateColumnMappings(workbook,
+                SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.RDF_PROPERTY_URI);
         if (columnsToRdfProperties.isEmpty()) {
             throw new ServiceException("Could not detect column-to-property mappings!");
         }
@@ -507,7 +519,8 @@ public class CubeDatasetMetadataService {
      * @throws OpenRDFException
      * @throws ResultSetReaderException
      */
-    private Map<String, Set<String>> getDatasetCatalogs(RepositoryConnection repoConn) throws OpenRDFException, ResultSetReaderException {
+    private Map<String, Set<String>> getDatasetCatalogs(RepositoryConnection repoConn)
+            throws OpenRDFException, ResultSetReaderException {
 
         Map<String, Set<String>> datasetCatalogsMap = new HashMap<>();
         PairReader<String, String> datasetCatalogReader = new PairReader<String, String>("dataset", "catalog");
