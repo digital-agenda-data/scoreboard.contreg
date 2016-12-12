@@ -301,7 +301,9 @@ public class CubeDatasetMetadataService {
         while (rows.hasNext()) {
             Row row = rows.next();
             CubeDatasetTemplateDTO dataset = getDatasetDTO(row, indexesToColumns, columnsToBeanProperties);
-            datasets.add(dataset);
+            if (dataset != null) {
+                datasets.add(dataset);
+            }
         }
 
         if (datasets.size() > 0) {
@@ -325,6 +327,7 @@ public class CubeDatasetMetadataService {
 
         CubeDatasetTemplateDTO datasetDTO = new CubeDatasetTemplateDTO();
 
+        boolean isAtLeastOneCellFilled = false;
         Iterator<Cell> cells = row.cellIterator();
         while (cells.hasNext()) {
 
@@ -342,13 +345,23 @@ public class CubeDatasetMetadataService {
                     } catch (InvocationTargetException e) {
                         throw new ServiceException(e.getMessage(), e);
                     }
+                    if (strValue != null) {
+                        isAtLeastOneCellFilled = true;
+                    }
                 }
             }
+        }
+
+        if (!isAtLeastOneCellFilled) {
+            return null;
+        } else if (StringUtils.isBlank(datasetDTO.getIdentifier())) {
+            throw new ServiceException("Missing dataset identifier at row #" + row.getRowNum());
         }
 
         if (StringUtils.isBlank(datasetDTO.getUri())) {
             datasetDTO.setUri(DATASET_URI_PREFIX + StringUtils.trimToNull(datasetDTO.getIdentifier()));
         }
+
         return datasetDTO;
     }
 

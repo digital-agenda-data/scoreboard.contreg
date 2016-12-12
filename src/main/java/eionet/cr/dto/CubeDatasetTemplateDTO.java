@@ -18,6 +18,7 @@ public class CubeDatasetTemplateDTO {
     private String licenseUri;
     private String statusUri;
     private String periodicityUri;
+    private String catalogIdentifier;
 
     /**
      * @return the uri
@@ -150,5 +151,17 @@ public class CubeDatasetTemplateDTO {
      */
     public void setPeriodicityUri(String periodicityUri) {
         this.periodicityUri = periodicityUri;
+    }
+    /**
+     * @return the catalogIdentifier
+     */
+    public String getCatalogIdentifier() {
+        return catalogIdentifier;
+    }
+    /**
+     * @param catalogIdentifier the catalogIdentifier to set
+     */
+    public void setCatalogIdentifier(String catalogIdentifier) {
+        this.catalogIdentifier = catalogIdentifier;
     }
 }
