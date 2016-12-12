@@ -31,19 +31,25 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.openrdf.OpenRDFException;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.rio.RDFFormat;
 
 import eionet.cr.common.CRRuntimeException;
+import eionet.cr.common.Predicates;
+import eionet.cr.common.Subjects;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.readers.DatasetMetadataExportReader;
+import eionet.cr.dao.readers.ResultSetReaderException;
 import eionet.cr.dto.CubeDatasetTemplateDTO;
 import eionet.cr.freemarker.TemplatesConfiguration;
 import eionet.cr.util.Pair;
+import eionet.cr.util.URIUtil;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
+import eionet.cr.util.sql.PairReader;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
 import freemarker.template.Template;
 
@@ -71,6 +77,9 @@ public class CubeDatasetMetadataService {
     public static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
 
     /** */
+    public static final String CATALOG_URI_PREFIX = "http://semantic.digital-agenda-data.eu/catalog/";
+
+    /** */
     private static final String EXPORT_DATASETS_METADATA_SPARQL = "" +
             "PREFIX cube: <http://purl.org/linked-data/cube#> \n" +
             "select \n" +
@@ -80,6 +89,15 @@ public class CubeDatasetMetadataService {
             "  ?s ?p ?o \n" +
             "} \n" +
             "order by ?s ?p ?o";
+
+    /** */
+    private static final String GET_DATASET_CATALOGS = "" +
+            "PREFIX dcat: <http://www.w3.org/ns/dcat#> \n" +
+            "select distinct ?dataset ?catalog where { \n" +
+            "  ?catalog a dcat:Catalog . \n" +
+            "  ?catalog dcat:dataset ?dataset \n" +
+            "} \n" +
+            "order by ?dataset ?catalog";
 
     // @formatter:on
 
@@ -133,6 +151,10 @@ public class CubeDatasetMetadataService {
             Template template = TemplatesConfiguration.getInstance().getTemplate(DATASET_RDF_TEMPLATE_PATH);
             String modifiedDateTimeStr = Util.virtuosoDateToString(new Date());
 
+            URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
+            URI dcatDatasetPropertyURI = vf.createURI(Predicates.DCAT_DATASET);
+            URI dcatCatalogClassURI = vf.createURI(Subjects.DCAT_CATALOG);
+
             Set<String> datasetUris = new HashSet<>();
             for (CubeDatasetTemplateDTO dataset : datasets) {
 
@@ -160,6 +182,13 @@ public class CubeDatasetMetadataService {
 
                     datasetUris.add(datasetUri);
                     repoConn.add(reader, datasetUri, RDFFormat.TURTLE, graphURI);
+
+                    String catalogIdentifier = dataset.getCatalogIdentifier();
+                    if (StringUtils.isNotBlank(catalogIdentifier)) {
+                        URI catalogURI = vf.createURI(CATALOG_URI_PREFIX + catalogIdentifier);
+                        repoConn.add(catalogURI, dcatDatasetPropertyURI, graphURI, graphURI);
+                        repoConn.add(catalogURI, rdfTypeURI, dcatCatalogClassURI, catalogURI);
+                    }
                 } finally {
                     IOUtils.closeQuietly(reader);
                     IOUtils.closeQuietly(writer);
@@ -248,9 +277,11 @@ public class CubeDatasetMetadataService {
                 throw new ServiceException("Failed to detect rdf-properties-to-column-indexes mappings from template file!");
             }
 
-            DatasetMetadataExportReader exporter =
-                    new DatasetMetadataExportReader(workbook, rdfPropertiesToColumnIndexes, targetFile);
             repoConn = SesameUtil.getRepositoryConnection();
+            Map<String, Set<String>> datasetCatalogs = getDatasetCatalogs(repoConn);
+
+            DatasetMetadataExportReader exporter =
+                    new DatasetMetadataExportReader(workbook, rdfPropertiesToColumnIndexes, datasetCatalogs, targetFile);
 
             SesameUtil.executeQuery(EXPORT_DATASETS_METADATA_SPARQL, exporter, repoConn);
             exporter.saveAndClose();
@@ -467,6 +498,36 @@ public class CubeDatasetMetadataService {
         }
 
         return rdfPropertiesToColumnIndexes;
+    }
+
+    /**
+     *
+     * @param repoConn
+     * @return
+     * @throws OpenRDFException
+     * @throws ResultSetReaderException
+     */
+    private Map<String, Set<String>> getDatasetCatalogs(RepositoryConnection repoConn) throws OpenRDFException, ResultSetReaderException {
+
+        Map<String, Set<String>> datasetCatalogsMap = new HashMap<>();
+        PairReader<String, String> datasetCatalogReader = new PairReader<String, String>("dataset", "catalog");
+        SesameUtil.executeQuery(GET_DATASET_CATALOGS, datasetCatalogReader, repoConn);
+        List<Pair<String, String>> datasetCatalogPairs = datasetCatalogReader.getResultList();
+        for (Pair<String, String> pair : datasetCatalogPairs) {
+            String datasetUri = pair.getLeft();
+            String catalogUri = pair.getRight();
+            if (StringUtils.isNotBlank(datasetUri) && StringUtils.isNotBlank(catalogUri)) {
+
+                Set<String> catalogs = datasetCatalogsMap.get(datasetUri);
+                if (catalogs == null) {
+                    catalogs = new HashSet<>();
+                    datasetCatalogsMap.put(datasetUri, catalogs);
+                }
+                catalogs.add(URIUtil.extractURILabel(catalogUri, catalogUri));
+            }
+        }
+
+        return datasetCatalogsMap;
     }
 
     /**

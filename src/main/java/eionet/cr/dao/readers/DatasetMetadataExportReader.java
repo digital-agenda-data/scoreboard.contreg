@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,6 +47,9 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
     /** */
     private static final String DATA_SHEET_NAME = "METADATA";
 
+    /** */
+    private static final String DUMMY_CATALOG_IDENTIFIER_PROPERTY = "dummy:catalogIdentifier";
+
     /** Maps RDF properties of datasets to corresponding columns (by column index) of targetFile spreadsheet. */
     private Map<String, Integer> propertiesToColumns;
 
@@ -74,20 +78,23 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
     /** The sheet where the datasets metadata should be written into. */
     private Sheet dataSheet;
 
+    /** */
+    private Map<String, Set<String>> datasetCatalogs;
+
     /**
      *
-     * Class constructor.
-     *
      * @param workbook
+     * @param datasetCatalogs
      * @param targetFile
      * @throws ResultSetReaderException
      */
-    public DatasetMetadataExportReader(Workbook workbook, Map<String, Integer> propertiesToColumns, File targetFile)
-            throws ResultSetReaderException {
+    public DatasetMetadataExportReader(Workbook workbook, Map<String, Integer> propertiesToColumns,
+            Map<String, Set<String>> datasetCatalogs, File targetFile) throws ResultSetReaderException {
 
         this.workbook = workbook;
         this.targetFile = targetFile;
         this.propertiesToColumns = propertiesToColumns;
+        this.datasetCatalogs = datasetCatalogs;
 
         dataSheet = workbook.getSheet(DATA_SHEET_NAME);
         if (dataSheet == null) {
@@ -115,6 +122,19 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
         }
 
         if (!subjectUri.equals(currentDatasetUri)) {
+
+            // Adds dataset catalogs to the current dataset map before the map gets actually saved into workbook.
+            Set<String> catalogs = datasetCatalogs.get(currentDatasetUri);
+            if (catalogs != null && !catalogs.isEmpty()) {
+                Integer catalogIdentifierColumnIndex = propertiesToColumns.get(DUMMY_CATALOG_IDENTIFIER_PROPERTY);
+                if (catalogIdentifierColumnIndex != null && catalogIdentifierColumnIndex >= 0) {
+                    if (currentDatasetMap == null) {
+                        currentDatasetMap = new HashMap<Integer, List<String>>();
+                    }
+                    currentDatasetMap.put(catalogIdentifierColumnIndex, new ArrayList<>(catalogs));
+                }
+            }
+
             if (!MapUtils.isEmpty(currentDatasetMap)) {
                 saveCurrentDataset();
                 exportedCount++;

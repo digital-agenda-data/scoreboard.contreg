@@ -91,6 +91,7 @@ public interface Subjects {
     String DCAT_WEB_SERVICE = "http://www.w3.org/ns/dcat#WebService";
     String DCAT_DATASET = "http://www.w3.org/ns/dcat#Dataset";
     String DCAT_DISTRIBUTION = "http://www.w3.org/ns/dcat#Distribution";
+    String DCAT_CATALOG = "http://www.w3.org/ns/dcat#Catalog";
 
     String ADMS_STATUS_COMPLETED = "http://purl.org/adms/status/Completed";
 

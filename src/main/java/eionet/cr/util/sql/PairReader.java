@@ -33,7 +33,10 @@ import eionet.cr.dao.readers.ResultSetReaderException;
 import eionet.cr.util.Pair;
 
 /**
- * @author Aleksandr Ivanov <a href="mailto:aleksandr.ivanov@tietoenator.com">contact</a>
+ *
+ * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
+ * @param <L>
+ * @param <R>
  */
 public class PairReader<L, R> extends ResultSetMixedReader<Pair<L, R>> {
 

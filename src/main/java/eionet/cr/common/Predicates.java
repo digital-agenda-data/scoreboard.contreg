@@ -172,6 +172,7 @@ public interface Predicates {
     String DCAT_LANDING_PAGE = "http://www.w3.org/ns/dcat#landingPage";
     String DCAT_THEME = "http://www.w3.org/ns/dcat#theme";
     String DCAT_MEDIA_TYPE = "http://www.w3.org/ns/dcat#mediaType";
+    String DCAT_DATASET = "http://www.w3.org/ns/dcat#dataset";
 
     String ECODP_KEYWORD = "http://ec.europa.eu/open-data/ontologies/ec-odp#keyword";
     String ECODP_FORMAT = "http://ec.europa.eu/open-data/ontologies/ec-odp#format";
