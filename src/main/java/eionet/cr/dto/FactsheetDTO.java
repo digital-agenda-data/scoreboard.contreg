@@ -39,6 +39,9 @@ import eionet.cr.web.util.WebConstants;
  */
 public class FactsheetDTO extends SubjectDTO {
 
+    /**  */
+    private static final long serialVersionUID = 5263573490631076276L;
+
     /** */
     private HashMap<String, Integer> predicateObjectCounts = new HashMap<String, Integer>();
 

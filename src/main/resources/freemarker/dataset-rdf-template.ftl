@@ -30,27 +30,27 @@
 @prefix dad-prop:   <http://semantic.digital-agenda-data.eu/def/property/> .
 
 # DATASET METADATA
-<http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}>
+<http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}>
     rdf:type qb:DataSet , dcat:Dataset ;
 # DCAT Mandatory
-    dcterms:title   "${DATASET_TITLE}"@en ;
-    dcterms:description "${DATASET_DESCRIPTION}"@en ;
+    dcterms:title   "${dataset.title!dataset.identifier}"@en ;
+    dcterms:description "${dataset.description!dataset.identifier}"@en ;
 # QB recommended properties
-    rdfs:label  "${DATASET_TITLE}"@en ;
-    rdfs:comment    "${DATASET_DESCRIPTION}"@en ;
+    rdfs:label  "${dataset.title!dataset.identifier}"@en ;
+    rdfs:comment    "${dataset.description!dataset.identifier}"@en ;
     dcterms:subject sdmx-subject:3.3.3 ;
         # TODO: here all concepts from dcat:theme could be listed
 
-    dcterms:license    #if(!$DATASET_LICENSE || "$DATASET_LICENSE.trim()" == "")<http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright>#{else}<${DATASET_LICENSE}>#end ;
+    dcterms:license  <${dataset.licenseUri!'http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright'}> ;
     
 # DCAT-AP recommended properties
     dcat:contactPoint   <http://publications.europa.eu/resource/authority/corporate-body/CNECT/F4> ;
-    dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/download> ;
-    dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/visualisation> ;
+    dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}/distribution/download> ;
+    dcat:distribution   <http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}/distribution/visualisation> ;
     dcat:keyword    
         "information-society"@en ,
         "digital agenda"@en ,
-        "${DATASET_KEYWORD}"@en ;
+        "${dataset.keyword!'digital agenda'}"@en ;
 
     dcterms:publisher   <http://publications.europa.eu/resource/authority/corporate-body/CNECT> ;
     dcat:theme  
@@ -62,24 +62,23 @@
     dcterms:accessRights    <http://publications.europa.eu/resource/authority/access-right/PUBLIC>;
     dcat:landingPage    <http://digital-agenda-data.eu/> ;
     foaf:page   <http://digital-agenda-data.eu/> ;
-    dcat:accrualPeriodicity    #if(!$DATASET_PERIODICITY || "$DATASET_PERIODICITY.trim()" == "")<http://publications.europa.eu/resource/authority/frequency/ANNUAL_2>#{else}<${DATASET_PERIODICITY}>#end ;
+    
+    dcat:accrualPeriodicity  <${dataset.periodicityUri!'http://publications.europa.eu/resource/authority/frequency/ANNUAL_2'}> ;
     dcterms:language <http://publications.europa.eu/resource/authority/language/ENG> ;
     dcterms:spatial  <http://publications.europa.eu/resource/authority/country/EUR> ;
     dcterms:temporal    [ schema:startDate "2002-01-01"^^xsd:date ] ;
-    dcterms:identifier  "${DATASET_IDENTIFIER}" ;
-#   adms:identifier    [ skos:notation "${DATASET_IDENTIFIER}" ]
-#   dcterms:issued  "2011-05-01T00:00:00Z"^^xsd:dateTime ;
-    dcterms:issued    #if(!$DATASET_ISSUED || "$DATASET_ISSUED.trim()" == "")"2011-05-01T00:00:00Z"^^xsd:dateTime#{else}"${DATASET_ISSUED}"#end ;
-    dcterms:modified    "${DATASET_MODIFIED}"^^xsd:dateTime ;
+    dcterms:identifier  "${dataset.identifier}" ;
+    dcterms:issued    "${dataset.issuedDateTimeStr!'2011-05-01T00:00:00Z'}"^^xsd:dateTime ;
+    dcterms:modified    "${dataset.modifiedDateTimeStr}"^^xsd:dateTime ;
 
 # QB
-    qb:structure    #if(!$DATASET_DSD || "$DATASET_DSD.trim()" == "")<http://semantic.digital-agenda-data.eu/def/dsd/scoreboard>#{else}<${DATASET_DSD}>#end ;
+    qb:structure  <${dataset.dsdUri!'http://semantic.digital-agenda-data.eu/def/dsd/scoreboard'}> ;
 
 # Linked data
-    foaf:isPrimaryTopicOf   <http://semantic.digital-agenda-data.eu/API/dataset/${DATASET_IDENTIFIER}.rdf> ;
+    foaf:isPrimaryTopicOf   <http://semantic.digital-agenda-data.eu/API/dataset/${dataset.identifier}.rdf> ;
 
 # ODP
-    adms:status #if(!$DATASET_STATUS || "$DATASET_STATUS.trim()" == "")<http://purl.org/adms/status/UnderDevelopment>#{else}<${DATASET_STATUS}>#end .
+    adms:status   <${dataset.statusUri!'http://purl.org/adms/status/UnderDevelopment'}> .
 
 # RELATED ENTITIES
 
@@ -87,27 +86,27 @@
 <http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright>    dcterms:title   "Europa Legal Notice" .
 
 # DCAT Distribution
-<http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/download> 
+<http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}/distribution/download> 
     rdf:type    dcat:Distribution ;
-    dcat:accessURL  <http://digital-agenda-data.eu/datasets/${DATASET_IDENTIFIER}#download> ;
+    dcat:accessURL  <http://digital-agenda-data.eu/datasets/${dataset.identifier}#download> ;
     dcterms:description "Download instructions";
     dcterms:type    <http://publications.europa.eu/resource/authority/distribution-type/DOWNLOADABLE_FILE> ;
     dcterms:format  <http://publications.europa.eu/resource/authority/file-type/RDF_TURTLE> ;
     dcat:mediaType  "text/turtle" .
 
 # DCAT Distribution
-<http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}/distribution/visualisation>
+<http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}/distribution/visualisation>
     rdf:type    dcat:Distribution ;
     dcterms:type    <http://publications.europa.eu/resource/authority/distribution-type/VISUALIZATION> ;
-    dcat:accessURL  <http://digital-agenda-data.eu/datasets/${DATASET_IDENTIFIER}> ;
+    dcat:accessURL  <http://digital-agenda-data.eu/datasets/${dataset.identifier}> ;
     dcterms:description "Dataset visualisation".
 
 # LD API page
-<http://semantic.digital-agenda-data.eu/API/dataset/${DATASET_IDENTIFIER}.rdf>
+<http://semantic.digital-agenda-data.eu/API/dataset/${dataset.identifier}.rdf>
     rdf:type    ld-api:Page ;
-    foaf:primaryTopic   <http://semantic.digital-agenda-data.eu/dataset/${DATASET_IDENTIFIER}> ;
+    foaf:primaryTopic   <http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}> ;
     ld-api:definition   <http://semantic.digital-agenda-data.eu/API/meta/dataset/_id.rdf> ;
-    ld-api:extendedMetadataVersion  <http://semantic.digital-agenda-data.eu/API/dataset/${DATASET_IDENTIFIER}.rdf?_metadata=all> .
+    ld-api:extendedMetadataVersion  <http://semantic.digital-agenda-data.eu/API/dataset/${dataset.identifier}.rdf?_metadata=all> .
 
 # Organization (contact point)
 <http://publications.europa.eu/resource/authority/corporate-body/CNECT/F4>

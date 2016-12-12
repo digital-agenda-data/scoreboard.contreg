@@ -22,7 +22,7 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
-import eionet.cr.service.DatasetMetadataService;
+import eionet.cr.service.CubeDatasetMetadataService;
 import eionet.cr.staging.util.TimePeriodsHarvester;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
@@ -209,7 +209,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     public Resolution createNewDataset() {
 
         try {
-            String datasetUri = DatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)

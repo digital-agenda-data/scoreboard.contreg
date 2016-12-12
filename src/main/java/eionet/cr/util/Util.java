@@ -20,6 +20,7 @@
  */
 package eionet.cr.util;
 
+import java.beans.PropertyDescriptor;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -48,14 +49,10 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
 
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.quartz.CronExpression;
 
 import eionet.cr.common.CRRuntimeException;
@@ -938,22 +935,27 @@ public final class Util {
         return StringUtils.join(array, ',');
     }
 
-    public static void main(String[] args) {
+    /**
+     *
+     * @param bean
+     * @throws ReflectiveOperationException
+     */
+    public static void trimToNullAllStringProperties(Object bean) throws ReflectiveOperationException {
 
-        VelocityEngine ve = new VelocityEngine();
-        ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-        ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-        ve.init();
+        if (bean == null) {
+            return;
+        }
 
-        Template template = ve.getTemplate("velocity/test.vm");
-        VelocityContext context = new VelocityContext();
-
-        context.put("dataset-dsd", "          s");
-
-        StringWriter writer = new StringWriter();
-        template.merge(context, writer);
-
-        String str = writer.toString();
-        System.out.println(str);
+        PropertyDescriptor[] propertyDescriptors = PropertyUtils.getPropertyDescriptors(bean);
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            String name = propertyDescriptor.getName();
+            Class<?> clazz = propertyDescriptor.getPropertyType();
+            if (clazz.equals(String.class)) {
+                Object strValue = PropertyUtils.getProperty(bean, name);
+                if (strValue != null) {
+                    PropertyUtils.setProperty(bean, name, StringUtils.trimToNull(strValue.toString()));
+                }
+            }
+        }
     }
 }

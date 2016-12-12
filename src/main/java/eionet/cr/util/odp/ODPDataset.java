@@ -1,6 +1,11 @@
 package eionet.cr.util.odp;
 
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  *
@@ -9,6 +14,7 @@ import java.util.List;
 public class ODPDataset {
 
     /** */
+    private int id;
     private String uri;
     private String identifier;
     private String title;
@@ -113,5 +119,42 @@ public class ODPDataset {
      */
     public void setSpatialUris(List<String> spatialUris) {
         this.spatialUris = spatialUris;
+    }
+
+    public static void main(String[] args) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+
+        ODPDataset ds = new ODPDataset();
+        ds.setId(1);
+        ds.setIdentifier("");
+        System.out.println(ds.getIdentifier());
+
+        PropertyDescriptor[] propertyDescriptors = PropertyUtils.getPropertyDescriptors(ds);
+        for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+            String name = propertyDescriptor.getName();
+            Class<?> clazz = propertyDescriptor.getPropertyType();
+            //System.out.println(name + " = " + clazz);
+
+            if (clazz.equals(String.class)) {
+                Object strValue = PropertyUtils.getProperty(ds, name);
+                if (strValue != null) {
+                    PropertyUtils.setProperty(ds, name, StringUtils.trimToNull(strValue.toString()));
+                }
+            }
+        }
+
+        System.out.println(ds.getIdentifier());
+
+    }
+    /**
+     * @return the id
+     */
+    public int getId() {
+        return id;
+    }
+    /**
+     * @param id the id to set
+     */
+    public void setId(int id) {
+        this.id = id;
     }
 }

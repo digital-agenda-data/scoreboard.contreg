@@ -1,10 +1,6 @@
 package eionet.cr.dao.virtuoso;
 
 import java.io.File;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.Connection;
@@ -12,7 +8,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -21,17 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.log4j.Logger;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.openrdf.OpenRDFException;
 import org.openrdf.model.Literal;
 import org.openrdf.model.Resource;
@@ -40,7 +29,6 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.model.vocabulary.XMLSchema;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.RDFFormat;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
@@ -48,7 +36,6 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.readers.CodelistExporter;
 import eionet.cr.dao.readers.SkosItemsReader;
-import eionet.cr.dto.DatasetDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.staging.exp.ObjectTypes.DSD;
@@ -253,56 +240,6 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "}\n" +
             "order by ?datasetUri";
 
-    /** The Constant DELETE_OBSERVATIONS_OF_DATASET. */
-    private static final String DELETE_OBSERVATIONS_OF_DATASET = "" +
-            "SPARQL \n" +
-            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
-            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
-            "DELETE FROM GRAPH iri(??) {\n" +
-            "    ?obs ?p ?o\n" +
-            "}\n" +
-            "WHERE {\n" +
-            "  GRAPH `iri(??)` {\n" +
-            "    ?obs ?p ?o .\n" +
-            "    ?obs a cube:Observation \n" +
-            "  }\n" +
-            "}";
-
-
-    /** The Constant DELETE_OBSERVATIONS_OF_INDICATOR. */
-    private static final String DELETE_OBSERVATIONS_OF_INDICATOR = "" +
-            "SPARQL \n" +
-            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
-            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
-            "DELETE FROM GRAPH iri(??) {\n" +
-            "    ?obs ?p ?o\n" +
-            "}\n" +
-            "WHERE {\n" +
-            "  GRAPH `iri(??)` {\n" +
-            "    ?obs ?p ?o .\n" +
-            "    ?obs a cube:Observation .\n" +
-            "    ?obs dad-prop:indicator `iri(??)` \n" +
-            "  }\n" +
-            "}";
-
-    /** The Constant DELETE_OBSERVATIONS_OF_INDICATOR. */
-    private static final String DELETE_OBSERVATIONS_OF_INDICATOR_AND_TIMES = "" +
-            "SPARQL \n" +
-            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
-            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
-            "DELETE FROM GRAPH iri(??) {\n" +
-            "    ?obs ?p ?o\n" +
-            "}\n" +
-            "WHERE {\n" +
-            "  GRAPH `iri(??)` {\n" +
-            "    ?obs ?p ?o .\n" +
-            "    ?obs a cube:Observation .\n" +
-            "    ?obs dad-prop:indicator `iri(??)` .\n" +
-            "    ?obs dad-prop:time-period ?timePeriod \n" +
-            "    filter (?timePeriod in (@TIME_PERIOD_IRIS@)) \n" +
-            "  }\n" +
-            "}";
-
     /** The Constant DELETE_OBSERVATIONS_OF_INDICATOR. */
     private static final String DELETE_OBSERVATIONS = "" +
             "SPARQL \n" +
@@ -388,96 +325,6 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         List<SkosItemDTO> list = executeSPARQL(GET_CODELIST_ITEMS_SPARQL, bindings, new SkosItemsReader());
         return list;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String createDataset(String identifier, String title, String description, String dsdUri) throws DAOException {
-
-        DatasetDTO dto = DatasetDTO.createNew(identifier, title, description, dsdUri);
-        List<String> datasetUris = createDatasets(Arrays.asList(dto));
-        return CollectionUtils.isEmpty(datasetUris) ? null : datasetUris.iterator().next();
-    }
-
-    /**
-     * {@inheritDoc}
-     * @return
-     */
-    @Override
-    public List<String> createDatasets(Collection<DatasetDTO> datasets) throws DAOException {
-
-        if (CollectionUtils.isEmpty(datasets)) {
-            return new ArrayList<String>();
-        }
-
-        VelocityEngine ve = new VelocityEngine();
-        ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-        ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-        ve.init();
-
-        Template template = ve.getTemplate(DATASET_METADATA_TTL_TEMPLATE_FILE);
-        VelocityContext context = new VelocityContext();
-
-        String modifiedDateStr = Util.virtuosoDateToString(new Date());
-
-        RepositoryConnection repoConn = null;
-        try {
-
-            repoConn = SesameUtil.getRepositoryConnection();
-            ValueFactory vf = repoConn.getValueFactory();
-
-            List<String> datasetUris = new ArrayList<>();
-            for (DatasetDTO dataset : datasets) {
-
-                String datasetUri = DATASET_URI_PREFIX + dataset.getIdentifier();
-                fillNewDatasetTemplate(context, dataset, modifiedDateStr);
-
-                Writer writer = null;
-                Reader reader = null;
-
-                try {
-                    writer = new StringWriter();
-                    template.merge(context, writer);
-                    String str = writer.toString();
-                    reader = new StringReader(str);
-
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace("Going to load new dataset's metadata:\n" + str);
-                    }
-
-                    repoConn.add(reader, datasetUri, RDFFormat.TURTLE, vf.createURI(datasetUri));
-                } finally {
-                    IOUtils.closeQuietly(reader);
-                    IOUtils.closeQuietly(writer);
-                }
-            }
-
-            return datasetUris;
-        } catch (Exception e) {
-            throw new DAOException("Failure when creating dataset metadata", e);
-        } finally {
-            SesameUtil.close(repoConn);
-        }
-    }
-
-    /**
-     *
-     * @param context
-     * @param dataset
-     * @param modifiedDateStr
-     */
-    private void fillNewDatasetTemplate(VelocityContext context, DatasetDTO dataset, String modifiedDateStr) {
-        context.put("dataset-identifier", dataset.getIdentifier());
-        context.put("dataset-title", dataset.getTitle());
-        context.put("dataset-modified-dateTime", modifiedDateStr);
-        if (StringUtils.isNotBlank(dataset.getDescription())) {
-            context.put("dataset-description", dataset.getDescription());
-        }
-        if (StringUtils.isNotBlank(dataset.getDsdUri())) {
-            context.put("dataset-dsd", dataset.getDsdUri());
-        }
     }
 
     /*
@@ -612,6 +459,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      *
      * @see eionet.cr.dao.ScoreboardSparqlDAO#updateDcTermsModified(java.lang.String, java.util.Date, java.lang.String)
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void updateDcTermsModified(String subjectUri, Date date, String graphUri) throws DAOException {
 
@@ -877,6 +725,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      *
      * @see eionet.cr.dao.ScoreboardSparqlDAO#changeDatasetStatus(java.lang.String, java.lang.String)
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void changeDatasetStatus(String uri, String newStatus) throws DAOException {
 
@@ -1231,6 +1080,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * @param dsd
      * @throws RepositoryException
      */
+    @SuppressWarnings("deprecation")
     @Override
     public void updateTouchedDatasets(Set<String> datasetUris, DSD dsd) throws RepositoryException {
 
@@ -1288,7 +1138,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             URI datasetURI = vf.createURI(datasetUri);
             URI graphURI = datasetURI;
 
-            // TODO: obtain dataset identifier in a less hardcoded way.
+            // Maybe we should obtain dataset identifier in a less hardcoded way?
             String datasetIdentifier = StringUtils.substringAfterLast(datasetUri, "/");
 
             // Remove all previous dcterms:modified triples of the given dataset.

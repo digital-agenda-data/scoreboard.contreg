@@ -23,7 +23,7 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
-import eionet.cr.service.DatasetMetadataService;
+import eionet.cr.service.CubeDatasetMetadataService;
 import eionet.cr.service.ServiceException;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
@@ -107,7 +107,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     public Resolution createNew() {
 
         try {
-            DatasetMetadataService.newInstance().createDataset(identifier, dctermsTitle, dctermsDescription, null);
+            CubeDatasetMetadataService.newInstance().createDataset(identifier, dctermsTitle, dctermsDescription, null);
             addSystemMessage("A new dataset with identifier \"" + identifier + "\" successfully created!");
         } catch (Exception e) {
             LOGGER.error("Dataset creation failed with technical error", e);
@@ -167,7 +167,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         }
 
         try {
-            int nrOfDatasets = DatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, clearExisting);
+            int nrOfDatasets = CubeDatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, clearExisting);
             addSystemMessage(String.format("A total of %d datasets were imported!", nrOfDatasets));
         } catch (Exception e) {
             LOGGER.error("Datasets import failed with technical error", e);
@@ -186,11 +186,11 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public Resolution export() throws ServiceException {
 
-        Pair<Integer, File> pair = DatasetMetadataService.newInstance().exportDatasetsMetadata();
+        Pair<Integer, File> pair = CubeDatasetMetadataService.newInstance().exportDatasetsMetadata();
         int exportedCount = pair.getLeft();
         LOGGER.debug("Number of exported datasets: " + exportedCount);
         File targetFile = pair.getRight();
-        return streamToResponse(targetFile, DatasetMetadataService.DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME);
+        return streamToResponse(targetFile, CubeDatasetMetadataService.DATASETS_SPREADSHEET_TEMPLATE_FILE_NAME);
     }
 
     /**

@@ -18,18 +18,18 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
+import eionet.cr.common.CRRuntimeException;
 import eionet.cr.common.Predicates;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.SearchDAO;
 import eionet.cr.dto.SubjectDTO;
+import eionet.cr.freemarker.TemplatesConfiguration;
 import eionet.cr.util.URIUtil;
 import eionet.cr.util.Util;
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import freemarker.template.Version;
 
 /**
  * @author Jaanus
@@ -46,9 +46,6 @@ public class ODPDatasetsPacker {
     private static final String MANIFEST_TEMPLATE_PATH = "freemarker/odp-manifest-template.ftl";
 
     /** */
-    private static final Configuration TEMPLATES_CONFIGURATION = createTemplatesConfiguration();
-
-    /** */
     private ODPAction odpAction;
 
     /** */
@@ -58,10 +55,7 @@ public class ODPDatasetsPacker {
     private List<String> datasetUris;
 
     /** */
-    private List<SubjectDTO> datasetSubjects;
-
-    /** */
-    private Map<String, List<String>> datasetSpatialUris = new HashMap<>();
+    private List<ODPDataset> odpDatasets = new ArrayList<>();
 
     /**
      * @param datasetUris
@@ -87,26 +81,15 @@ public class ODPDatasetsPacker {
 
         isPrepareCalled = true;
 
-        datasetSubjects = DAOFactory.get().getDao(SearchDAO.class).getSubjectsData(datasetUris, null);
+        List<SubjectDTO> datasetSubjects = DAOFactory.get().getDao(SearchDAO.class).getSubjectsData(datasetUris, null);
         if (CollectionUtils.isEmpty(datasetSubjects)) {
             throw new DAOException("Could not find any metadata about the given datasets!");
         }
 
         ScoreboardSparqlDAO ssDao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         for (SubjectDTO datasetSubject : datasetSubjects) {
-
-            String datasetUri = datasetSubject.getUri();
-
-            List<String> odpCountryUris = new ArrayList<>();
-            List<String> refAreaUris = ssDao.getDistinctUsedRefAreas(datasetUri, null);
-            for (String refAreaUri : refAreaUris) {
-                String odpCountryUri = ODPCountryMappings.getMappingFor(refAreaUri);
-                if (StringUtils.isNotBlank(odpCountryUri)) {
-                    odpCountryUris.add(odpCountryUri);
-                }
-            }
-
-            datasetSpatialUris.put(datasetUri, odpCountryUris);
+            ODPDataset odpDataset = toOdpDataset(datasetSubject, ssDao);
+            odpDatasets.add(odpDataset);
         }
     }
 
@@ -128,10 +111,8 @@ public class ODPDatasetsPacker {
             zipOutput = new ZipArchiveOutputStream(outputStream);
 
             int i = 0;
-            List<ODPDataset> odpDatasets = new ArrayList<>();
-            for (SubjectDTO datasetSubject : datasetSubjects) {
-                ODPDataset odpDataset = createAndWriteDatasetEntry(zipOutput, datasetSubject, i++);
-                odpDatasets.add(odpDataset);
+            for (ODPDataset odpDataset : odpDatasets) {
+                createAndWriteDatasetEntry(zipOutput, odpDataset, i++);
             }
 
             createAndWriteManifestEntry(zipOutput, odpDatasets);
@@ -143,29 +124,25 @@ public class ODPDatasetsPacker {
     /**
      *
      * @param zipOutput
-     * @param datasetSubject
+     * @param odpDataset
      * @param datasetIndex
      * @return
      * @throws IOException
      * @throws TemplateException
      * @throws DAOException
+     * @throws ReflectiveOperationException
      */
-    private ODPDataset createAndWriteDatasetEntry(ZipArchiveOutputStream zipOutput, SubjectDTO datasetSubject, int datasetIndex)
-            throws IOException, TemplateException, DAOException {
+    private ODPDataset createAndWriteDatasetEntry(ZipArchiveOutputStream zipOutput, ODPDataset odpDataset, int datasetIndex)
+            throws DAOException {
 
-        String datasetUri = datasetSubject.getUri();
-        String datasetIdentifier = datasetSubject.getObjectValue(Predicates.DCTERMS_IDENTIFIER);
-        if (StringUtils.isBlank(datasetIdentifier) || datasetIdentifier.equals(datasetUri)) {
-            datasetIdentifier = URIUtil.extractURILabel(datasetUri);
-            if (StringUtils.isBlank(datasetIdentifier)) {
-                throw new DAOException("Could not detect identifier of dataset with URI = " + datasetUri);
-            }
+        try {
+            ZipArchiveEntry entry = new ZipArchiveEntry("datasets/" + odpDataset.getIdentifier() + ".rdf");
+            zipOutput.putArchiveEntry(entry);
+            odpDataset = writeDatasetEntry(zipOutput, odpDataset, datasetIndex);
+            zipOutput.closeArchiveEntry();
+        } catch (IOException | TemplateException | ReflectiveOperationException e) {
+            throw new DAOException(e.getMessage(), e);
         }
-
-        ZipArchiveEntry entry = new ZipArchiveEntry("datasets/" + datasetIdentifier + ".rdf");
-        zipOutput.putArchiveEntry(entry);
-        ODPDataset odpDataset = writeDatasetEntry(zipOutput, datasetIdentifier, datasetSubject, datasetIndex);
-        zipOutput.closeArchiveEntry();
 
         return odpDataset;
     }
@@ -173,20 +150,77 @@ public class ODPDatasetsPacker {
     /**
      *
      * @param zipOutput
-     * @param datasetIdentifier
      * @param datasetSubject
      * @param index
      * @return
      * @throws IOException
      * @throws TemplateException
+     * @throws ReflectiveOperationException
      */
-    private ODPDataset writeDatasetEntry(ZipArchiveOutputStream zipOutput, String datasetIdentifier, SubjectDTO datasetSubject,
-            int index) throws IOException, TemplateException {
+    private ODPDataset writeDatasetEntry(ZipArchiveOutputStream zipOutput, ODPDataset odpDataset, int index)
+            throws IOException, TemplateException, ReflectiveOperationException {
 
-        Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("dataset", odpDataset);
+
+        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
+        Template template = TemplatesConfiguration.getInstance().getTemplate(DATASET_TEMPLATE_PATH);
+        template.process(data, writer);
+
+        return odpDataset;
+    }
+
+    /**
+     *
+     * @param zipOutput
+     * @param odpDatasets
+     * @throws IOException
+     * @throws TemplateException
+     */
+    private void createAndWriteManifestEntry(ZipArchiveOutputStream zipOutput, List<ODPDataset> odpDatasets)
+            throws IOException, TemplateException {
+
+        List<ODPManifestEntry> manifestEntries = new ArrayList<>();
+        for (ODPDataset odpDataset : odpDatasets) {
+
+            ODPManifestEntry entry = new ODPManifestEntry();
+            entry.setDataset(odpDataset);
+            entry.setOdpAction(odpAction);
+            manifestEntries.add(entry);
+        }
+
+        Map<String, Object> data = new HashMap<String, Object>();
+        data.put("manifestEntries", manifestEntries);
+
+        ZipArchiveEntry entry = new ZipArchiveEntry("manifest.xml");
+        zipOutput.putArchiveEntry(entry);
+
+        Template template = TemplatesConfiguration.getInstance().getTemplate(MANIFEST_TEMPLATE_PATH);
+        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
+        template.process(data, writer);
+
+        zipOutput.closeArchiveEntry();
+    }
+
+    /**
+     *
+     * @param datasetSubject
+     * @return
+     * @throws DAOException
+     */
+    private ODPDataset toOdpDataset(SubjectDTO datasetSubject, ScoreboardSparqlDAO ssDao) throws DAOException {
 
         ODPDataset odpDataset = new ODPDataset();
+
         String datasetUri = datasetSubject.getUri();
+        String datasetIdentifier = datasetSubject.getObjectValue(Predicates.DCTERMS_IDENTIFIER);
+        if (StringUtils.isBlank(datasetIdentifier) || datasetIdentifier.equals(datasetUri)) {
+            datasetIdentifier = URIUtil.extractURILabel(datasetUri);
+            if (StringUtils.isBlank(datasetIdentifier)) {
+                throw new CRRuntimeException("Could not detect identifier of dataset with URI = " + datasetUri);
+            }
+        }
+
         odpDataset.setUri(datasetUri);
         odpDataset.setIdentifier(datasetIdentifier);
 
@@ -227,97 +261,21 @@ public class ODPDatasetsPacker {
         }
         odpDataset.setIssued(issuedDate);
 
-        List<String> spatialUris = datasetSpatialUris.get(datasetUri);
-        odpDataset.setSpatialUris(spatialUris == null ? new ArrayList<String>() : spatialUris);
-
-        Map<String, Object> data = new HashMap<String, Object>();
-        data.put("dataset", odpDataset);
-
-        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
-        template.process(data, writer);
-
-        return odpDataset;
-    }
-
-    /**
-     *
-     * @param zipOutput
-     * @param odpDatasets
-     * @throws IOException
-     * @throws TemplateException
-     */
-    private void createAndWriteManifestEntry(ZipArchiveOutputStream zipOutput, List<ODPDataset> odpDatasets)
-            throws IOException, TemplateException {
-
-        List<ODPManifestEntry> manifestEntries = new ArrayList<>();
-        for (ODPDataset odpDataset : odpDatasets) {
-
-            ODPManifestEntry entry = new ODPManifestEntry();
-            entry.setDataset(odpDataset);
-            entry.setOdpAction(odpAction);
-            manifestEntries.add(entry);
+        List<String> odpCountryUris = new ArrayList<>();
+        List<String> refAreaUris = ssDao.getDistinctUsedRefAreas(datasetUri, null);
+        for (String refAreaUri : refAreaUris) {
+            String odpCountryUri = ODPCountryMappings.getMappingFor(refAreaUri);
+            if (StringUtils.isNotBlank(odpCountryUri)) {
+                odpCountryUris.add(odpCountryUri);
+            }
         }
+        odpDataset.setSpatialUris(odpCountryUris);
 
-        Map<String, Object> data = new HashMap<String, Object>();
-        data.put("manifestEntries", manifestEntries);
-
-        ZipArchiveEntry entry = new ZipArchiveEntry("manifest.xml");
-        zipOutput.putArchiveEntry(entry);
-
-        Template template = TEMPLATES_CONFIGURATION.getTemplate(MANIFEST_TEMPLATE_PATH);
-        Writer writer = new OutputStreamWriter(zipOutput, Charset.forName(UTF_8));
-        template.process(data, writer);
-
-        zipOutput.closeArchiveEntry();
-    }
-
-    /**
-     *
-     * @return
-     */
-    private static Configuration createTemplatesConfiguration() {
-        Configuration cfg = new Configuration(new Version(2, 3, 25));
-        cfg.setClassForTemplateLoading(ODPDatasetsPacker.class, "/");
-        return cfg;
-    }
-
-    /**
-     *
-     * @param args
-     * @throws IOException
-     * @throws TemplateException
-     */
-    public static void main(String[] args) throws IOException, TemplateException {
-
-        // FreeMarker Template example: ${message}
-        // ${messageMore}
-        // =======================
-        // === County List ====
-        // =======================
-        // <#list countries as country>
-        // ${country_index + 1}. ${country}
-        // </#list>
-
-        Template template = TEMPLATES_CONFIGURATION.getTemplate(DATASET_TEMPLATE_PATH);
-
-        System.out.println(template == null);
-
-        // Build the data-model
-        Map<String, Object> data = new HashMap<String, Object>();
-        data.put("message", "Hello World!");
-
-        // List parsing
-        List<String> countries = new ArrayList<String>();
-        countries.add("India");
-        countries.add("United States");
-        countries.add("Germany");
-        countries.add("France");
-
-        data.put("countries", countries);
-
-        // Console output
-        Writer out = new OutputStreamWriter(System.out);
-        template.process(data, out);
-        out.flush();
+        try {
+            Util.trimToNullAllStringProperties(odpDataset);
+        } catch (ReflectiveOperationException e) {
+            throw new CRRuntimeException("Failed to trim all string properties");
+        }
+        return odpDataset;
     }
 }

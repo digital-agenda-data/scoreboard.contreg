@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,9 +18,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -30,11 +31,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
@@ -43,16 +39,19 @@ import org.openrdf.rio.RDFFormat;
 import eionet.cr.common.CRRuntimeException;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.readers.DatasetMetadataExportReader;
+import eionet.cr.dto.CubeDatasetTemplateDTO;
+import eionet.cr.freemarker.TemplatesConfiguration;
 import eionet.cr.util.Pair;
 import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
+import freemarker.template.Template;
 
 /**
  *
  * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
  */
-public class DatasetMetadataService {
+public class CubeDatasetMetadataService {
 
     // @formatter:off
 
@@ -66,7 +65,7 @@ public class DatasetMetadataService {
     private static final String CONFIGURATION_SHEET_NAME = "CONFIGURATION";
 
     /** */
-    private static final String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
+    private static final String DATASET_RDF_TEMPLATE_PATH = "freemarker/dataset-rdf-template.ftl";
 
     /** */
     public static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
@@ -88,8 +87,8 @@ public class DatasetMetadataService {
      *
      * @return
      */
-    public static DatasetMetadataService newInstance() {
-        return new DatasetMetadataService();
+    public static CubeDatasetMetadataService newInstance() {
+        return new CubeDatasetMetadataService();
     }
 
     /**
@@ -103,67 +102,58 @@ public class DatasetMetadataService {
      */
     public String createDataset(String identifier, String title, String description, String dsdUri) throws ServiceException {
 
-        Map<String, String> map = new HashMap<>();
-        map.put(RdfTemplateVariable.DATASET_IDENTIFIER.name(), identifier);
-        map.put(RdfTemplateVariable.DATASET_TITLE.name(), title);
-        map.put(RdfTemplateVariable.DATASET_DESCRIPTION.name(), description);
-        map.put(RdfTemplateVariable.DATASET_DSD.name(), dsdUri);
-        Set<String> datasetUris = createDatasets(Arrays.asList(map), false);
+        CubeDatasetTemplateDTO dataset = new CubeDatasetTemplateDTO();
+        dataset.setUri(DATASET_URI_PREFIX + identifier);
+        dataset.setIdentifier(identifier);
+        dataset.setTitle(title);
+        dataset.setDescription(description);
+        dataset.setDsdUri(dsdUri);
 
+        Set<String> datasetUris = createDatasets(Arrays.asList(dataset), false);
         return datasetUris.isEmpty() ? StringUtils.EMPTY : datasetUris.iterator().next();
     }
 
     /**
      *
-     * @param datasetMaps
+     * @param datasets
      * @return
      * @throws ServiceException
      */
-    public Set<String> createDatasets(List<Map<String, String>> datasetMaps, boolean clear) throws ServiceException {
+    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, boolean clear) throws ServiceException {
 
-        if (CollectionUtils.isEmpty(datasetMaps)) {
+        if (CollectionUtils.isEmpty(datasets)) {
             return Collections.emptySet();
         }
-
-        VelocityEngine ve = new VelocityEngine();
-        ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-        ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-        ve.init();
-        Template template = ve.getTemplate(DATASET_METADATA_TTL_TEMPLATE_FILE);
-
-        String modifiedDateStr = Util.virtuosoDateToString(new Date());
 
         RepositoryConnection repoConn = null;
         try {
 
             repoConn = SesameUtil.getRepositoryConnection();
             ValueFactory vf = repoConn.getValueFactory();
+            Template template = TemplatesConfiguration.getInstance().getTemplate(DATASET_RDF_TEMPLATE_PATH);
+            String modifiedDateTimeStr = Util.virtuosoDateToString(new Date());
 
             Set<String> datasetUris = new HashSet<>();
-            for (Map<String, String> datasetMap : datasetMaps) {
+            for (CubeDatasetTemplateDTO dataset : datasets) {
 
-                VelocityContext context = new VelocityContext();
-                for (Entry<String, String> entry : datasetMap.entrySet()) {
-                    String variable = entry.getKey();
-                    String value = entry.getValue();
-                    context.put(variable, value);
-                }
-                context.put(RdfTemplateVariable.DATASET_MODIFIED.name(), modifiedDateStr);
+                Util.trimToNullAllStringProperties(dataset);
+                Map<String, Object> data = new HashMap<String, Object>();
+                data.put("dataset", dataset);
+                dataset.setModifiedDateTimeStr(modifiedDateTimeStr);
 
                 Writer writer = null;
                 Reader reader = null;
                 try {
                     writer = new StringWriter();
-                    template.merge(context, writer);
+                    template.process(data, writer);
                     String str = writer.toString();
                     reader = new StringReader(str);
 
-                    String datasetUri = DATASET_URI_PREFIX + datasetMap.get(RdfTemplateVariable.DATASET_IDENTIFIER.name());
+                    String datasetUri = dataset.getUri();
                     URI graphURI = vf.createURI(datasetUri);
 
-                    // If clear requested and this dataset's metadata not yet added (because it could be added multiple times, e.g.
-                    // for each row
-                    // in imported spreadsheet file), then clear the graph.
+                    // If clear requested and this dataset's metadata not yet added (because it could be added multiple times,
+                    // e.g. for each row in imported spreadsheet file), then clear the graph.
                     if (clear && !datasetUris.contains(datasetUri)) {
                         repoConn.clear(graphURI);
                     }
@@ -198,7 +188,7 @@ public class DatasetMetadataService {
             Workbook workbook = WorkbookFactory.create(inputStream);
             return importWorkbook(workbook, clear);
         } catch (Exception e) {
-            throw new ServiceException("Error when reading from file: " + file, e);
+            throw new ServiceException("Technical error when importing from file: " + file, e);
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -282,10 +272,10 @@ public class DatasetMetadataService {
      */
     private int importWorkbook(Workbook workbook, boolean clear) throws ServiceException {
 
-        Map<String, String> columnsToVariables = getTemplateColumnMappings(workbook, TemplateColumnProperty.COLUMN_TITLE,
-                TemplateColumnProperty.RDF_TEMPLATE_VARIABLE);
-        if (columnsToVariables.isEmpty()) {
-            throw new ServiceException("Could not detect column-to-variable mappings!");
+        Map<String, String> columnsToBeanProperties =
+                getTemplateColumnMappings(workbook, SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.BEAN_PROPERTY);
+        if (columnsToBeanProperties.isEmpty()) {
+            throw new ServiceException("Could not detect column-to-bean-property mappings!");
         }
 
         Sheet dataSheet = getDataSheet(workbook);
@@ -307,18 +297,15 @@ public class DatasetMetadataService {
             }
         }
 
-        List<Map<String, String>> datasetMaps = new ArrayList<>();
+        List<CubeDatasetTemplateDTO> datasets = new ArrayList<>();
         while (rows.hasNext()) {
-
             Row row = rows.next();
-            Map<String, String> datasetMap = getVariablesMap(row, indexesToColumns, columnsToVariables);
-            if (!datasetMap.isEmpty()) {
-                datasetMaps.add(datasetMap);
-            }
+            CubeDatasetTemplateDTO dataset = getDatasetDTO(row, indexesToColumns, columnsToBeanProperties);
+            datasets.add(dataset);
         }
 
-        if (datasetMaps.size() > 0) {
-            Set<String> datasetUris = createDatasets(datasetMaps, clear);
+        if (datasets.size() > 0) {
+            Set<String> datasetUris = createDatasets(datasets, clear);
             return datasetUris.size();
         } else {
             return 0;
@@ -329,13 +316,14 @@ public class DatasetMetadataService {
      *
      * @param row
      * @param indexesToColumns
-     * @param columnsToVariables
+     * @param columnsToBeanProperties
      * @return
+     * @throws ServiceException
      */
-    private Map<String, String> getVariablesMap(Row row, Map<Integer, String> indexesToColumns,
-            Map<String, String> columnsToVariables) {
+    private CubeDatasetTemplateDTO getDatasetDTO(Row row, Map<Integer, String> indexesToColumns,
+            Map<String, String> columnsToBeanProperties) throws ServiceException {
 
-        Map<String, String> rowMap = new HashMap<>();
+        CubeDatasetTemplateDTO datasetDTO = new CubeDatasetTemplateDTO();
 
         Iterator<Cell> cells = row.cellIterator();
         while (cells.hasNext()) {
@@ -344,14 +332,24 @@ public class DatasetMetadataService {
             int columnIndex = cell.getColumnIndex();
             String column = indexesToColumns.get(columnIndex);
             if (column != null) {
-                String variable = columnsToVariables.get(column);
-                if (variable != null) {
-                    String strValue = StringUtils.trimToEmpty(cell.getStringCellValue());
-                    rowMap.put(variable, strValue);
+                String beanPropertyName = columnsToBeanProperties.get(column);
+                if (StringUtils.isNotBlank(beanPropertyName)) {
+                    String strValue = StringUtils.trimToNull(cell.getStringCellValue());
+                    try {
+                        BeanUtils.setProperty(datasetDTO, beanPropertyName, strValue);
+                    } catch (IllegalAccessException e) {
+                        throw new ServiceException(e.getMessage(), e);
+                    } catch (InvocationTargetException e) {
+                        throw new ServiceException(e.getMessage(), e);
+                    }
                 }
             }
         }
-        return rowMap;
+
+        if (StringUtils.isBlank(datasetDTO.getUri())) {
+            datasetDTO.setUri(DATASET_URI_PREFIX + StringUtils.trimToNull(datasetDTO.getIdentifier()));
+        }
+        return datasetDTO;
     }
 
     /**
@@ -359,8 +357,8 @@ public class DatasetMetadataService {
      * @param workbook
      * @return
      */
-    private Map<String, String> getTemplateColumnMappings(Workbook workbook, TemplateColumnProperty keyProperty,
-            TemplateColumnProperty valueProperty) {
+    private Map<String, String> getTemplateColumnMappings(Workbook workbook, SpreadsheetConfigurationProperty keyProperty,
+            SpreadsheetConfigurationProperty valueProperty) {
 
         Sheet sheet = workbook.getSheet(CONFIGURATION_SHEET_NAME);
         if (sheet == null) {
@@ -428,7 +426,7 @@ public class DatasetMetadataService {
     private Map<String, Integer> getRdfPropertiesToColumnIndexes(Workbook workbook) throws ServiceException {
 
         Map<String, String> columnsToRdfProperties =
-                getTemplateColumnMappings(workbook, TemplateColumnProperty.COLUMN_TITLE, TemplateColumnProperty.RDF_PROPERTY_URI);
+                getTemplateColumnMappings(workbook, SpreadsheetConfigurationProperty.COLUMN_TITLE, SpreadsheetConfigurationProperty.RDF_PROPERTY_URI);
         if (columnsToRdfProperties.isEmpty()) {
             throw new ServiceException("Could not detect column-to-property mappings!");
         }
@@ -461,15 +459,7 @@ public class DatasetMetadataService {
     /**
      * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
      */
-    public static enum RdfTemplateVariable {
-        DATASET_IDENTIFIER, DATASET_TITLE, DATASET_DESCRIPTION, DATASET_DSD, DATASET_MODIFIED, DATASET_KEYWORD, DATASET_ISSUED,
-        DATASET_LICENSE, DATASET_STATUS, DATASET_PERIODICITY;
-    }
-
-    /**
-     * @author Jaanus Heinlaid <jaanus.heinlaid@gmail.com>
-     */
-    public static enum TemplateColumnProperty {
-        COLUMN_TITLE, RDF_PROPERTY_URI, RDF_TEMPLATE_VARIABLE;
+    public static enum SpreadsheetConfigurationProperty {
+        COLUMN_TITLE, RDF_PROPERTY_URI, BEAN_PROPERTY;
     }
 }

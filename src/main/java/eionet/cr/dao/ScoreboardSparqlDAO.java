@@ -11,7 +11,6 @@ import org.openrdf.model.ValueFactory;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
 
-import eionet.cr.dto.DatasetDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.staging.exp.ObjectTypes.DSD;
@@ -47,9 +46,6 @@ public interface ScoreboardSparqlDAO extends DAO {
 
     /** */
     String DATASET_DISTRIBUTION_ACCESS_URL_TEMPLATE = "http://digital-agenda-data.eu/datasets/<dataset-identifier>#<distribution-type>";
-
-    /** */
-    String DATASET_METADATA_TTL_TEMPLATE_FILE = "velocity/new-dataset-metadata.vm";
 
     /**
      * Return URI-label pairs of codelists that have type skos:conceptScheme and whose URI starts with the given
@@ -87,25 +83,6 @@ public interface ScoreboardSparqlDAO extends DAO {
      */
     List<Pair<String, String>> getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter, boolean isAdmin)
             throws DAOException;
-
-    /**
-     *
-     * @param identifier
-     * @param title
-     * @param description
-     * @param dsdUri
-     * @return
-     * @throws DAOException
-     */
-    String createDataset(String identifier, String title, String description, String dsdUri) throws DAOException;
-
-    /**
-     *
-     * @param datasets
-     * @return
-     * @throws DAOException
-     */
-    List<String> createDatasets(Collection<DatasetDTO> datasets) throws DAOException;
 
     /**
      *

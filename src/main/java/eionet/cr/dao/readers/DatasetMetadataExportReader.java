@@ -28,7 +28,7 @@ import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
 
 import eionet.cr.dao.DAOException;
-import eionet.cr.service.DatasetMetadataService;
+import eionet.cr.service.CubeDatasetMetadataService;
 import eionet.cr.util.sesame.SPARQLResultSetBaseReader;
 
 /**
@@ -147,7 +147,7 @@ public class DatasetMetadataExportReader extends SPARQLResultSetBaseReader {
         } else if (!(value instanceof BNode)) {
 
             String strValue = value.stringValue();
-            if (strValue.startsWith(DatasetMetadataService.DATASET_URI_PREFIX)) {
+            if (strValue.startsWith(CubeDatasetMetadataService.DATASET_URI_PREFIX)) {
 
                 strValue = StringUtils.substringAfterLast(strValue.replace('/', '#'), "#");
                 addToMap(currentDatasetMap, columnIndex, strValue);
