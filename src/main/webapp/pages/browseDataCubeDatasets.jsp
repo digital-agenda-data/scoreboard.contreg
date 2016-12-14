@@ -62,7 +62,16 @@
                             $('#createNewCatalogDialog').dialog("close");
                             return true;
                         });
-
+                        
+                        // Hide/show catalog metadata button.
+                        $('#selBrowseCatalog').change(function() {
+                            if (this.value != '') {
+                                $('#btnCatalogMetadata').show();
+                            } else {
+                                $('#btnCatalogMetadata').hide();
+                            }
+                            $('#catalogBrowseForm').submit();
+                        });
 
                     });
             } ) ( jQuery );
@@ -98,6 +107,25 @@
         It simply lists all datasets found, and provides paging functions if there is more than <c:out value="${actionBean != null && actionBean.datasets != null ? actionBean.datasets.objectsPerPage : 20}"/> DataCube datasets in the system.<br/>
         Clicking on a listed dataset leads to the detailed view page of its metadata which is further browseable.
     </p>
+    
+    <div style="margin-top:20px;width:100%">
+        <stripes:form id="catalogBrowseForm" beanclass="${actionBean['class'].name}" method="get">
+        
+	        <label for="selBrowseCatalog">Browse catalog:</label>&nbsp;
+	        <stripes:select name="browseCatalogUri" id="selBrowseCatalog">
+	            <c:if test="${empty actionBean.catalogs}">
+	                <stripes:option value="" label=" - none found - "/>
+	            </c:if>
+	            <c:if test="${not empty actionBean.catalogs}">
+	                <stripes:option value="" label="-- all --"/>
+	                <c:forEach items="${actionBean.catalogs}" var="catalog">
+	                    <stripes:option value="${catalog.left}" label="${catalog.right}"/>
+	                </c:forEach>
+	            </c:if>
+	        </stripes:select>&nbsp;<stripes:submit id="btnCatalogMetadata" name="viewCatalogMetadata" value="Catalog metadata" style="font-size:0.8em;${empty actionBean.browseCatalogUri ? 'display:none' : ''}"/>
+	        
+        </stripes:form>
+    </div>
 
     <%-- The "working area". --%>
 

@@ -177,6 +177,19 @@ public interface ScoreboardSparqlDAO extends DAO {
             SortingRequest sortRequest, String... labelPredicates) throws DAOException;
 
     /**
+     *
+     * @param isAdmin
+     * @param catalogUri
+     * @param pageRequest
+     * @param sortRequest
+     * @param labelPredicates
+     * @return
+     * @throws DAOException
+     */
+    SearchResultDTO<Pair<String, String>> getDistinctDatasets(boolean isAdmin, String catalogUri, PagingRequest pageRequest,
+            SortingRequest sortRequest, String... labelPredicates) throws DAOException;
+
+    /**
      * Changes the "http://www.w3.org/ns/adms#status" of the dataset by the given URI.
      *
      * @param uri The URI of the dataset whose status is to be changed.

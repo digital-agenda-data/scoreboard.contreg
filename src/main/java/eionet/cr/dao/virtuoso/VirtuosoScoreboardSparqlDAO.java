@@ -1168,4 +1168,89 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             }
         }
     }
+
+    @Override
+    public SearchResultDTO<Pair<String, String>> getDistinctDatasets(boolean isAdmin, String catalogUri, PagingRequest pageRequest,
+            SortingRequest sortRequest, String... labelPredicates) throws DAOException {
+
+        if (sortRequest == null) {
+            sortRequest = SortingRequest.create(PairReader.RIGHTCOL, SortOrder.ASCENDING);
+        }
+
+        Bindings bindings = new Bindings();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("select distinct").append("\n");
+        sb.append("  ?s as ?").append(PairReader.LEFTCOL).append("\n");
+
+        if (ArrayUtils.isEmpty(labelPredicates)) {
+            sb.append("  bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
+        } else {
+            sb.append("  min(coalesce(");
+            for (int i = 0; i < labelPredicates.length; i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("?label").append(i);
+            }
+            sb.append(", bif:subseq(str(?s), coalesce(bif:strrchr(bif:replace(str(?s),'/','#'),'#'),0)+1))) as ?")
+                    .append(PairReader.RIGHTCOL).append("\n");
+        }
+
+        sb.append("where {").append("\n");
+        sb.append("  ?s a <").append(Subjects.DATACUBE_DATA_SET).append("> .\n");
+
+        boolean isCatalogSpecified = StringUtils.isNotBlank(catalogUri);
+        if (isCatalogSpecified) {
+            sb.append("  ?catalog <").append(Predicates.DCAT_DATASET).append("> ?s .").append("\n");
+        }
+
+        // If not an admin-user, allow selections from "Completed" datasets only.
+        if (!isAdmin) {
+            sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED).append("> .")
+                    .append("\n");
+        }
+
+        String s = "  optional {?s ?labelPred0 ?label0}\n";
+        for (int i = 0; i < labelPredicates.length; i++) {
+            sb.append(StringUtils.replace(s, "0", String.valueOf(i)));
+            bindings.setURI("labelPred" + i, labelPredicates[i]);
+        }
+        sb.append("\n");
+
+        if (isCatalogSpecified) {
+            sb.append("  filter (?catalog = ?catalogUri)").append("\n");
+            bindings.setURI("catalogUri", catalogUri);
+        }
+
+        sb.append("} order by ").append(sortRequest.getSortOrder()).append("(?").append(sortRequest.getSortingColumnName())
+                .append(")");
+
+        if (pageRequest != null) {
+            sb.append(" limit ").append(pageRequest.getItemsPerPage()).append(" offset ").append(pageRequest.getOffset());
+        }
+
+        List<Pair<String, String>> list = executeSPARQL(sb.toString(), bindings, new PairReader<String, String>());
+        int totalMatchCount = list.size();
+        if (pageRequest != null) {
+
+            sb = new StringBuilder();
+            sb.append("select count(distinct ?s) where {\n");
+            sb.append("  ?s a <").append(Subjects.DATACUBE_DATA_SET).append("> .\n");
+
+            // If not an admin-user, allow selections from "Completed" datasets only.
+            if (!isAdmin) {
+                sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED)
+                        .append("> .").append("\n");
+            }
+            sb.append("}");
+
+            String count = executeUniqueResultSPARQL(sb.toString(), new SingleObjectReader<String>());
+            totalMatchCount = NumberUtils.toInt(count);
+        }
+
+        return new SearchResultDTO<Pair<String, String>>(list, totalMatchCount);
+
+    }
 }

@@ -91,6 +91,9 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     private String catalogTitle;
     private String catalogDescription;
 
+    /** */
+    private String browseCatalogUri;
+
     /**
      *
      * @return
@@ -105,7 +108,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         SearchResultDTO<Pair<String, String>> searchResult = null;
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            searchResult = dao.getDistinctDatasets(isUserLoggedIn(), pageRequest, sortRequest, LABEL_PREDICATES);
+            searchResult = dao.getDistinctDatasets(isUserLoggedIn(), browseCatalogUri, pageRequest, sortRequest, LABEL_PREDICATES);
         } catch (DAOException e) {
             LOGGER.error("DataCube datasets search error", e);
             addWarningMessage("A technical error occurred when searching for the available datasets" + e.getMessage());
@@ -113,6 +116,20 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
         datasets = new CustomPaginatedList<Pair<String, String>>(this, searchResult, pageRequest.getItemsPerPage());
         return new ForwardResolution(JSP);
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Resolution viewCatalogMetadata() {
+
+        if (StringUtils.isBlank(browseCatalogUri)) {
+            addWarningMessage("No catalog specified!");
+            return new RedirectResolution(getClass());
+        } else {
+            return new RedirectResolution(FactsheetActionBean.class).addParameter("uri", browseCatalogUri);
+        }
     }
 
     /**
@@ -238,7 +255,8 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         }
 
         try {
-            int nrOfDatasets = CubeDatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, targetCatalogUri, clearExisting);
+            int nrOfDatasets =
+                    CubeDatasetMetadataService.newInstance().importDatasetsSpreadsheet(tempFile, targetCatalogUri, clearExisting);
             addSystemMessage(String.format("A total of %d datasets were imported!", nrOfDatasets));
         } catch (Exception e) {
             LOGGER.error("Datasets import failed with technical error", e);
@@ -511,5 +529,19 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setDatasetCatalogUri(String datasetCatalogUri) {
         this.datasetCatalogUri = datasetCatalogUri;
+    }
+
+    /**
+     * @return the browseCatalogUri
+     */
+    public String getBrowseCatalogUri() {
+        return browseCatalogUri;
+    }
+
+    /**
+     * @param browseCatalogUri the browseCatalogUri to set
+     */
+    public void setBrowseCatalogUri(String browseCatalogUri) {
+        this.browseCatalogUri = browseCatalogUri;
     }
 }
