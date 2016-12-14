@@ -108,34 +108,25 @@ public class CubeDatasetMetadataService {
 
     /**
      *
-     * @param identifier
-     * @param title
-     * @param description
-     * @param dsdUri
+     * @param datasetTemplateDTO
+     * @param datasetCatalogUri
      * @return
      * @throws ServiceException
      */
-    public String createDataset(String identifier, String title, String description, String dsdUri) throws ServiceException {
+    public String createDataset(CubeDatasetTemplateDTO datasetTemplateDTO, String datasetCatalogUri) throws ServiceException {
 
-        CubeDatasetTemplateDTO dataset = new CubeDatasetTemplateDTO();
-        dataset.setUri(DATASET_URI_PREFIX + identifier);
-        dataset.setIdentifier(identifier);
-        dataset.setTitle(title);
-        dataset.setDescription(description);
-        dataset.setDsdUri(dsdUri);
-
-        Set<String> datasetUris = createDatasets(Arrays.asList(dataset), null, false);
+        Set<String> datasetUris = createDatasets(Arrays.asList(datasetTemplateDTO), datasetCatalogUri, false);
         return datasetUris.isEmpty() ? StringUtils.EMPTY : datasetUris.iterator().next();
     }
 
     /**
      *
      * @param datasets
-     * @param targetCatalogUri
+     * @param fixedCatalogUri
      * @return
      * @throws ServiceException
      */
-    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String targetCatalogUri, boolean clear)
+    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String fixedCatalogUri, boolean clear)
             throws ServiceException {
 
         if (CollectionUtils.isEmpty(datasets)) {
@@ -170,7 +161,7 @@ public class CubeDatasetMetadataService {
                     String str = writer.toString();
                     reader = new StringReader(str);
 
-                    String datasetUri = dataset.getUri();
+                    String datasetUri = DATASET_URI_PREFIX + dataset.getIdentifier();
                     URI graphURI = vf.createURI(datasetUri);
 
                     // If clear requested and this dataset's metadata not yet added (because it could be added multiple times,
@@ -183,13 +174,11 @@ public class CubeDatasetMetadataService {
                     repoConn.add(reader, datasetUri, RDFFormat.TURTLE, graphURI);
 
                     URI catalogURI = null;
-                    if (StringUtils.isNotBlank(targetCatalogUri)) {
-                        catalogURI = vf.createURI(targetCatalogUri);
-                    } else {
-                        String catalogIdentifier = dataset.getCatalogIdentifier();
-                        if (StringUtils.isNotBlank(catalogIdentifier)) {
-                            catalogURI = vf.createURI(DcatCatalogService.CATALOG_URI_PREFIX + catalogIdentifier);
-                        }
+                    String catalogIdentifier = dataset.getCatalogIdentifier();
+                    if (StringUtils.isNotBlank(catalogIdentifier)) {
+                        catalogURI = vf.createURI(DcatCatalogService.CATALOG_URI_PREFIX + catalogIdentifier);
+                    } else if (StringUtils.isNotBlank(fixedCatalogUri)) {
+                        catalogURI = vf.createURI(fixedCatalogUri);
                     }
 
                     if (catalogURI != null) {
@@ -340,7 +329,7 @@ public class CubeDatasetMetadataService {
         List<CubeDatasetTemplateDTO> datasets = new ArrayList<>();
         while (rows.hasNext()) {
             Row row = rows.next();
-            CubeDatasetTemplateDTO dataset = getDatasetDTO(row, indexesToColumns, columnsToBeanProperties);
+            CubeDatasetTemplateDTO dataset = buildDatasetDTO(row, indexesToColumns, columnsToBeanProperties);
             if (dataset != null) {
                 datasets.add(dataset);
             }
@@ -362,7 +351,7 @@ public class CubeDatasetMetadataService {
      * @return
      * @throws ServiceException
      */
-    private CubeDatasetTemplateDTO getDatasetDTO(Row row, Map<Integer, String> indexesToColumns,
+    private CubeDatasetTemplateDTO buildDatasetDTO(Row row, Map<Integer, String> indexesToColumns,
             Map<String, String> columnsToBeanProperties) throws ServiceException {
 
         CubeDatasetTemplateDTO datasetDTO = new CubeDatasetTemplateDTO();
@@ -396,10 +385,6 @@ public class CubeDatasetMetadataService {
             return null;
         } else if (StringUtils.isBlank(datasetDTO.getIdentifier())) {
             throw new ServiceException("Missing dataset identifier at row #" + row.getRowNum());
-        }
-
-        if (StringUtils.isBlank(datasetDTO.getUri())) {
-            datasetDTO.setUri(DATASET_URI_PREFIX + StringUtils.trimToNull(datasetDTO.getIdentifier()));
         }
 
         return datasetDTO;

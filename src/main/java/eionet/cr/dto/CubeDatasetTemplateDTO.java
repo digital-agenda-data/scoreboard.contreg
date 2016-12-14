@@ -7,7 +7,6 @@ package eionet.cr.dto;
 public class CubeDatasetTemplateDTO {
 
     /** */
-    private String uri;
     private String identifier;
     private String title;
     private String description;
@@ -21,17 +20,24 @@ public class CubeDatasetTemplateDTO {
     private String catalogIdentifier;
 
     /**
-     * @return the uri
      */
-    public String getUri() {
-        return uri;
+    public CubeDatasetTemplateDTO() {
     }
+
     /**
-     * @param uri the uri to set
+     * @param identifier
+     * @param title
+     * @param description
+     * @param dsdUri
      */
-    public void setUri(String uri) {
-        this.uri = uri;
+    public CubeDatasetTemplateDTO(String identifier, String title, String description, String dsdUri) {
+
+        this.identifier = identifier;
+        this.title = title;
+        this.description = description;
+        this.dsdUri = dsdUri;
     }
+
     /**
      * @return the identifier
      */

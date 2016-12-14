@@ -21,6 +21,7 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
+import eionet.cr.dto.CubeDatasetTemplateDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.CubeDatasetMetadataService;
 import eionet.cr.staging.util.TimePeriodsHarvester;
@@ -209,7 +210,8 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     public Resolution createNewDataset() {
 
         try {
-            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            CubeDatasetTemplateDTO dto = new CubeDatasetTemplateDTO(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, null);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)

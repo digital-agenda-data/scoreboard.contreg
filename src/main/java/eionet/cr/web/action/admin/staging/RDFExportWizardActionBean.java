@@ -49,6 +49,7 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.StagingDatabaseDAO;
+import eionet.cr.dto.CubeDatasetTemplateDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.StagingDatabaseDTO;
 import eionet.cr.dto.StagingDatabaseTableColumnDTO;
@@ -325,7 +326,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     public Resolution createNewDataset() {
 
         try {
-            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            CubeDatasetTemplateDTO dto = new CubeDatasetTemplateDTO(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
+            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, null);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             if (queryConf == null) {
                 queryConf = new QueryConfiguration();

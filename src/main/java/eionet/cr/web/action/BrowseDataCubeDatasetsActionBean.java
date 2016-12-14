@@ -23,6 +23,7 @@ import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
+import eionet.cr.dto.CubeDatasetTemplateDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.CubeDatasetMetadataService;
 import eionet.cr.service.DcatCatalogService;
@@ -71,6 +72,7 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     private String identifier;
     private String dctermsTitle;
     private String dctermsDescription;
+    private String datasetCatalogUri;
 
     /** File bean for importing datasets metadata. */
     private FileBean importFileBean;
@@ -120,7 +122,8 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
     public Resolution createNew() {
 
         try {
-            CubeDatasetMetadataService.newInstance().createDataset(identifier, dctermsTitle, dctermsDescription, null);
+            CubeDatasetTemplateDTO dto = new CubeDatasetTemplateDTO(identifier, dctermsTitle, dctermsDescription, null);
+            CubeDatasetMetadataService.newInstance().createDataset(dto, datasetCatalogUri);
             addSystemMessage("A new dataset with identifier \"" + identifier + "\" successfully created!");
         } catch (Exception e) {
             LOGGER.error("Dataset creation failed with technical error", e);
@@ -159,6 +162,10 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
         if (StringUtils.isBlank(dctermsTitle)) {
             addGlobalValidationError("The title is mandatory!");
+        }
+
+        if (StringUtils.isBlank(datasetCatalogUri)) {
+            addGlobalValidationError("Dataset catalog is mandatory!");
         }
 
         getContext().setSourcePageResolution(defaultEvent());
@@ -490,5 +497,19 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setCatalogDescription(String catalogDescription) {
         this.catalogDescription = catalogDescription;
+    }
+
+    /**
+     * @return the datasetCatalogUri
+     */
+    public String getDatasetCatalogUri() {
+        return datasetCatalogUri;
+    }
+
+    /**
+     * @param datasetCatalogUri the datasetCatalogUri to set
+     */
+    public void setDatasetCatalogUri(String datasetCatalogUri) {
+        this.datasetCatalogUri = datasetCatalogUri;
     }
 }
