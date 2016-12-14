@@ -141,6 +141,9 @@
                         $("#prefix9").click(function() {
                             return handlePrefixClick("PREFIX cube: <http://purl.org/linked-data/cube#>");
                         });
+                        $("#prefix9_5").click(function() {
+                            return handlePrefixClick("PREFIX dcat: <http://www.w3.org/ns/dcat#>");
+                        });
                         // Add query prefix #10
                         $("#prefix10").click(function() {
                             return handlePrefixClick("PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>");
@@ -363,6 +366,7 @@
 # for the indicator "Households with access to the Internet at home".
 
 PREFIX cube: &lt;http://purl.org/linked-data/cube#&gt;
+PREFIX dcat: &lt;http://www.w3.org/ns/dcat#&gt;
 PREFIX dad-prop: &lt;http://semantic.digital-agenda-data.eu/def/property/&gt;
 
 SELECT DISTINCT ?observation WHERE {
@@ -726,6 +730,7 @@ while (l--) {
                     <li><span id="prefix7" class="shadowHover">PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/&gt;</span></li>
                     <li><span id="prefix8" class="shadowHover">PREFIX skos: &lt;http://www.w3.org/2004/02/skos/core#&gt;</span></li>
                     <li><span id="prefix9" class="shadowHover">PREFIX cube: &lt;http://purl.org/linked-data/cube#&gt;</span></li>
+                    <li><span id="prefix9_5" class="shadowHover">PREFIX dcat: &lt;http://www.w3.org/ns/dcat#&gt;</span></li>
                     <li><span id="prefix10" class="shadowHover">PREFIX dad-prop: &lt;http://semantic.digital-agenda-data.eu/def/property/&gt;</span></li>
                     <li><span id="prefix11" class="shadowHover">PREFIX dad-class: &lt;http://semantic.digital-agenda-data.eu/def/class/&gt;</span></li>
                     <li><span id="prefix12" class="shadowHover">PREFIX dad-codelist: &lt;http://semantic.digital-agenda-data.eu/def/codelist/&gt;</span></li>

@@ -77,9 +77,6 @@ public class CubeDatasetMetadataService {
     public static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
 
     /** */
-    public static final String CATALOG_URI_PREFIX = "http://semantic.digital-agenda-data.eu/catalog/";
-
-    /** */
     private static final String EXPORT_DATASETS_METADATA_SPARQL = "" +
             "PREFIX cube: <http://purl.org/linked-data/cube#> \n" +
             "select \n" +
@@ -191,7 +188,7 @@ public class CubeDatasetMetadataService {
                     } else {
                         String catalogIdentifier = dataset.getCatalogIdentifier();
                         if (StringUtils.isNotBlank(catalogIdentifier)) {
-                            catalogURI = vf.createURI(CATALOG_URI_PREFIX + catalogIdentifier);
+                            catalogURI = vf.createURI(DcatCatalogService.CATALOG_URI_PREFIX + catalogIdentifier);
                         }
                     }
 

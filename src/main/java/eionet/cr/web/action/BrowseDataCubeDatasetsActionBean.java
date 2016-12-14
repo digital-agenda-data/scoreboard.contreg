@@ -25,6 +25,7 @@ import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.CubeDatasetMetadataService;
+import eionet.cr.service.DcatCatalogService;
 import eionet.cr.service.ServiceException;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
@@ -82,6 +83,11 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
 
     /** */
     private String targetCatalogUri;
+
+    /** */
+    private String catalogIdentifier;
+    private String catalogTitle;
+    private String catalogDescription;
 
     /**
      *
@@ -152,6 +158,57 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
         }
 
         if (StringUtils.isBlank(dctermsTitle)) {
+            addGlobalValidationError("The title is mandatory!");
+        }
+
+        getContext().setSourcePageResolution(defaultEvent());
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Resolution createNewCatalog() {
+
+        try {
+            DcatCatalogService.newInstance().createCatalog(catalogIdentifier, catalogTitle, catalogDescription);
+            addSystemMessage("A new catalog with identifier \"" + catalogIdentifier + "\" successfully created!");
+        } catch (Exception e) {
+            LOGGER.error("Catalog creation failed with technical error", e);
+            addWarningMessage("Catalog creation failed with technical error: " + e.getMessage());
+        }
+
+        return new RedirectResolution(getClass());
+    }
+
+    /**
+     *
+     * @throws DAOException
+     */
+    @ValidationMethod(on = {"createNewCatalog"})
+    public void validateCreateNewCatalog() throws ServiceException {
+
+        if (getUser() == null || !getUser().isAdministrator()) {
+            addGlobalValidationError("You are not authorized for this operation!");
+            getContext().setSourcePageResolution(new RedirectResolution(getClass()));
+            return;
+        }
+
+        if (StringUtils.isBlank(catalogIdentifier)) {
+            addGlobalValidationError("The identifier is mandatory!");
+        } else {
+            String s = catalogIdentifier.replaceAll("[^a-zA-Z0-9-._]+", "");
+            if (!s.equals(catalogIdentifier)) {
+                addGlobalValidationError("Only digits, latin letters, underscores and dashes allowed in the identifier!");
+            } else {
+                boolean exists = DcatCatalogService.newInstance().isCatalogExisting(catalogIdentifier);
+                if (exists) {
+                    addGlobalValidationError("A catalog already exists with this identifier: " + catalogIdentifier);
+                }
+            }
+        }
+
+        if (StringUtils.isBlank(catalogTitle)) {
             addGlobalValidationError("The title is mandatory!");
         }
 
@@ -391,5 +448,47 @@ public class BrowseDataCubeDatasetsActionBean extends DisplaytagSearchActionBean
      */
     public void setTargetCatalogUri(String targetCatalogUri) {
         this.targetCatalogUri = targetCatalogUri;
+    }
+
+    /**
+     * @return the catalogIdentifier
+     */
+    public String getCatalogIdentifier() {
+        return catalogIdentifier;
+    }
+
+    /**
+     * @param catalogIdentifier the catalogIdentifier to set
+     */
+    public void setCatalogIdentifier(String catalogIdentifier) {
+        this.catalogIdentifier = catalogIdentifier;
+    }
+
+    /**
+     * @return the catalogTitle
+     */
+    public String getCatalogTitle() {
+        return catalogTitle;
+    }
+
+    /**
+     * @param catalogTitle the catalogTitle to set
+     */
+    public void setCatalogTitle(String catalogTitle) {
+        this.catalogTitle = catalogTitle;
+    }
+
+    /**
+     * @return the catalogDescription
+     */
+    public String getCatalogDescription() {
+        return catalogDescription;
+    }
+
+    /**
+     * @param catalogDescription the catalogDescription to set
+     */
+    public void setCatalogDescription(String catalogDescription) {
+        this.catalogDescription = catalogDescription;
     }
 }
