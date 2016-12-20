@@ -90,9 +90,9 @@
             <li><a href="#">Operations</a>
                 <ul>
                     <li><a href="#" id="creationLink" title="Create a new dataset">New dataset</a></li>
+                    <li><a href="#" id="createNewCatalogLink" title="Create a new catalog">New catalog</a></li>
                     <li><a href="#" id="importLink" title="Import multiple datasets metadata">Import datasets</a></li>
                     <li><stripes:link class="link-plain" beanclass="${actionBean['class'].name}" event="export">Export datasets</stripes:link></li>
-                    <li><a href="#" id="createNewCatalogLink" title="Create a new catalog">New catalog</a></li>
                 </ul>
             </li>
         </ul>
@@ -111,7 +111,7 @@
     <div style="margin-top:20px;width:100%">
         <stripes:form id="catalogBrowseForm" beanclass="${actionBean['class'].name}" method="get">
         
-	        <label for="selBrowseCatalog">Browse catalog:</label>&nbsp;
+	        <label for="selBrowseCatalog" class="question">Browse catalog:</label>&nbsp;
 	        <stripes:select name="browseCatalogUri" id="selBrowseCatalog">
 	            <c:if test="${empty actionBean.catalogs}">
 	                <stripes:option value="" label=" - none found - "/>

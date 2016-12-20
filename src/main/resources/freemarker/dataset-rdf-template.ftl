@@ -82,9 +82,6 @@
 
 # RELATED ENTITIES
 
-# License
-<http://ec.europa.eu/geninfo/legal_notices_en.htm#copyright>    dcterms:title   "Europa Legal Notice" .
-
 # DCAT Distribution
 <http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}/distribution/download> 
     rdf:type    dcat:Distribution ;
@@ -107,12 +104,3 @@
     foaf:primaryTopic   <http://semantic.digital-agenda-data.eu/dataset/${dataset.identifier}> ;
     ld-api:definition   <http://semantic.digital-agenda-data.eu/API/meta/dataset/_id.rdf> ;
     ld-api:extendedMetadataVersion  <http://semantic.digital-agenda-data.eu/API/dataset/${dataset.identifier}.rdf?_metadata=all> .
-
-# Organization (contact point)
-<http://publications.europa.eu/resource/authority/corporate-body/CNECT/F4>
-    a vcard:Organization, foaf:Organization;
-    rdfs:label "DG CONNECT - Digital Economy and Skills (Unit F.4)" ;
-    foaf:mbox   "mailto:CNECT-F4@ec.europa.eu" ;
-    foaf:name   "DG CONNECT - Digital Economy and Skills (Unit F.4)" ;
-    foaf:workplaceHomepage  <https://ec.europa.eu/digital-single-market/en/dg-connect> .
-
