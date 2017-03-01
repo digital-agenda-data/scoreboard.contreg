@@ -87,6 +87,12 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
     private String newDatasetTitle;
     private String newDatasetDescription;
 
+    /** */
+    private List<Pair<String, String>> catalogs;
+
+    /** */
+    private String datasetCatalogUri;
+
     /**
      *
      * @return
@@ -211,7 +217,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
 
         try {
             CubeDatasetTemplateDTO dto = new CubeDatasetTemplateDTO(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
-            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, null);
+            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, datasetCatalogUri);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             return new RedirectResolution(getClass()).addParameter("targetDataset", datasetUri)
                     .addParameter("clearDataset", clearDataset)
@@ -251,6 +257,10 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
 
         if (StringUtils.isBlank(newDatasetTitle)) {
             addGlobalValidationError("The title is mandatory!");
+        }
+
+        if (StringUtils.isBlank(datasetCatalogUri)) {
+            addGlobalValidationError("Dataset catalog is mandatory!");
         }
 
         getContext().setSourcePageResolution(new ForwardResolution(JSP));
@@ -433,5 +443,31 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
         if (XLWrapUploadType.BREAKDOWN.equals(uploadType) || XLWrapUploadType.INDICATOR.equals(uploadType)) {
             DAOFactory.get().getDao(ScoreboardSparqlDAO.class).fixGrouplessCodelistItems();
         }
+    }
+
+
+    /**
+     *
+     * @return
+     * @throws DAOException
+     */
+    public List<Pair<String, String>> getCatalogs() throws DAOException {
+
+        if (catalogs == null) {
+            String[] labels = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.FOAF_NAME};
+            HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
+            SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DCAT_CATALOG, null, null, labels);
+            if (searchResult != null) {
+                catalogs = searchResult.getItems();
+            }
+        }
+        return catalogs;
+    }
+
+    /**
+     * @param datasetCatalogUri the datasetCatalogUri to set
+     */
+    public void setDatasetCatalogUri(String datasetCatalogUri) {
+        this.datasetCatalogUri = datasetCatalogUri;
     }
 }

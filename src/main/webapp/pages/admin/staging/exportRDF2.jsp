@@ -149,7 +149,7 @@
                                 <stripes:radio id="dynamicDatasetRadio" name="datasetType" value="DYNAMIC" checked="DYNAMIC" />
                             </td>
                             <td>
-                                <label for="selDynamicDatasetColumn" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset identifier dynamically expected from this SQL column:</label>
+                                <label for="dynamicDatasetRadio" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset identifier dynamically expected from this SQL column:</label>
                                 <stripes:select name="queryConf.datasetIdentifierColumn" value="${actionBean.queryConf.datasetIdentifierColumn}" id="selDynamicDatasetColumn">
                                     <stripes:option value="" label=" - choose SQL column - "/>
                                     <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
@@ -163,7 +163,7 @@
                                 <stripes:radio id="fixedDatasetRadio" name="datasetType" value="FIXED" checked="FIXED" />
                             </td>
                             <td style="padding-top:5px">
-                                <label for="selDatasetUri" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset will be fixed to this:</label>
+                                <label for="fixedDatasetRadio" style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Dataset will be fixed to this:</label>
                                 <stripes:select name="queryConf.datasetUriTemplate" value="${actionBean.queryConf.datasetUriTemplate}" id="selDatasetUri">
                                     <stripes:option value="" label=" - choose existing dataset - "/>
                                     <c:forEach items="${actionBean.datasets}" var="dataset">
@@ -337,6 +337,24 @@
                         <td><stripes:label for="txtTitle" class="question required" title="Friendly name of the dataset. Any free text allowed here. Will go into the property identified by http://purl.org/dc/terms/title">Title:</stripes:label></td>
                         <td><stripes:text name="newDatasetTitle" id="txtTitle" size="80"/></td>
                     </tr>
+                    <tr>
+	                    <td>
+	                        <label for="selDatasetCatalog" class="question required">Catalog:</label>
+	                    </td>
+	                    <td>
+	                        <stripes:select name="datasetCatalogUri" id="selDatasetCatalog">
+	                            <c:if test="${empty actionBean.catalogs}">
+	                                <stripes:option value="" label=" - none found - "/>
+	                            </c:if>
+	                            <c:if test="${not empty actionBean.catalogs}">
+	                                <stripes:option value="" label=""/>
+	                                <c:forEach items="${actionBean.catalogs}" var="catalog">
+	                                    <stripes:option value="${catalog.left}" label="${catalog.right}"/>
+	                                </c:forEach>
+	                            </c:if>
+	                        </stripes:select>
+	                    </td>
+	                </tr>
                     <tr>
                         <td><stripes:label for="txtDescription" class="question" title="Humanly understandable detailed description of the dataset. Any free text allowed here. Will go into the property identified by http://purl.org/dc/terms/description">Description:</stripes:label></td>
                         <td>

@@ -176,6 +176,24 @@
                         <td><stripes:text name="newDatasetTitle" id="txtTitle" size="80"/></td>
                     </tr>
                     <tr>
+                        <td>
+                            <label for="selDatasetCatalog" class="question required">Catalog:</label>
+                        </td>
+                        <td>
+                            <stripes:select name="datasetCatalogUri" id="selDatasetCatalog">
+                                <c:if test="${empty actionBean.catalogs}">
+                                    <stripes:option value="" label=" - none found - "/>
+                                </c:if>
+                                <c:if test="${not empty actionBean.catalogs}">
+                                    <stripes:option value="" label=""/>
+                                    <c:forEach items="${actionBean.catalogs}" var="catalog">
+                                        <stripes:option value="${catalog.left}" label="${catalog.right}"/>
+                                    </c:forEach>
+                                </c:if>
+                            </stripes:select>
+                        </td>
+                    </tr>
+                    <tr>
                         <td><stripes:label for="txtDescription" class="question" title="Humanly understandable detailed description of the dataset. Any free text allowed here. Will go into the property identified by http://purl.org/dc/terms/description">Description:</stripes:label></td>
                         <td>
                             <stripes:textarea name="newDatasetDescription" id="txtDescription" cols="80" rows="10"/>

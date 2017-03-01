@@ -10,7 +10,7 @@
     </appender>
 
     <logger name="eionet.cr">
-        <level value="trace" />
+        <level value="debug" />
     </logger>
 
     <logger name="net.sourceforge.stripes.controller.StripesFilter">

@@ -148,6 +148,12 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     /** */
     private String datasetType;
 
+    /** */
+    private List<Pair<String, String>> catalogs;
+
+    /** */
+    private String datasetCatalogUri;
+
     /**
      * Event handler for the wizard's first step.
      *
@@ -269,6 +275,15 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
                     StringUtils.equalsIgnoreCase(getContext().getRequestParameter("clearDataset"), Boolean.TRUE.toString()));
         }
 
+        if ("FIXED".equals(datasetType)) {
+            queryConf.setDatasetIdentifierColumn(null);
+        } if ("DYNAMIC".equals(datasetType)) {
+            ObjectType objectType = getObjectType();
+            if (objectType != null) {
+                queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
+            }
+        }
+
         try {
             StagingDatabaseDTO dto = DAOFactory.get().getDao(StagingDatabaseDAO.class).getDatabaseByName(dbName);
             testRun = ExportRunner.test(dto, queryConf);
@@ -327,7 +342,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         try {
             CubeDatasetTemplateDTO dto = new CubeDatasetTemplateDTO(newDatasetIdentifier, newDatasetTitle, newDatasetDescription, null);
-            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, null);
+            String datasetUri = CubeDatasetMetadataService.newInstance().createDataset(dto, datasetCatalogUri);
             addSystemMessage("A new dataset with identifier \"" + newDatasetIdentifier + "\" successfully created!");
             if (queryConf == null) {
                 queryConf = new QueryConfiguration();
@@ -370,6 +385,10 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         if (StringUtils.isBlank(newDatasetTitle)) {
             addGlobalValidationError("The title is mandatory!");
+        }
+
+        if (StringUtils.isBlank(datasetCatalogUri)) {
+            addGlobalValidationError("Dataset catalog is mandatory!");
         }
 
         getContext().setSourcePageResolution(new ForwardResolution(STEP2_JSP));
@@ -915,5 +934,30 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
      */
     public void setDatasetType(String datasetType) {
         this.datasetType = datasetType;
+    }
+
+    /**
+     *
+     * @return
+     * @throws DAOException
+     */
+    public List<Pair<String, String>> getCatalogs() throws DAOException {
+
+        if (catalogs == null) {
+            String[] labels = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.FOAF_NAME};
+            HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
+            SearchResultDTO<Pair<String, String>> searchResult = dao.getUriLabels(Subjects.DCAT_CATALOG, null, null, labels);
+            if (searchResult != null) {
+                catalogs = searchResult.getItems();
+            }
+        }
+        return catalogs;
+    }
+
+    /**
+     * @param datasetCatalogUri the datasetCatalogUri to set
+     */
+    public void setDatasetCatalogUri(String datasetCatalogUri) {
+        this.datasetCatalogUri = datasetCatalogUri;
     }
 }

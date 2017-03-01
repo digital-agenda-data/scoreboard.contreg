@@ -814,6 +814,17 @@ public final class ExportRunner extends Thread {
     private void processTestRow(ResultSet rs) throws SQLException, DAOException {
 
         LinkedHashMap<String, String> rowMap = new LinkedHashMap<String, String>();
+
+        String datasetIdentifierColumn = queryConf.getDatasetIdentifierColumn();
+        String datasetUriTemplate = queryConf.getDatasetUriTemplate();
+        if (StringUtils.isNotBlank(datasetIdentifierColumn)) {
+            String datasetIdentifier = rs.getString(datasetIdentifierColumn);
+            rowMap.put("dataset", datasetIdentifier);
+        } else if (StringUtils.isNotBlank(datasetUriTemplate)) {
+            String datasetIdentifier = StringUtils.substringAfterLast(datasetUriTemplate, "/");
+            rowMap.put("dataset", datasetIdentifier);
+        }
+
         for (Entry<ObjectProperty, String> entry : queryConf.getPropertyMappings().entrySet()) {
 
             ObjectProperty property = entry.getKey();
