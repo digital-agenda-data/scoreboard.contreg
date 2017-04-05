@@ -223,6 +223,8 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
     public Resolution step2() throws DAOException {
 
         // Just forward to the JSP and that's all.
+
+        catalogs = null;
         return new ForwardResolution(STEP2_JSP);
     }
 
@@ -248,6 +250,7 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
             if (objectType != null) {
                 queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
             }
+            queryConf.setCatalogUri(datasetCatalogUri);
         }
 
         try {

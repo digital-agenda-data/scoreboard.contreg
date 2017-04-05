@@ -67,6 +67,9 @@ public class QueryConfiguration implements Serializable {
     /** If true, the target graph(s) should be cleared before the export query is executed. */
     private boolean clearDataset;
 
+    /** If datasets will be created dynamically then this is the catalog they will be associated with. */
+    private String catalogUri;
+
     /**
      * @return the query
      */
@@ -212,5 +215,19 @@ public class QueryConfiguration implements Serializable {
      */
     public void setDatasetUriTemplate(String datasetUriTemplate) {
         this.datasetUriTemplate = datasetUriTemplate;
+    }
+
+    /**
+     * @return the catalogUri
+     */
+    public String getCatalogUri() {
+        return catalogUri;
+    }
+
+    /**
+     * @param catalogUri the catalogUri to set
+     */
+    public void setCatalogUri(String catalogUri) {
+        this.catalogUri = catalogUri;
     }
 }

@@ -156,6 +156,14 @@
                                         <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
                                     </c:forEach>
                                 </stripes:select>
+                                <stripes:select name="datasetCatalogUri" id="selDatasetCatalog">
+	                                <stripes:option value="" label="-- select catalog for datasets --"/>
+	                                <c:if test="${not empty actionBean.catalogs}">
+	                                    <c:forEach items="${actionBean.catalogs}" var="catalog">
+	                                        <stripes:option value="${catalog.left}" label="${catalog.right}"/>
+	                                    </c:forEach>
+	                                </c:if>
+	                            </stripes:select>
                             </td>
                         </tr>
                         <tr>
@@ -180,40 +188,6 @@
                     </table>
                 </fieldset>
                 
-<%--                <fieldset style="margin-top:20px">
-                    <legend style="font-weight:bold">Target graph:</legend>
-                    <table>
-                        <tr>
-                            <td style="text-align:right;vertical-align:top">
-                                <label for="txtGraphTemplate" title="Value template of the URI of the target graph where the observations will be stored into. Use &lt;value&gt; as placeholder to be filled by selector column below. Or type a fixed value without any placeholder (in which case the selector column below will be ignored)." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Value template:</label>
-                            </td>
-                            <td>
-                                <stripes:text name="queryConf.targetGraphValueTemplate" id="txtGraphTemplate" value="${actionBean.queryConf.targetGraphValueTemplate}" size="80"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:right;vertical-align:top">
-                                <label for="selGraphSelectorColumn" title="An above-queried SQL column that will fill the &lt;value&gt; placeholder in the above value template for each queried observation." style="padding-right: 12px;background: url(${pageContext.request.contextPath}/images/conditional.gif) center right no-repeat;">Value selector column:</label>
-                            </td>
-                            <td>
-                                <stripes:select name="queryConf.targetGraphValueSelectorColumn" value="${actionBean.queryConf.targetGraphValueSelectorColumn}" id="selGraphSelectorColumn">
-                                    <stripes:option value="" label=""/>
-                                    <c:forEach items="${actionBean.selectedColumns}" var="selectedColumn">
-                                        <stripes:option value="${selectedColumn}" label="${selectedColumn}" title="${selectedColumn}"/>
-                                    </c:forEach>
-                                </stripes:select>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <stripes:label for="chkClear" title="If checked, the contents of the graph(s) will be cleared before the export runs.">Clear graph before run:</stripes:label>
-                            </td>
-                            <td>
-                                <input type="checkbox" name="clearGraph" id="chkClear" value="true"/>
-                            </td>
-                        </tr>
-                    </table>
-                </fieldset> --%>
                 <div style="margin-top:20px">
                     <stripes:submit name="backToStep1" value="< Back"/>&nbsp;
                     <stripes:submit name="test" id="testButton" value="Test"/>&nbsp;

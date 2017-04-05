@@ -27,6 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -47,11 +49,16 @@ import org.openrdf.repository.RepositoryException;
 import eionet.cr.common.Predicates;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
-import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.StagingDatabaseDAO;
+import eionet.cr.dto.CubeDatasetTemplateDTO;
+import eionet.cr.dto.DsdTemplateDTO;
 import eionet.cr.dto.StagingDatabaseDTO;
+import eionet.cr.service.CubeDatasetMetadataService;
+import eionet.cr.service.ServiceException;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.staging.util.TimePeriodsHarvester;
 import eionet.cr.util.LogUtil;
+import eionet.cr.util.Util;
 import eionet.cr.util.sesame.SesameUtil;
 import eionet.cr.util.sql.SQLUtil;
 
@@ -156,7 +163,7 @@ public final class ExportRunner extends Thread {
     private HashSet<String> timePeriods = new HashSet<String>();
 
     /** */
-    private Set<String> touchedDatasetUris = new HashSet<>();
+    private Set<String> datasetUris = new HashSet<>();
 
     /** */
     private Set<URI> clearedGraphs = new HashSet<>();
@@ -258,7 +265,7 @@ public final class ExportRunner extends Thread {
             executeExport(repoConn);
 
             // Update all "touched" datasets.
-            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(touchedDatasetUris, queryConf.getObjectTypeDsd(), repoConn, vf);
+            updateDatasets();
 
             // Commit the transaction.
             repoConn.commit();
@@ -284,6 +291,45 @@ public final class ExportRunner extends Thread {
         } catch (DAOException e) {
             LOGGER.error("Failed to finish RDF export record with id = " + exportId, e);
         }
+    }
+
+    /**
+     *
+     * @throws ServiceException
+     */
+    private void updateDatasets() throws ServiceException {
+
+        if (CollectionUtils.isEmpty(datasetUris)) {
+            return;
+        }
+
+        Date date = new Date();
+        String dsdUriPrefix = StringUtils.substringBeforeLast(DSD.SCOREBOARD.getUri(), "/") + "/";
+
+        List<DsdTemplateDTO> dsdDtos = new ArrayList<>();
+        List<CubeDatasetTemplateDTO> datasetDtos = new ArrayList<>();
+        for (String datasetUri : datasetUris) {
+
+            String identifier = StringUtils.substringAfterLast(datasetUri, "/");
+
+            CubeDatasetTemplateDTO datasetDto = new CubeDatasetTemplateDTO();
+            datasetDto.setIdentifier(identifier);
+            datasetDto.setTitle(identifier);
+            datasetDto.setModifiedDateTimeStr(Util.virtuosoDateToString(date));
+            datasetDto.setDsdUri(dsdUriPrefix + identifier);
+            datasetDtos.add(datasetDto);
+
+            DsdTemplateDTO dsdDto = new DsdTemplateDTO();
+            dsdDto.setIdentifier(identifier);
+            dsdDto.setGraphUri(datasetUri);
+            dsdDtos.add(dsdDto);
+        }
+
+        String catalogUri = queryConf.getCatalogUri();
+
+        CubeDatasetMetadataService service = CubeDatasetMetadataService.newInstance();
+        service.createDatasets(datasetDtos, catalogUri, false);
+        service.createDsds(dsdDtos);
     }
 
     /**
@@ -556,7 +602,7 @@ public final class ExportRunner extends Thread {
 
                         if (Predicates.DATACUBE_DATA_SET.equals(predicateURI.stringValue())) {
                             if (value instanceof URI) {
-                                touchedDatasetUris.add(value.stringValue());
+                                datasetUris.add(value.stringValue());
                             }
                         }
 

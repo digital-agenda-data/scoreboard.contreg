@@ -37,7 +37,6 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanComparator;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.XMLConfiguration;
@@ -119,9 +118,6 @@ public class FactsheetActionBean extends AbstractActionBean {
     public static final String PAGE_PARAM_PREFIX = "page";
 
     /** */
-    private static final String ADDBL_PROPS_SESSION_ATTR_PREFIX = "addibleProperties_";
-
-    /** */
     private static final List<HTMLSelectOption> DATACUBE_DATASET_ADDBL_PROPS = createDataCubeDatasetAddibleProperties();
 
     /** */
@@ -197,6 +193,9 @@ public class FactsheetActionBean extends AbstractActionBean {
 
     /** */
     private Boolean isAllEditable = null;
+
+    /** */
+    private List<HTMLSelectOption> addibleProperties = null;
 
     /**
      *
@@ -582,37 +581,34 @@ public class FactsheetActionBean extends AbstractActionBean {
     @SuppressWarnings("unchecked")
     public List<HTMLSelectOption> getAddibleProperties() throws DAOException {
 
-        String sessionAttrName = ADDBL_PROPS_SESSION_ATTR_PREFIX + uri;
-        List<HTMLSelectOption> result = (List<HTMLSelectOption>) getContext().getSessionAttribute(sessionAttrName);
-
-        if (CollectionUtils.isEmpty(result)) {
-
-            // Get the subject's RDF types.
-            Collection<String> rdfTypes = fullSubjectDTO == null ? null : fullSubjectDTO.getObjectValues(Predicates.RDF_TYPE);
-
-            // Special case for DataCube datasets.
-            if (rdfTypes.contains(Subjects.DATACUBE_DATA_SET)) {
-                getContext().setSessionAttribute(sessionAttrName, DATACUBE_DATASET_ADDBL_PROPS);
-                return DATACUBE_DATASET_ADDBL_PROPS;
-            }
-
-            // Get addible properties from the repository.
-            HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
-            Map<String, HTMLSelectOption> options = dao.getAddibleProperties(uri, rdfTypes);
-
-            // Add some hard-coded addible properties.
-            for (HTMLSelectOption htmlSelectOption : COMMON_ADDBL_PROPS) {
-                options.put(htmlSelectOption.getValue(), htmlSelectOption);
-            }
-
-            result = new ArrayList<HTMLSelectOption>();
-            result.addAll(options.values());
-            Collections.sort(result, new BeanComparator("label"));
-
-            getContext().setSessionAttribute(sessionAttrName, result);
+        if (addibleProperties != null) {
+            return addibleProperties;
         }
 
-        return result;
+        addibleProperties = new ArrayList<>();
+
+        // Get the subject's RDF types.
+        Collection<String> rdfTypes = fullSubjectDTO == null ? null : fullSubjectDTO.getObjectValues(Predicates.RDF_TYPE);
+
+        // Special case for DataCube datasets: they have a fixed set of addible properties, so just return that.
+        if (rdfTypes.contains(Subjects.DATACUBE_DATA_SET)) {
+            addibleProperties.addAll(DATACUBE_DATASET_ADDBL_PROPS);
+            return addibleProperties;
+        }
+
+        // Get addible properties from the repository.
+        HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
+        Map<String, HTMLSelectOption> options = dao.getAddibleProperties(uri, rdfTypes);
+
+        // Add some hard-coded addible properties.
+        for (HTMLSelectOption htmlSelectOption : COMMON_ADDBL_PROPS) {
+            options.put(htmlSelectOption.getValue(), htmlSelectOption);
+        }
+
+        addibleProperties.addAll(options.values());
+        Collections.sort(addibleProperties, new BeanComparator("label"));
+
+        return addibleProperties;
     }
 
     /**

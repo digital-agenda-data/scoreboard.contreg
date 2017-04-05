@@ -44,6 +44,7 @@ import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.readers.DatasetMetadataExportReader;
 import eionet.cr.dao.readers.ResultSetReaderException;
 import eionet.cr.dto.CubeDatasetTemplateDTO;
+import eionet.cr.dto.DsdTemplateDTO;
 import eionet.cr.freemarker.TemplatesConfiguration;
 import eionet.cr.util.Pair;
 import eionet.cr.util.URIUtil;
@@ -74,7 +75,13 @@ public class CubeDatasetMetadataService {
     private static final String DATASET_RDF_TEMPLATE_PATH = "freemarker/dataset-rdf-template.ftl";
 
     /** */
+    private static final String DSD_RDF_TEMPLATE_PATH = "freemarker/dsd-rdf-template.ftl";
+
+    /** */
     public static final String DATASET_URI_PREFIX = "http://semantic.digital-agenda-data.eu/dataset/";
+
+    /** */
+    public static final String DSD_URI_PREFIX = "http://semantic.digital-agenda-data.eu/def/dsd/";
 
     /** */
     private static final String EXPORT_DATASETS_METADATA_SPARQL = "" +
@@ -144,6 +151,7 @@ public class CubeDatasetMetadataService {
             URI rdfTypeURI = vf.createURI(Predicates.RDF_TYPE);
             URI dcatDatasetPropertyURI = vf.createURI(Predicates.DCAT_DATASET);
             URI dcatCatalogClassURI = vf.createURI(Subjects.DCAT_CATALOG);
+            URI dcTermsModifiedURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
 
             Set<String> datasetUris = new HashSet<>();
             for (CubeDatasetTemplateDTO dataset : datasets) {
@@ -162,6 +170,7 @@ public class CubeDatasetMetadataService {
                     reader = new StringReader(str);
 
                     String datasetUri = DATASET_URI_PREFIX + dataset.getIdentifier();
+                    URI datasetURI = vf.createURI(datasetUri);
                     URI graphURI = vf.createURI(datasetUri);
 
                     // If clear requested and this dataset's metadata not yet added (because it could be added multiple times,
@@ -171,6 +180,11 @@ public class CubeDatasetMetadataService {
                     }
 
                     datasetUris.add(datasetUri);
+
+                    // Remove all previous dcterms:modified triples of the given dataset.
+                    repoConn.remove(datasetURI, dcTermsModifiedURI, null, graphURI);
+
+                    // Now add the contents of template metadata string reader to the repository.
                     repoConn.add(reader, datasetUri, RDFFormat.TURTLE, graphURI);
 
                     URI catalogURI = null;
@@ -192,6 +206,57 @@ public class CubeDatasetMetadataService {
             }
 
             return datasetUris;
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage(), e);
+        } finally {
+            SesameUtil.close(repoConn);
+        }
+    }
+
+    /**
+     *
+     * @param dsds
+     * @return
+     * @throws ServiceException
+     */
+    public void createDsds(List<DsdTemplateDTO> dsds) throws ServiceException {
+
+        if (CollectionUtils.isEmpty(dsds)) {
+            return;
+        }
+
+        RepositoryConnection repoConn = null;
+        try {
+
+            repoConn = SesameUtil.getRepositoryConnection();
+            ValueFactory vf = repoConn.getValueFactory();
+            Template template = TemplatesConfiguration.getInstance().getTemplate(DSD_RDF_TEMPLATE_PATH);
+
+            for (DsdTemplateDTO dsd : dsds) {
+
+                Util.trimToNullAllStringProperties(dsd);
+                Map<String, Object> data = new HashMap<String, Object>();
+                data.put("dsd", dsd);
+
+                Writer writer = null;
+                Reader reader = null;
+                try {
+                    writer = new StringWriter();
+                    template.process(data, writer);
+                    String str = writer.toString();
+                    reader = new StringReader(str);
+
+                    String dsdUri = DSD_URI_PREFIX + dsd.getIdentifier();
+                    URI dsdURI = vf.createURI(dsdUri);
+                    URI graphURI = vf.createURI(dsd.getGraphUri());
+
+                    // Now add the contents of template metadata string reader to the repository.
+                    repoConn.add(reader, dsdUri, RDFFormat.TURTLE, graphURI);
+                } finally {
+                    IOUtils.closeQuietly(reader);
+                    IOUtils.closeQuietly(writer);
+                }
+            }
         } catch (Exception e) {
             throw new ServiceException(e.getMessage(), e);
         } finally {

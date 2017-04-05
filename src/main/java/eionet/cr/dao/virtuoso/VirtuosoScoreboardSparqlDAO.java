@@ -1239,14 +1239,25 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             sb.append("select count(distinct ?s) where {\n");
             sb.append("  ?s a <").append(Subjects.DATACUBE_DATA_SET).append("> .\n");
 
+            if (isCatalogSpecified) {
+                sb.append("  ?catalog <").append(Predicates.DCAT_DATASET).append("> ?s .").append("\n");
+            }
+
             // If not an admin-user, allow selections from "Completed" datasets only.
             if (!isAdmin) {
                 sb.append("  ?s <").append(Predicates.ADMS_STATUS).append("> <").append(Subjects.ADMS_STATUS_COMPLETED)
                         .append("> .").append("\n");
             }
+
+            bindings = new Bindings();
+            if (isCatalogSpecified) {
+                sb.append("  filter (?catalog = ?catalogUri)").append("\n");
+                bindings.setURI("catalogUri", catalogUri);
+            }
+
             sb.append("}");
 
-            String count = executeUniqueResultSPARQL(sb.toString(), new SingleObjectReader<String>());
+            String count = executeUniqueResultSPARQL(sb.toString(), bindings, new SingleObjectReader<String>());
             totalMatchCount = NumberUtils.toInt(count);
         }
 
