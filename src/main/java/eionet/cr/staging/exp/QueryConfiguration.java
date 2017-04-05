@@ -70,6 +70,9 @@ public class QueryConfiguration implements Serializable {
     /** If datasets will be created dynamically then this is the catalog they will be associated with. */
     private String catalogUri;
 
+    /** */
+    private boolean isDynamicalDatasets;
+
     /**
      * @return the query
      */
@@ -229,5 +232,19 @@ public class QueryConfiguration implements Serializable {
      */
     public void setCatalogUri(String catalogUri) {
         this.catalogUri = catalogUri;
+    }
+
+    /**
+     * @return the isDynamicalDatasets
+     */
+    public boolean isDynamicalDatasets() {
+        return isDynamicalDatasets;
+    }
+
+    /**
+     * @param isDynamicalDatasets the isDynamicalDatasets to set
+     */
+    public void setDynamicalDatasets(boolean isDynamicalDatasets) {
+        this.isDynamicalDatasets = isDynamicalDatasets;
     }
 }

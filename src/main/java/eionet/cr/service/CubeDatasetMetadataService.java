@@ -127,23 +127,41 @@ public class CubeDatasetMetadataService {
     }
 
     /**
+    *
+    * @param datasets
+    * @param fixedCatalogUri
+    * @return
+    * @throws ServiceException
+    */
+   public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String fixedCatalogUri, boolean clear)
+           throws ServiceException {
+
+       RepositoryConnection repoConn = null;
+       try {
+           repoConn = SesameUtil.getRepositoryConnection();
+           return createDatasets(datasets, fixedCatalogUri, clear, repoConn);
+       } catch (Exception e) {
+           throw new ServiceException(e.getMessage(), e);
+       } finally {
+           SesameUtil.close(repoConn);
+       }
+   }
+
+    /**
      *
      * @param datasets
      * @param fixedCatalogUri
      * @return
      * @throws ServiceException
      */
-    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String fixedCatalogUri, boolean clear)
+    public Set<String> createDatasets(List<CubeDatasetTemplateDTO> datasets, String fixedCatalogUri, boolean clear, RepositoryConnection repoConn)
             throws ServiceException {
 
         if (CollectionUtils.isEmpty(datasets)) {
             return Collections.emptySet();
         }
 
-        RepositoryConnection repoConn = null;
         try {
-
-            repoConn = SesameUtil.getRepositoryConnection();
             ValueFactory vf = repoConn.getValueFactory();
             Template template = TemplatesConfiguration.getInstance().getTemplate(DATASET_RDF_TEMPLATE_PATH);
             String modifiedDateTimeStr = Util.virtuosoDateToString(new Date());
@@ -208,24 +226,21 @@ public class CubeDatasetMetadataService {
             return datasetUris;
         } catch (Exception e) {
             throw new ServiceException(e.getMessage(), e);
-        } finally {
-            SesameUtil.close(repoConn);
         }
     }
 
     /**
      *
      * @param dsds
-     * @return
+     * @param repoConn
      * @throws ServiceException
      */
-    public void createDsds(List<DsdTemplateDTO> dsds) throws ServiceException {
+    public void createDsds(List<DsdTemplateDTO> dsds, RepositoryConnection repoConn) throws ServiceException {
 
         if (CollectionUtils.isEmpty(dsds)) {
             return;
         }
 
-        RepositoryConnection repoConn = null;
         try {
 
             repoConn = SesameUtil.getRepositoryConnection();
@@ -259,8 +274,6 @@ public class CubeDatasetMetadataService {
             }
         } catch (Exception e) {
             throw new ServiceException(e.getMessage(), e);
-        } finally {
-            SesameUtil.close(repoConn);
         }
     }
 

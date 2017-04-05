@@ -245,12 +245,14 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         if ("FIXED".equals(datasetType)) {
             queryConf.setDatasetIdentifierColumn(null);
+            queryConf.setDynamicalDatasets(false);
         } if ("DYNAMIC".equals(datasetType)) {
             ObjectType objectType = getObjectType();
             if (objectType != null) {
                 queryConf.setDatasetUriTemplate(objectType.getDatasetUriTemplate());
             }
             queryConf.setCatalogUri(datasetCatalogUri);
+            queryConf.setDynamicalDatasets(true);
         }
 
         try {
@@ -429,8 +431,13 @@ public class RDFExportWizardActionBean extends AbstractActionBean {
 
         String eventName = getContext().getEventName();
         if (eventName.equals("run") || eventName.equals("test")) {
-            if (datasetType.equals("DYNAMIC") && StringUtils.isBlank(queryConf.getDatasetIdentifierColumn())) {
-                addGlobalValidationError("No SQL column chosen for dynamic dataset!");
+            if (datasetType.equals("DYNAMIC")) {
+                if (StringUtils.isBlank(queryConf.getDatasetIdentifierColumn())) {
+                    addGlobalValidationError("No SQL column chosen for dynamic dataset!");
+                }
+                if (StringUtils.isBlank(this.datasetCatalogUri)) {
+                    addGlobalValidationError("Catalog must be chosen when datasets dynamically created!");
+                }
             } else if (datasetType.equals("FIXED") && StringUtils.isBlank(queryConf.getDatasetUriTemplate())) {
                 addGlobalValidationError("No fixed dataset chosen!");
             }

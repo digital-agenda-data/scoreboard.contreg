@@ -50,4 +50,9 @@
         <label>Landing page</label>
         <title>A Web page that can be navigated to in a Web browser to gain access to the dataset, its distributions and/or additional information.</title>
     </property>
+    <property>
+        <uri>http://purl.org/linked-data/cube#structure</uri>
+        <label>Structure (i.e. DSD)</label>
+        <title>URI of the datasets structure definition (DSD).</title>
+    </property>
 </properties>

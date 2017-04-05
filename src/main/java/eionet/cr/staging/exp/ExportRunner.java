@@ -49,6 +49,7 @@ import org.openrdf.repository.RepositoryException;
 import eionet.cr.common.Predicates;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.StagingDatabaseDAO;
 import eionet.cr.dto.CubeDatasetTemplateDTO;
 import eionet.cr.dto.DsdTemplateDTO;
@@ -265,7 +266,7 @@ public final class ExportRunner extends Thread {
             executeExport(repoConn);
 
             // Update all "touched" datasets.
-            updateDatasets();
+            updateDatasets(repoConn);
 
             // Commit the transaction.
             repoConn.commit();
@@ -295,9 +296,11 @@ public final class ExportRunner extends Thread {
 
     /**
      *
+     * @param repoConn
      * @throws ServiceException
+     * @throws RepositoryException
      */
-    private void updateDatasets() throws ServiceException {
+    private void updateDatasets(RepositoryConnection repoConn) throws ServiceException, RepositoryException {
 
         if (CollectionUtils.isEmpty(datasetUris)) {
             return;
@@ -308,6 +311,7 @@ public final class ExportRunner extends Thread {
 
         List<DsdTemplateDTO> dsdDtos = new ArrayList<>();
         List<CubeDatasetTemplateDTO> datasetDtos = new ArrayList<>();
+
         for (String datasetUri : datasetUris) {
 
             String identifier = StringUtils.substringAfterLast(datasetUri, "/");
@@ -325,11 +329,18 @@ public final class ExportRunner extends Thread {
             dsdDtos.add(dsdDto);
         }
 
-        String catalogUri = queryConf.getCatalogUri();
+        if (queryConf.isDynamicalDatasets()) {
 
-        CubeDatasetMetadataService service = CubeDatasetMetadataService.newInstance();
-        service.createDatasets(datasetDtos, catalogUri, false);
-        service.createDsds(dsdDtos);
+            String catalogUri = queryConf.getCatalogUri();
+            CubeDatasetMetadataService service = CubeDatasetMetadataService.newInstance();
+            LogUtil.debug("Creating/updating datasets ...", exportLogger, LOGGER);
+            service.createDatasets(datasetDtos, catalogUri, false, repoConn);
+            LogUtil.debug("Creating/updating DSDs ...", exportLogger, LOGGER);
+            service.createDsds(dsdDtos, repoConn);
+        } else {
+            LogUtil.debug("Creating/updating datasets ...", exportLogger, LOGGER);
+            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(datasetUris, queryConf.getObjectTypeDsd(), repoConn, null);
+        }
     }
 
     /**

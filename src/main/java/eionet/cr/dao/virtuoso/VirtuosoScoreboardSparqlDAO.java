@@ -1117,6 +1117,10 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             return;
         }
 
+        if (vf == null) {
+            vf = repoConn.getValueFactory();
+        }
+
         // Prepare some URIs.
 
         URI dcTermsModifiedURI = vf.createURI(Predicates.DCTERMS_MODIFIED);
