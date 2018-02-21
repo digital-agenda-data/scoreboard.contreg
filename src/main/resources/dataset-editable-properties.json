@@ -1,0 +1,97 @@
+[ {
+  "uri" : "http://purl.org/dc/terms/title",
+  "label" : "Title",
+  "hint" : "DublinCore title. May be any free text"
+}, {
+  "uri" : "http://www.w3.org/2000/01/rdf-schema#label",
+  "label" : "Label",
+  "hint" : "RDF Schema label, i.e. a human-readable name that applications can use for displaying in user interfaces. May be any free text."
+}, {
+  "uri" : "http://purl.org/dc/terms/description",
+  "label" : "Description",
+  "hint" : "DublinCore description, i.e. a human-readable description of the resource. May be any free text."
+}, {
+  "uri" : "http://www.w3.org/2000/01/rdf-schema#comment",
+  "label" : "Comment",
+  "hint" : "Free text comment on the subject.",
+}, {
+  "uri" : "http://xmlns.com/foaf/0.1/name",
+  "label" : "Name",
+  "hint" : "FOAF name, i.e. a name for some thing as defined in FOAF vocabulary. May be any free text."
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#contactPoint",
+  "label" : "Contact point",
+  "hint" : "Contact point about the suject. May be a URL."
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#distribution",
+  "label" : "Distribution",
+  "hint" : "Points to the download page of the resource."
+}, {
+  "uri" : "http://purl.org/dc/terms/publisher",
+  "label" : "Publisher",
+  "hint" : "DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. May be any free text, but it is advised to use URLs."
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#keyword",
+  "label" : "Keyword",
+  "hint" : "Keyword as in DCAT vocabulary.",
+}, {
+  "uri" : "http://ec.europa.eu/open-data/ontologies/ec-odp#keyword",
+  "label" : "Keyword",
+  "hint" : "Open Data Portal (ODP) keyword, used to succinctly describe the dataset within ODP."
+}, {
+  "uri" : "http://purl.org/dc/terms/subject",
+  "label" : "Subject",
+  "hint" : "Subject matter of the underlying resource."
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#theme",
+  "label" : "Theme",
+  "hint" : "Underlyingtheme of the resource as in DCAT vocabulary."
+}, {
+  "uri" : "http://purl.org/dc/terms/license",
+  "label" : "License",
+  "hint" : "A legal document giving official permission to do something with the resource. Usually a URL pointing to the document."
+}, {
+  "uri" : "http://purl.org/dc/terms/issued",
+  "label" : "Date issued",
+  "hint" : "YYYY-MM-DD"
+}, {
+  "uri" : "http://purl.org/dc/terms/modified",
+  "label" : "Date modified",
+  "hint" : "YYYY-MM-DD"
+}, {
+  "uri" : "http://purl.org/dc/terms/identifier",
+  "label" : "Identifier",
+  "hint" : "Identifier of the underlying resource. For example: digital-agenda-scoreboard-key-indicators"
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#landingPage",
+  "label" : "Landing page",
+  "hint" : "The home page of the underlying resource."
+}, {
+  "uri" : "http://xmlns.com/foaf/0.1/page",
+  "label" : "Page",
+  "hint" : "FOAF page, i.e. a URL pointing to the web page or document about the resource."
+}, {
+  "uri" : "http://www.w3.org/ns/dcat#accrualPeriodicity",
+  "label" : "Accrual periodicity",
+  "hint" : "Publication frequencey, as in DCAT vocabulary."
+}, {
+  "uri" : "http://purl.org/dc/terms/language",
+  "label" : "Language",
+  "hint" : "The language of the underlying resource."
+}, {
+  "uri" : "http://purl.org/dc/terms/spatial",
+  "label" : "Spatial",
+  "hint" : "Spatial coverage of the underlying resource. May be a URL."
+}, {
+  "uri" : "http://purl.org/dc/terms/temporal",
+  "label" : "Temporal",
+  "hint" : "Temporal coverage of the underlying resource. May be a URL."
+}, {
+  "uri" : "http://www.w3.org/ns/adms#status",
+  "label" : "Status",
+  "hint" : "The current status of the resource, referring to the maturity of the distribution."
+}, {
+  "uri" : "http://purl.org/dc/terms/accessRights",
+  "label" : "Access rights",
+  "hint" : "Refers to the visibility / permissions on the dataset. May be a URL."
+} ]

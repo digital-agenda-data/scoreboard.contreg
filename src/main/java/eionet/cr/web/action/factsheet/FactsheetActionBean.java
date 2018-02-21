@@ -22,17 +22,8 @@ package eionet.cr.web.action.factsheet;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.InputStreamReader;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -88,6 +79,10 @@ import eionet.cr.web.util.HTMLSelectOption;
 import eionet.cr.web.util.tabs.FactsheetTabMenuHelper;
 import eionet.cr.web.util.tabs.TabElement;
 import eionet.cr.web.util.tabs.TabId;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Factsheet.
@@ -103,6 +98,9 @@ public class FactsheetActionBean extends AbstractActionBean {
 
     /** Name of the resource file containing the list of fully editable types. */
     private static final String FULLY_EDITABLE_TYPES_FILE_NAME = "fully-editable-types.txt";
+
+    /** */
+    private static final String DATASET_EDITABLE_PROPERTIES_FILE_NAME = "dataset-editable-properties.json";
 
     /** */
     private static final Logger LOGGER = Logger.getLogger(FactsheetActionBean.class);
@@ -594,7 +592,7 @@ public class FactsheetActionBean extends AbstractActionBean {
             HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
             Map<String, HTMLSelectOption> options = dao.getAddibleProperties(uri, rdfTypes);
 
-            // Add some hard-coded addible properties.
+            // Add some hard-coded addable properties.
             for (HTMLSelectOption htmlSelectOption : COMMON_ADDBL_PROPS) {
                 options.put(htmlSelectOption.getValue(), htmlSelectOption);
             }
@@ -1061,44 +1059,38 @@ public class FactsheetActionBean extends AbstractActionBean {
      */
     private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties() {
 
-        ArrayList<HTMLSelectOption> result = new ArrayList<HTMLSelectOption>();
+        ArrayList<HTMLSelectOption> resultList = new ArrayList<>();
 
-        HTMLSelectOption option = new HTMLSelectOption(Predicates.DCTERMS_TITLE, "Title");
-        option.setTitle("DublinCore title. May be any free text.");
-        result.add(option);
+        InputStream inputStream = null;
+        JSONParser jsonParser = new JSONParser();
+        try {
+            inputStream = FactsheetActionBean.class.getClassLoader().getResourceAsStream(DATASET_EDITABLE_PROPERTIES_FILE_NAME);
+            JSONArray objects = (JSONArray) jsonParser.parse(new InputStreamReader(inputStream));
 
-        option = new HTMLSelectOption(Predicates.RDFS_LABEL, "Label");
-        option.setTitle("RDF Schema label, i.e. a human-readable name that applications "
-                + "can use for displaying in user interfaces. May be any free text.");
-        result.add(option);
+            if (objects != null) {
+                for (Object object : objects) {
+                    JSONObject jsonObject = (JSONObject) object;
+                    resultList.add(new HTMLSelectOption((String) jsonObject.get("uri"),
+                            (String) jsonObject.get("label"), (String) jsonObject.get("hint")));
+                }
+            }
 
-        option = new HTMLSelectOption(Predicates.FOAF_NAME, "Name");
-        option.setTitle("FOAF name, i.e. a name for some thing as defined in FOAF vocabulary. May be any free text.");
-        result.add(option);
+        } catch (IOException e) {
+            LOGGER.error("IOException when finding/reading this resource file: " + DATASET_EDITABLE_PROPERTIES_FILE_NAME, e);
+        } catch (ParseException e) {
+            LOGGER.error("Failed parsing JSON from this resource file: " + DATASET_EDITABLE_PROPERTIES_FILE_NAME, e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
 
-        option = new HTMLSelectOption(Predicates.DCTERMS_DESCRIPTION, "Description");
-        option.setTitle("DublinCore description, i.e. a human-readable description of the resource. May be any free text.");
-        result.add(option);
+        Collections.sort(resultList, new Comparator<HTMLSelectOption>() {
+            @Override
+            public int compare(HTMLSelectOption o1, HTMLSelectOption o2) {
+                return o1.getLabel().compareTo(o2.getLabel());
+            }
+        });
 
-        option = new HTMLSelectOption(Predicates.ECODP_KEYWORD, "Keyword");
-        option.setTitle("A word or phrase used to succinctly describe an asset. May be any free text.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_PUBLISHER, "Publisher");
-        option.setTitle("DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. "
-                + "May be any free text, but it is advised to use URLs.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.DCTERMS_LICENSE, "License");
-        option.setTitle("A legal document giving official permission to do something with the resource. "
-                + "Usually a URL pointing to the document.");
-        result.add(option);
-
-        option = new HTMLSelectOption(Predicates.FOAF_PAGE, "Page");
-        option.setTitle("FOAF page, i.e. a URL pointing to the web page or document about the resource.");
-        result.add(option);
-
-        return result;
+        return resultList;
     }
 
     /**
