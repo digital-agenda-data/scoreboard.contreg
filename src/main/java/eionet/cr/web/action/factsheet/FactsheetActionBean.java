@@ -22,17 +22,8 @@ package eionet.cr.web.action.factsheet;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.InputStreamReader;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -80,6 +71,10 @@ import eionet.cr.web.util.HTMLSelectOption;
 import eionet.cr.web.util.tabs.FactsheetTabMenuHelper;
 import eionet.cr.web.util.tabs.TabElement;
 import eionet.cr.web.util.tabs.TabId;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -108,8 +103,8 @@ public class FactsheetActionBean extends AbstractActionBean {
     /** Name of the resource file containing the common properties manually addible to any subjects. */
     private static final String COMMON_ADDIBLE_PROPERTIES_FILE = "common-addible-properties.xml";
 
-    /** Name of the resource file containing the configuration properties manually addible to datasets. */
-    private static final String DATASET_ADDIBLE_PROPERTIES_FILE = "dataset-addible-properties.xml";
+    /** */
+    private static final String DATASET_EDITABLE_PROPERTIES_FILE_NAME = "dataset-editable-properties.json";
 
     /** */
     private static final Logger LOGGER = Logger.getLogger(FactsheetActionBean.class);
@@ -600,7 +595,7 @@ public class FactsheetActionBean extends AbstractActionBean {
         HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
         Map<String, HTMLSelectOption> options = dao.getAddibleProperties(uri, rdfTypes);
 
-        // Add some hard-coded addible properties.
+            // Add some hard-coded addable properties.
         for (HTMLSelectOption htmlSelectOption : COMMON_ADDBL_PROPS) {
             options.put(htmlSelectOption.getValue(), htmlSelectOption);
         }
@@ -1062,7 +1057,39 @@ public class FactsheetActionBean extends AbstractActionBean {
      * @return
      */
     private static List<HTMLSelectOption> createDataCubeDatasetAddibleProperties() {
-        return loadAddibleProperties(DATASET_ADDIBLE_PROPERTIES_FILE);
+
+        ArrayList<HTMLSelectOption> resultList = new ArrayList<>();
+
+        InputStream inputStream = null;
+        JSONParser jsonParser = new JSONParser();
+        try {
+            inputStream = FactsheetActionBean.class.getClassLoader().getResourceAsStream(DATASET_EDITABLE_PROPERTIES_FILE_NAME);
+            JSONArray objects = (JSONArray) jsonParser.parse(new InputStreamReader(inputStream));
+
+            if (objects != null) {
+                for (Object object : objects) {
+                    JSONObject jsonObject = (JSONObject) object;
+                    resultList.add(new HTMLSelectOption((String) jsonObject.get("uri"),
+                            (String) jsonObject.get("label"), (String) jsonObject.get("hint")));
+                }
+            }
+
+        } catch (IOException e) {
+            LOGGER.error("IOException when finding/reading this resource file: " + DATASET_EDITABLE_PROPERTIES_FILE_NAME, e);
+        } catch (ParseException e) {
+            LOGGER.error("Failed parsing JSON from this resource file: " + DATASET_EDITABLE_PROPERTIES_FILE_NAME, e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+
+        Collections.sort(resultList, new Comparator<HTMLSelectOption>() {
+            @Override
+            public int compare(HTMLSelectOption o1, HTMLSelectOption o2) {
+                return o1.getLabel().compareTo(o2.getLabel());
+            }
+        });
+
+        return resultList;
     }
 
     /**
