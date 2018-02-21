@@ -2,7 +2,9 @@ package eionet.cr.web.action.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -22,11 +24,14 @@ import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.CubeDatasetTemplateDTO;
+import eionet.cr.dto.DsdTemplateDTO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.service.CubeDatasetMetadataService;
+import eionet.cr.staging.exp.ObjectTypes.DSD;
 import eionet.cr.staging.util.TimePeriodsHarvester;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
+import eionet.cr.util.Util;
 import eionet.cr.util.xlwrap.StatementListener;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
 import eionet.cr.util.xlwrap.XLWrapUtil;
@@ -159,7 +164,8 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             // If this far, then lets update dataset or codelist modification date, depending on whether
             // we're uploading observations or a codelist.
             if (isObservationsUpload) {
-                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(stmtListener.getDatasetUris(),
+                Set<String> datasetUris = stmtListener.getDatasetUris();
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(datasetUris,
                         uploadType.getObservationsDsd());
             } else {
                 String graphUri = uploadType.getGraphUri();
@@ -199,6 +205,46 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
         } finally {
             FileDeletionJob.register(spreadsheetFile);
         }
+    }
+
+    private void updateOrCreateDatasets(Collection<String> datasetUris) {
+
+        Date date = new Date();
+        String dsdUriPrefix = StringUtils.substringBeforeLast(DSD.SCOREBOARD.getUri(), "/") + "/";
+
+        List<DsdTemplateDTO> dsdDtos = new ArrayList<>();
+        List<CubeDatasetTemplateDTO> datasetDtos = new ArrayList<>();
+
+        for (String datasetUri : datasetUris) {
+
+            String identifier = StringUtils.substringAfterLast(datasetUri, "/");
+
+            CubeDatasetTemplateDTO datasetDto = new CubeDatasetTemplateDTO();
+            datasetDto.setIdentifier(identifier);
+            datasetDto.setTitle(identifier);
+            datasetDto.setModifiedDateTimeStr(Util.virtuosoDateToString(date));
+            datasetDto.setDsdUri(dsdUriPrefix + identifier);
+            datasetDtos.add(datasetDto);
+
+            DsdTemplateDTO dsdDto = new DsdTemplateDTO();
+            dsdDto.setIdentifier(identifier);
+            dsdDto.setGraphUri(datasetUri);
+            dsdDtos.add(dsdDto);
+        }
+
+        boolean isDynamicalDatasets = false;
+//        if (isDynamicalDatasets) {
+//
+//            String catalogUri = queryConf.getCatalogUri();
+//            CubeDatasetMetadataService service = CubeDatasetMetadataService.newInstance();
+//            LogUtil.debug("Creating/updating datasets ...", exportLogger, LOGGER);
+//            service.createDatasets(datasetDtos, catalogUri, false, repoConn);
+//            LogUtil.debug("Creating/updating DSDs ...", exportLogger, LOGGER);
+//            service.createDsds(dsdDtos, repoConn);
+//        } else {
+//            LogUtil.debug("Creating/updating datasets ...", exportLogger, LOGGER);
+//            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateTouchedDatasets(datasetUris, queryConf.getObjectTypeDsd(), repoConn, null);
+//        }
     }
 
     /**

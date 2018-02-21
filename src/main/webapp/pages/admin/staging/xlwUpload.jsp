@@ -99,11 +99,22 @@
                             <stripes:checkbox name="clearGraph" id="chkClearGraph"/>&nbsp;<label for="chkClearGraph">Clear all previous content of selected type</label>
                         </td>
                     </tr>
+                    <tr>
+                        <td colspan="2">&nbsp;</td>
+                    </tr>
                     <tr id="datasetRow" ${fn:startsWith(actionBean.uploadType, 'OBSERVATION_') ? '' : 'style="display:none"'}>
-                        <td>
-                            <label for="selDataset" class="question required">Target dataset:</label>
+                        <td style="vertical-align:top;">
+                            <label for="selDataset" class="question required" style="vertical-align:top;">Target dataset:</label>
                         </td>
-                        <td>
+                        <td style="padding-top:10px">
+                            <stripes:radio id="dynamicDatasetRadio" name="datasetType" value="DYNAMIC" checked="DYNAMIC" />
+                            <label for="dynamicDatasetRadio" style="padding-right: 12px;">dynamical datasets placed into this catalog:</label>
+                            <stripes:select name="catalogUri" >
+                                <stripes:option value="asdasdasdasdasdasdasd" label="asdasdasdasdasdasdasd adasdasdasdasdasdasd as dasd "/>
+                            </stripes:select>
+                            <br/>
+                            <stripes:radio id="fixedDatasetRadio" name="datasetType" value="FIXED" checked="FIXED" />
+                            <label for="fixedDatasetRadio" style="padding-right: 12px;">select fixed dataset:</label>
                             <stripes:select name="targetDataset" id="selDataset">
                                 <c:if test="${empty actionBean.datasets}">
                                     <stripes:option value="" label=" - none found - "/>
