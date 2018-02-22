@@ -13,7 +13,7 @@
 }, {
   "uri" : "http://www.w3.org/2000/01/rdf-schema#comment",
   "label" : "Comment",
-  "hint" : "Free text comment on the subject.",
+  "hint" : "Free text comment on the subject."
 }, {
   "uri" : "http://xmlns.com/foaf/0.1/name",
   "label" : "Name",
@@ -27,13 +27,17 @@
   "label" : "Distribution",
   "hint" : "Points to the download page of the resource."
 }, {
+  "uri" : "http://www.w3.org/ns/dcat#accessURL",
+  "label" : "Access URL",
+  "hint" : "URL that gives access to a the distribution of the dataset. Must be a URL."
+}, {
   "uri" : "http://purl.org/dc/terms/publisher",
   "label" : "Publisher",
   "hint" : "DublinCore publisher, i.e. a person, an organization, or a service that is the resource's publisher. May be any free text, but it is advised to use URLs."
 }, {
   "uri" : "http://www.w3.org/ns/dcat#keyword",
   "label" : "Keyword",
-  "hint" : "Keyword as in DCAT vocabulary.",
+  "hint" : "Keyword as in DCAT vocabulary."
 }, {
   "uri" : "http://ec.europa.eu/open-data/ontologies/ec-odp#keyword",
   "label" : "Keyword",
@@ -71,7 +75,7 @@
   "label" : "Page",
   "hint" : "FOAF page, i.e. a URL pointing to the web page or document about the resource."
 }, {
-  "uri" : "http://www.w3.org/ns/dcat#accrualPeriodicity",
+  "uri" : "http://purl.org/dc/terms/accrualPeriodicity",
   "label" : "Accrual periodicity",
   "hint" : "Publication frequencey, as in DCAT vocabulary."
 }, {
@@ -94,4 +98,16 @@
   "uri" : "http://purl.org/dc/terms/accessRights",
   "label" : "Access rights",
   "hint" : "Refers to the visibility / permissions on the dataset. May be a URL."
+}, {
+  "uri": "http://www.w3.org/2006/vcard/ns#fn",
+  "label" : "Name",
+  "hint" : "Formatted name, the name of the contact point."
+}, {
+  "uri": "http://www.w3.org/2006/vcard/ns#hasEmail",
+  "label" : "E-mail",
+  "hint" : "The electronic mail address for communication."
+}, {
+  "uri": "http://www.w3.org/2006/vcard/ns#hasURL",
+  "label" : "URL",
+  "hint" : "Web page of the organisation (a URL)."
 } ]
