@@ -206,6 +206,7 @@
                 <version>3.0.4</version>
                 <configuration>
                     <propertyFile>target/classes/liquibase.properties</propertyFile>
+                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                     <changeLogFile>sql/liquibase-virtuoso-db-struct.xml</changeLogFile>
                     <databaseClass>eionet.liquibase.VirtuosoDatabase</databaseClass>
                     <verbose>true</verbose>

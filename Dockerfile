@@ -1,10 +1,8 @@
-FROM tomcat:8.5.31-jre8
+FROM tomcat:8.5.31-jre8-slim
 
 ENV CR_BASE=/var/local/cr
 ENV CR_HOME=${CR_BASE}/apphome
 ENV MAVEN_VERSION=3.3.9-4
-
-COPY docker.properties /tmp/
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git maven="$MAVEN_VERSION" \
@@ -19,7 +17,8 @@ RUN apt-get update \
              $CR_HOME/tmp \
  && git clone https://github.com/digital-agenda-data/scoreboard.contreg.git $CR_BASE/build \
  && cd $CR_BASE/build \
- && cp /tmp/docker.properties local.properties \
+ && git checkout 5089-docker-migration \ 
+ && cp docker.properties local.properties \
  && sed -i "/^\s*application.homeDir/c\application.homeDir\=${CR_HOME}" local.properties \
  && mvn clean install -Dmaven.test.skip=true \
  && mv target/cr-das $CATALINA_HOME/webapps/data 
