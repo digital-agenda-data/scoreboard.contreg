@@ -39,8 +39,11 @@ function replace_propr() {
 
 
 replace_propr "$CATALINA_HOME/webapps/data/WEB-INF/classes/*.properties"
+replace_propr "$CATALINA_HOME/webapps/data/META-INF/*.xml"
 replace_propr "$CR_BASE/build/local.properties"
 replace_propr "$CR_BASE/build/target/classes/*.properties"
+replace_propr "$CR_BASE/build/target/cr-das/*.properties"
+
  
 exec "$@"
 

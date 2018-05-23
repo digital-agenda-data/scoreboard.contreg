@@ -21,7 +21,7 @@ RUN apt-get update \
  && cp docker.properties local.properties \
  && sed -i "/^\s*application.homeDir/c\application.homeDir\=${CR_HOME}" local.properties \
  && mvn clean install -Dmaven.test.skip=true \
- && mv target/cr-das $CATALINA_HOME/webapps/data 
+ && cp -pr target/cr-das $CATALINA_HOME/webapps/data 
 
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 
