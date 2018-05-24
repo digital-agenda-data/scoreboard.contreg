@@ -6,9 +6,31 @@ CR is a linked data harvester and search engine backed by a triplestore whose da
 The data is collected and uploaded from various sources, including the Web and user-uploaded files.
 The data is stored as RDF triples in the [Virtuoso](https://github.com/openlink/virtuoso-opensource) triple store.
 
+## Docker
+
+The image containing the application running on a Tomcat 8 can be started like this:
+
+docker run -d -p 8383:8080  -v content_registry:/var/local/cr/apphome -e  HOME_URL=http://test-cr.digital-agenda-data.eu -e DB_HOST=virtuoso -e DB_PORT=1111 -e DB_USER=cr3user -e DB_PASSWORD=xxx -e DB_RO_USER=cr3rouser -e DB_RO_PASSWORD=yyy  digitalagendadata/scoreboard.contreg:latest
+
+Environment variables ( used in configuration ) :
+
+* HOME_URL - application.homeURL
+* DB_HOST - virtuoso db host
+* DB_PORT - virtuoso db port
+* DB_USER - virtuoso db application rw user 
+* DB_PASSWORD - virtuoso db rw password
+* DB_RO_USER - virtuoso db application ro user
+* DB_RO_PASSWORD - virtuoso db ro password
+
+More information regarding starting the stack can be found in : https://github.com/digital-agenda-data/scoreboard.docker
+
+## Vagrant
+
+
 The following sections describe how to install and run CR.
 There is also a vagrant box that installs and configures the whole Scoreboard software, including CR:
 https://github.com/digital-agenda-data/scoreboard.vagrant
+
 
 1. Download and install Java, Tomcat and Maven.
 -----------------------------------------------
