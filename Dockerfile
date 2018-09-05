@@ -17,7 +17,6 @@ RUN apt-get update \
              $CR_HOME/tmp \
  && git clone https://github.com/digital-agenda-data/scoreboard.contreg.git $CR_BASE/build \
  && cd $CR_BASE/build \
- && git checkout 5089-docker-migration \ 
  && cp docker.properties local.properties \
  && sed -i "/^\s*application.homeDir/c\application.homeDir\=${CR_HOME}" local.properties \
  && mvn clean install -Dmaven.test.skip=true \
