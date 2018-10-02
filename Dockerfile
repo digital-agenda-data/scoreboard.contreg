@@ -1,4 +1,4 @@
-FROM tomcat:8.5.31-jre8-slim
+FROM tomcat:8.5-jre8-slim
 
 ENV CR_BASE=/var/local/cr
 ENV CR_HOME=${CR_BASE}/apphome
