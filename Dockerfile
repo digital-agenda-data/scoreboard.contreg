@@ -4,8 +4,6 @@ ENV CR_BASE=/var/local/cr
 ENV CR_HOME=${CR_BASE}/apphome
 ENV MAVEN_VERSION=3.3.9-4
 
-COPY . $CR_BASE/build
-
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git maven="$MAVEN_VERSION" \
             openjdk-8-jdk="$JAVA_DEBIAN_VERSION" \
@@ -14,8 +12,11 @@ RUN apt-get update \
              $CR_HOME/acl \
              $CR_HOME/filestore \
              $CR_HOME/staging \
-             $CR_HOME/tmp \
- && cd $CR_BASE/build \
+             $CR_HOME/tmp 
+
+COPY . $CR_BASE/build
+
+RUN cd $CR_BASE/build \
  && cp docker.properties local.properties \
  && sed -i "/^\s*application.homeDir/c\application.homeDir\=${CR_HOME}" local.properties \
  && mvn clean install -Dmaven.test.skip=true \
