@@ -47,7 +47,7 @@
 	        </div>
 	        <br/>
 	        <stripes:submit name="save" value="Save" id="saveButton"/>
-	        <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1"/>
+	        <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1" title="Hidden dummy input."/>
 	
 	    </crfn:form>
     </stripes:layout-component>

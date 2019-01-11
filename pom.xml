@@ -206,6 +206,7 @@
                 <version>3.0.4</version>
                 <configuration>
                     <propertyFile>target/classes/liquibase.properties</propertyFile>
+                    <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
                     <changeLogFile>sql/liquibase-virtuoso-db-struct.xml</changeLogFile>
                     <databaseClass>eionet.liquibase.VirtuosoDatabase</databaseClass>
                     <verbose>true</verbose>
@@ -374,11 +375,6 @@
             <groupId>taglibs</groupId>
             <artifactId>standard</artifactId>
             <version>1.1.2</version>
-        </dependency>
-        <dependency>
-            <groupId>ARP</groupId>
-            <artifactId>ARP2</artifactId>
-            <version>alpha-1</version>
         </dependency>
         <dependency>
             <groupId>xerces</groupId>

@@ -174,7 +174,7 @@
         <stripes:form beanclass="${actionBean['class'].name}" method="post">
 
             <p>
-                The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif"/>.<br/>
+                The following properties are sufficient to create a new dataset. The ones mandatory, are marked with <img src="${pageContext.request.contextPath}/images/mandatory.gif" alt="Mandatory."/>.<br/>
                 More information is displayed when placing the mouse over properties' labels.<br/>
                 Once the dataset is created, you can add more properties on the dataset's detailed view page.
             </p>

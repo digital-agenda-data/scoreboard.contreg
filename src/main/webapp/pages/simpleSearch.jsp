@@ -71,7 +71,7 @@
                 </td>
                 <td colspan="2">
                 <stripes:text name="searchExpression" id="expressionText" size="70"/>
-                <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1"/>
+                <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1" title="Hidden dummy input."/>
                 <stripes:submit name="search" value="Search" id="searchButton"/>
                 </td>
             </tr>
@@ -80,20 +80,24 @@
                     <stripes:label for="nofield" class="question">What type</stripes:label>
                 </td>
                 <td>
-                    <stripes:radio id="anyObject" name="simpleFilter" value="anyObject" checked="anyObject" title="Any Object"/>
-                    <stripes:label for="anyObject">Any Object</stripes:label>
+                    <fieldset style="border:0;padding-left: 0px;">
+                        <legend style="visibility: hidden;display: none;">Search type</legend>
+                        <stripes:radio id="anyObject" name="simpleFilter" value="anyObject" checked="anyObject" title="Any Object"/>
+                        <stripes:label for="anyObject">Any Object</stripes:label>
 
-                    <stripes:radio id="anyFile" name="simpleFilter" value="anyFile"/>
-                    <stripes:label for="anyFile">Any File</stripes:label>
+                        <stripes:radio id="anyFile" name="simpleFilter" value="anyFile"/>
+                        <stripes:label for="anyFile">Any File</stripes:label>
 
-                    <stripes:radio id="texts" name="simpleFilter" value="texts"/>
-                    <stripes:label for="texts">Texts</stripes:label>
+                        <stripes:radio id="texts" name="simpleFilter" value="texts"/>
+                        <stripes:label for="texts">Texts</stripes:label>
 
-                    <stripes:radio id="datasets" name="simpleFilter" value="datasets"/>
-                    <stripes:label for="datasets">Datasets</stripes:label>
+                        <stripes:radio id="datasets" name="simpleFilter" value="datasets"/>
+                        <stripes:label for="datasets">Datasets</stripes:label>
 
-                    <stripes:radio id="images" name="simpleFilter" value="images"/>
-                    <stripes:label for="images">Images</stripes:label>
+                        <stripes:radio id="images" name="simpleFilter" value="images"/>
+                        <stripes:label for="images">Images</stripes:label>
+                    </fieldset>
+                </td>
                 </td>
                 <td class="exactMatch">
                     <stripes:checkbox name="exactMatch" id="exactMatch"/>

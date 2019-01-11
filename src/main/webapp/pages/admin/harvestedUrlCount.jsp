@@ -20,7 +20,7 @@
                 <stripes:label for="harvestedUrlDaysValue" class="question">Last days count for harvested URLs</stripes:label>
                 <stripes:text name="harvestedUrlDays" id="harvestedUrlDaysValue" value="${actionBean.harvestedUrlDays}" size="4"/>
                 <stripes:submit name="filter" value="Filter" id="filterButton"/>
-                <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1"/>
+                <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1" title="Hidden dummy input."/>
             </p>
             </crfn:form>
             <div class="advice-msg">
