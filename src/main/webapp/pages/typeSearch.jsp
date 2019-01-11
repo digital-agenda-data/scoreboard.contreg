@@ -129,14 +129,14 @@
                 </div>
                 <c:choose>
                     <c:when test="${actionBean.typesByName}">
-                        <stripes:select name="type" size="20" style="min-width:550px; width:550px;">
+                        <stripes:select name="type" size="20" style="min-width:550px; width:550px;" title="Select a type by name.">
                             <c:forEach var="type" items="${actionBean.availableTypesByName}">
                                 <stripes:option value="${type.left}">${type.right}</stripes:option>
                             </c:forEach>
                         </stripes:select>
                     </c:when>
                     <c:otherwise>
-                        <stripes:select name="type" size="20" style="min-width:550px; width:550px;">
+                        <stripes:select name="type" size="20" style="min-width:550px; width:550px;" title="Select a type by namespace URI.">
                             <c:forEach var="groups" items="${actionBean.availableTypes}">
                             <optgroup label="${groups.left}">
                                 <c:forEach var="type" items="${groups.right}">

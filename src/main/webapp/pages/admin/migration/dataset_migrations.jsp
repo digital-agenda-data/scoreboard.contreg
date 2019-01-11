@@ -200,7 +200,7 @@
                 <div style="padding-top:10px;">
                 
                     <stripes:label for="txtTargetDatasetUri" class="question required">Selected package will be migrated into this dataset:</stripes:label><br/>
-                    <input type="text" id="txtTargetDatasetUri" name="dummy" disabled="disabled" size="100" style="font-size:0.75em" value="${actionBean.newMigration.targetDatasetUri}" title="${actionBean.newMigration.targetDatasetUri}"/>
+                    <input type="text" id="txtTargetDatasetUri" name="dummy" disabled="disabled" size="100" style="font-size:0.75em" value="${actionBean.newMigration.targetDatasetUri}" title="${actionBean.newMigration.targetDatasetUri}" title="Target dataset URI."/>
                     <input type="hidden" id="hiddenTargetDatasetUri" name="newMigration.targetDatasetUri" value="${actionBean.newMigration.targetDatasetUri}"/>
                  
                     <br/>

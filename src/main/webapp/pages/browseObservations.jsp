@@ -6,8 +6,6 @@
 
     <stripes:layout-component name="head">
         <script type="text/javascript">
-        // <![CDATA[
-        // ]]>
         </script>
     </stripes:layout-component>
 
@@ -51,7 +49,7 @@
 
                 <display:column>
                     <stripes:link beanclass="${actionBean.factsheetActionBeanClass.name}" style="font-size:0.8em">
-                        <img src="${pageContext.request.contextPath}/images/properties.gif"/>
+                        <img src="${pageContext.request.contextPath}/images/properties.gif" alt="Open observation details."/>
                         <stripes:param name="uri" value="${observation.uri}"/>
                     </stripes:link>
                 </display:column>

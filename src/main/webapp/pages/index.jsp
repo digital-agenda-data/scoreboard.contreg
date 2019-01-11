@@ -80,15 +80,18 @@
             </tr>
             <tr>
             <td colspan="3">
-                <stripes:radio id="anyObject" name="simpleFilter" value="anyObject" checked="anyObject" title="Any Object"/>
-                <stripes:label for="anyObject">Full text search</stripes:label>
+                <fieldset style="border:0;padding-left: 0px;">
+                    <legend style="visibility: hidden;display: none;">Search type</legend>
+                    <stripes:radio id="anyObject" name="simpleFilter" value="anyObject" checked="anyObject" title="Any Object"/>
+                    <stripes:label for="anyObject">Full text search</stripes:label>
 
-                <stripes:radio id="exactMatch" name="simpleFilter" value="exactMatch"/>
-                <stripes:label for="exactMatch">Exact match</stripes:label>
+                    <stripes:radio id="exactMatch" name="simpleFilter" value="exactMatch"/>
+                    <stripes:label for="exactMatch">Exact match</stripes:label>
+                </fieldset>
             </td>
             </tr>
         </table>
-        <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1"/>
+        <stripes:text name="dummy" style="visibility:hidden;display:none" disabled="disabled" size="1" title="Hidden dummy input."/>
     </crfn:form>
 
     <h2>Further searches</h2>

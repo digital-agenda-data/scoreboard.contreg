@@ -63,8 +63,8 @@
                     <crfn:form name="customSearchForm" action="/customSearch.action" method="get" id="customSearchForm" acceptcharset="UTF-8">
 
                         <c:if test="${fn:length(actionBean.selectedFilters)<fn:length(actionBean.availableFilters)}">
-                            <stripes:select name="addedFilter" id="filterSelect" onchange="this.form.submit();" >
-                                <stripes:option value="" label="Add filter"/>
+                            <stripes:select name="addedFilter" id="filterSelect" onchange="this.form.submit();" title="Add a filter.">
+                                <stripes:option value="" label="-- add a filter --"/>
                                 <c:forEach var="availableFilter" items="${actionBean.availableFilters}">
                                     <c:if test="${actionBean.selectedFilters[availableFilter.key]==null}">
                                         <stripes:option value="${availableFilter.key}" label="${availableFilter.value.title}" title="${availableFilter.value.uri}"/>
@@ -84,28 +84,38 @@
                                             <td style="padding-right:12px">
                                                 <input type="image" name="removeFilter_${availableFilter.key}" src="${pageContext.request.contextPath}/images/delete_small.gif" title="Remove filter" alt="Remove filter"/>
                                             </td>
-                                            <td style="text-align:right">${availableFilter.value.title}:</td>
+                                            <td style="text-align:right"><label for="inp_value_${availableFilter.key}"><c:out value="${availableFilter.value.title}"/>:</label></td>
                                             <td>
                                                 <c:if test="${!actionBean.showPicklist || actionBean.picklistFilter!=availableFilter.key || actionBean.picklist==null || fn:length(actionBean.picklist)==0}">
-                                                    <input type="text" name="value_${availableFilter.key}" value="${fn:escapeXml(actionBean.selectedFilters[availableFilter.key])}" size="30"/>
+                                                    <div style="float: left">
+                                                        <c:choose>
+                                                            <c:when test="${actionBean.showPicklist && actionBean.picklistFilter==availableFilter.key && (actionBean.picklist==null || fn:length(actionBean.picklist)==0)}">
+                                                                <input id="inp_value_${availableFilter.key}" type="text" name="value_${availableFilter.key}" size="30" placeholder="No picklist found!"/>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <input id="inp_value_${availableFilter.key}" type="text" name="value_${availableFilter.key}"
+                                                                       value="${fn:escapeXml(actionBean.selectedFilters[availableFilter.key])}" size="30"/>
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                    </div>
                                                 </c:if>
                                                 <c:if test="${availableFilter.value.provideValues}">
                                                     <c:if test="${actionBean.showPicklist && actionBean.picklistFilter==availableFilter.key && actionBean.picklist!=null && fn:length(actionBean.picklist)>0}">
-                                                        <select name="value_${availableFilter.key}" style="max-width:100%">
-                                                            <option value="" selected="selected">- select a value -</option>
-                                                            <c:if test="${actionBean.picklist!=null}">
-                                                                <c:forEach var="picklistItem" items="${actionBean.picklist}">
-                                                                    <!--option value="${fn:escapeXml(crfn:addQuotesIfWhitespaceInside(picklistItem))}" title="${fn:escapeXml(picklistItem)}" style="max-width:100%"><c:out value="${picklistItem}"/></option-->
-                                                                    <option value="${fn:escapeXml(crfn:addQuotesIfWhitespaceInside(picklistItem.left))}" title="${fn:escapeXml(picklistItem.left)}" style="max-width:100%"><c:out value="${picklistItem.right}"/></option>
-                                                                </c:forEach>
-                                                            </c:if>
-                                                        </select>
+                                                        <div style="float: left">
+                                                            <select id="inp_value_${availableFilter.key}" name="value_${availableFilter.key}" style="max-width:100%">
+                                                                <option value="" selected="selected">- select a value -</option>
+                                                                <c:if test="${actionBean.picklist!=null}">
+                                                                    <c:forEach var="picklistItem" items="${actionBean.picklist}">
+                                                                        <option value="${fn:escapeXml(crfn:addQuotesIfWhitespaceInside(picklistItem.left))}" title="${fn:escapeXml(picklistItem.left)}" style="max-width:100%"><c:out value="${picklistItem.right}"/></option>
+                                                                    </c:forEach>
+                                                                </c:if>
+                                                            </select>
+                                                        </div>
                                                     </c:if>
                                                     <c:if test="${!actionBean.showPicklist || actionBean.picklistFilter!=availableFilter.key}">
-                                                        <input type="image" name="showPicklist_${availableFilter.key}" src="${pageContext.request.contextPath}/images/list.gif" title="Get existing values" alt="Get existing values" style="position:absolute;padding-top:1px"/>
-                                                    </c:if>
-                                                    <c:if test="${actionBean.showPicklist && actionBean.picklistFilter==availableFilter.key && (actionBean.picklist==null || fn:length(actionBean.picklist)==0)}">
-                                                        No picklist found!
+                                                        <div style="float: right">
+                                                            <input type="image" name="showPicklist_${availableFilter.key}" src="${pageContext.request.contextPath}/images/list.gif" title="Get a picklist of existing values..." alt="Get a picklist of existing values..." style="position:absolute;padding-top:1px"/>
+                                                        </div>
                                                     </c:if>
                                                 </c:if>
                                             </td>
