@@ -123,18 +123,17 @@ public class FactsheetReader extends SPARQLResultSetBaseReader<FactsheetDTO> {
             }
         }
         objectDTO.setSourceUri(graphUri);
+        objectDTO.setObjectMD5(objectMD5);
 
         // If literal object and its length in the database is actually bigger than the length
         // of the value we retrieved (because the query asks only for the N first characters),
-        // then set the object's database-calculated MD5 hash, so that we can later retrieve the
-        // full object value on the factsheet page. As a double measure, make also sure that the
-        // database-calculated hash differs indeed from the Java-calculated hash of the first N
-        // characters that we got here.
+        // then set the corresponding flag, as we need to know it at display-time. As a double measure,
+        // make also sure that the database-calculated hash differs indeed from the Java-calculated hash
+        // of the first N characters that we got here.
         if (isLiteral) {
             String value = objectDTO.getValue();
             if (objectLength > WebConstants.MAX_OBJECT_LENGTH && !DigestUtils.md5Hex(value).equalsIgnoreCase(objectMD5)) {
-                objectDTO.setObjectMD5(objectMD5);
-                LOGGER.trace("Object's database-calculated length is " + objectLength);
+                objectDTO.setExceedsMaxLength(true);
             }
         }
 

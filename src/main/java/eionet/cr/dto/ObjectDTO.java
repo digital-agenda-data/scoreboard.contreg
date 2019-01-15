@@ -104,6 +104,8 @@ public class ObjectDTO implements Serializable {
      */
     private String objectMD5;
 
+    private boolean exceedsMaxLength;
+
     /**
      * Instantiates a new object dto.
      *
@@ -573,5 +575,13 @@ public class ObjectDTO implements Serializable {
      */
     public void setObjectMD5(String objectMD5) {
         this.objectMD5 = objectMD5;
+    }
+
+    public void setExceedsMaxLength(boolean exceedsMaxLength) {
+        this.exceedsMaxLength = exceedsMaxLength;
+    }
+
+    public boolean isExceedsMaxLength() {
+        return exceedsMaxLength;
     }
 }

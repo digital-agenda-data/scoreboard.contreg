@@ -137,6 +137,9 @@ public class FactsheetActionBean extends AbstractActionBean {
     /** */
     private String propertyValue;
 
+    /** */
+    private String propertyValueMd5;
+
     /** List of identifiers of property-value rows submitted from factsheet edit form. */
     private List<String> rowId;
 
@@ -187,6 +190,9 @@ public class FactsheetActionBean extends AbstractActionBean {
 
     /** */
     private Boolean isAllEditable = null;
+
+    /** */
+    private String sourceUri;
 
     /**
      *
@@ -380,18 +386,37 @@ public class FactsheetActionBean extends AbstractActionBean {
      * @throws DAOException
      *             if query fails if query fails
      */
-    public Resolution save() throws DAOException {
+    public Resolution add() throws DAOException {
+
+        SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
 
         // Get the distinct types that this subject currently has in repository.
         // FIXME: the resulting list should also probably be complemented with any new types coming from the current save!
-        SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
         Collection<String> types = currSubj == null ? new HashSet<String>() : currSubj.getObjectValues(Predicates.RDF_TYPE);
 
-        // Prepare blank subject DTO for collecting the triples about to be saved.
-        SubjectDTO subjectDTO = new SubjectDTO(uri, anonymous);
+        String sourceUri = StringUtils.isBlank(this.sourceUri) ? (types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri())
+                : this.sourceUri;
 
-        // URI of source of saved triples depends on whether we're saving a DataCube dataset or not.
-        String sourceUri = types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri();
+        //addTripleByUser(uri, anonymous, propertyUri, propertyValue, sourceUri);
+        addTripleByUser(uri, anonymous, propertyUri, propertyValue, sourceUri);
+        updateDctModified(currSubj, types, sourceUri);
+
+        return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+    }
+
+    /**
+     *
+     * @param subjectUri
+     * @param anonymousSubject
+     * @param propertyUri
+     * @param propertyValue
+     * @param sourceUri
+     * @throws DAOException
+     */
+    private void addTripleByUser(String subjectUri, boolean anonymousSubject, String propertyUri, String propertyValue, String sourceUri) throws DAOException {
+
+        // Prepare blank subject DTO for collecting the triples about to be saved.
+        SubjectDTO subjectDTO = new SubjectDTO(subjectUri, anonymousSubject);
 
         // URI of property (i.e. predicate) that is saved. Special case if it's cr:tag.
         if (propertyUri.equals(Predicates.CR_TAG)) {
@@ -414,26 +439,31 @@ public class FactsheetActionBean extends AbstractActionBean {
         // Add saved triples into repository.
         HelperDAO helperDao = factory.getDao(HelperDAO.class);
         helperDao.addTriples(subjectDTO);
-        helperDao.updateUserHistory(getUser(), uri);
-
-        // Updated dcterms:modified.
-        try {
-            updateDctModified(currSubj, types, sourceUri);
-        } catch (DAOException e) {
-            LOGGER.error("Failed to update dcterms:modified", e);
-        }
+        helperDao.updateUserHistory(getUser(), subjectUri);
 
         // Since user registrations URI was used as triple source, add it to HARVEST_SOURCE too
         // (but set interval minutes to 0, to avoid it being background-harvested)
         if (sourceUri != null && sourceUri.equals(getUser().getRegistrationsUri())) {
             DAOFactory
-            .get()
-            .getDao(HarvestSourceDAO.class)
-            .addSourceIgnoreDuplicate(
-                    HarvestSourceDTO.create(sourceUri, true, 0, getUser().getUserName()));
+                    .get()
+                    .getDao(HarvestSourceDAO.class)
+                    .addSourceIgnoreDuplicate(
+                            HarvestSourceDTO.create(sourceUri, true, 0, getUser().getUserName()));
         }
+    }
 
-        return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+    /**
+     *
+     * @throws DAOException
+     */
+    private void updateDctModified() throws DAOException {
+
+        // FIXME: the resulting types list should also probably be complemented with any new types coming from the current save!
+        SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
+        Collection<String> types = currSubj == null ? new HashSet<String>() : currSubj.getObjectValues(Predicates.RDF_TYPE);
+        String sourceUri = types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri();
+
+        updateDctModified(currSubj, types, sourceUri);
     }
 
     /**
@@ -444,7 +474,7 @@ public class FactsheetActionBean extends AbstractActionBean {
      * @param sourceUri The graph URI where the dcterms:modified should be updated.
      * @throws DAOException if any sort of DB error happens
      */
-    private void updateDctModified(SubjectDTO currSubj, Collection<String> types, String sourceUri) throws DAOException {
+    private void updateDctModified(SubjectDTO currSubj, Collection<String> types, String sourceUri) {
 
         if (currSubj == null || StringUtils.isBlank(sourceUri)) {
             return;
@@ -472,63 +502,57 @@ public class FactsheetActionBean extends AbstractActionBean {
         }
 
         if (StringUtils.isNotBlank(dctModifiedSubjectUri)) {
-            DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(dctModifiedSubjectUri, new Date(), sourceUri);
+
+            try {
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(dctModifiedSubjectUri, new Date(), sourceUri);
+            } catch (DAOException e) {
+                LOGGER.error("Failed to update dcterms:modified", e);
+            }
         }
     }
 
     /**
      *
-     * @return Resolution
+     * @return
      * @throws DAOException
-     *             if query fails
      */
     public Resolution delete() throws DAOException {
 
-        if (rowId != null && !rowId.isEmpty()) {
-
-            ArrayList<TripleDTO> triples = new ArrayList<TripleDTO>();
-
-            for (String row : rowId) {
-                int i = row.indexOf("_");
-                if (i <= 0 || i == (row.length() - 1)) {
-                    throw new IllegalArgumentException("Illegal rowId: " + row);
-                }
-
-                String predicateHash = row.substring(0, i);
-                String predicate = getContext().getRequestParameter("pred_".concat(predicateHash));
-
-                String objectHash = row.substring(i + 1);
-                String objectValue = getContext().getRequest().getParameter("obj_".concat(objectHash));
-                String sourceUri = getContext().getRequest().getParameter("source_".concat(objectHash));
-
-                TripleDTO triple = new TripleDTO(uri, predicate, objectValue == null ? null : objectValue.replace("\r", ""));
-                // FIXME - find a better way to determine if the object is literal or not, URIs may be literals also
-                triple.setLiteralObject(!URLUtil.isURL(objectValue));
-                triple.setSourceUri(sourceUri);
-
-                triples.add(triple);
-            }
-
-            HelperDAO helperDao = factory.getDao(HelperDAO.class);
-            helperDao.deleteTriples(triples);
-            helperDao.updateUserHistory(getUser(), uri);
-
-            // Update dcterms:modified.
-            // FIXME: the resulting types list should also probably be complemented with any new types coming from the current save!
-            SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
-            Collection<String> types = currSubj == null ? new HashSet<String>() : currSubj.getObjectValues(Predicates.RDF_TYPE);
-            String sourceUri = types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri();
-            try {
-                updateDctModified(currSubj, types, sourceUri);
-            } catch (DAOException e) {
-                LOGGER.error("Failed to update dcterms:modified", e);
-            }
-
-        } else {
-            addWarningMessage("You selected no triples to delete!");
-        }
+        deleteTripleByUser(uri, propertyUri, propertyValueMd5, sourceUri);
+        updateDctModified();
 
         return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+    }
+
+    /**
+     *
+     * @return
+     * @throws DAOException
+     */
+    public Resolution save() throws DAOException {
+
+        String oldValue = getContext().getRequestParameter("oldPropertyValueMd5");
+        deleteTripleByUser(uri, propertyUri, oldValue, sourceUri);
+        return add();
+    }
+
+    /**
+     *
+     * @param uri
+     * @param predicateUri
+     * @param objectMd5
+     * @param sourceUri
+     * @throws DAOException
+     */
+    private void deleteTripleByUser(String uri, String predicateUri, String objectMd5, String sourceUri) throws DAOException {
+
+        TripleDTO triple = new TripleDTO(uri, predicateUri, null);
+        triple.setObjectMd5(objectMd5);
+        triple.setSourceUri(sourceUri);
+
+        HelperDAO helperDao = factory.getDao(HelperDAO.class);
+        helperDao.deleteTriple(triple);
+        helperDao.updateUserHistory(getUser(), uri);
     }
 
     /**
@@ -1199,5 +1223,13 @@ public class FactsheetActionBean extends AbstractActionBean {
         LOGGER.debug("Found these fully editable types: " + result);
 
         return result;
+    }
+
+    public void setSourceUri(String sourceUri) {
+        this.sourceUri = sourceUri;
+    }
+
+    public void setPropertyValueMd5(String propertyValueMd5) {
+        this.propertyValueMd5 = propertyValueMd5;
     }
 }

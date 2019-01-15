@@ -10,6 +10,36 @@
             ( function($) {
                 $(document).ready(
                     function(){
+
+                        // The edit-property-value dialog setup.
+                        $(".edit-property-opener").click(function() {
+
+                            var propertyUri = $(this).data('property-uri');
+                            var propertyLabel = $(this).data('property-label');
+                            var propertyValue = $(this).data('property-value');
+                            var propertyValueMd5 = $(this).data('property-value-md5');
+                            var sourceUri = $(this).data('source-uri');
+
+                            $('#editDialog').find('#property-label').text(propertyLabel);
+                            $('#editDialog').find('#property-value').val(propertyValue);
+                            $('#editDialog').find('#input-predicate-uri').val(propertyUri);
+                            $('#editDialog').find('#input-source-uri').val(sourceUri);
+                            $('#editDialog').find('#input-old-property-value-md5').val(propertyValueMd5);
+
+                            $('#editDialog').dialog('option','width', 700);
+                            $('#editDialog').dialog('open');
+
+                            return false;
+                        });
+                        $('#editDialog').dialog({
+                            autoOpen: false,
+                            width: 700
+                        });
+                        $("#closeEditDialog").click(function() {
+                            $('#editDialog').dialog("close");
+                            return true;
+                        });
+
                         // onClick handler for add-bookmark link (open add-bookmark dialog)
                         $("#add_bookmark").click(function() {
                             $('#bookmark_dialog').dialog('open');
@@ -243,39 +273,39 @@
                                 </c:otherwise>
                             </c:choose>
 
-                            <crfn:form action="/factsheet.action" method="post">
+                            <c:if test="${actionBean.context.eventName=='edit' && editAllowed}">
+                                <crfn:form id="addForm" action="/factsheet.action" method="post">
 
-                                <c:if test="${actionBean.context.eventName=='edit' && editAllowed}">
-                                        <table>
-                                            <tr>
-                                                <td><stripes:label for="propertySelect">Property:</stripes:label></td>
-                                                <td>
-                                                    <stripes:select name="propertyUri" id="propertySelect">
-                                                        <c:forEach var="prop" items="${actionBean.addibleProperties}">
-                                                            <stripes:option value="${prop.value}" label="${prop.label} (${prop.value})" title="${empty prop.title ? prop.label : prop.title}"/>
-                                                        </c:forEach>
-                                                    </stripes:select>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><stripes:label for="propertyText">Value:</stripes:label></td>
-                                                <td><stripes:textarea name="propertyValue" id="propertyText" cols="100" rows="2"/></td>
-                                            </tr>
-                                            <tr>
-                                                <td>&nbsp;</td>
-                                                <td>
-                                                    <stripes:submit name="save" value="Save" id="saveButton"/>
-                                                    <stripes:submit name="delete" value="Delete selected" id="deleteButton"/>
-                                                    <stripes:hidden name="uri" value="${subjectUri}"/>
-                                                    <stripes:hidden name="anonymous" value="${actionBean.subject.anonymous}"/>
-                                                </td>
-                                        </table>
-                                </c:if>
+                                    <table style="margin-top: 30px;">
+                                        <tr>
+                                            <td><stripes:label for="propertySelect">Property:</stripes:label></td>
+                                            <td>
+                                                <stripes:select name="propertyUri" id="propertySelect">
+                                                    <c:forEach var="prop" items="${actionBean.addibleProperties}">
+                                                        <stripes:option value="${prop.value}" label="${prop.label} (${prop.value})" title="${empty prop.title ? prop.label : prop.title}"/>
+                                                    </c:forEach>
+                                                </stripes:select>
+                                            </td>
+                                            <td>&nbsp;</td>
+                                        </tr>
+                                        <tr>
+                                            <td><stripes:label for="propertyText">Value:</stripes:label></td>
+                                            <td><stripes:textarea name="propertyValue" id="propertyText" cols="80" rows="2"/></td>
+                                            <td style="vertical-align: bottom;padding-bottom: 4px;"><stripes:submit name="add" value="Add" id="addButton" title="Add a new property-value pair."/></td>
+                                        </tr>
+                                    </table>
 
-                                <stripes:layout-render name="/pages/common/factsheet_table.jsp"
-                                            subjectUrl="${subjectUrl}" subjectUri="${subjectUri}" displayCheckboxes="${actionBean.context.eventName=='edit' && editAllowed}"/>
+                                    <fieldset style="display: none;">
+                                        <stripes:hidden name="uri" value="${subjectUri}"/>
+                                        <stripes:hidden name="anonymous" value="${actionBean.subject.anonymous}"/>
+                                    </fieldset>
+                                </crfn:form>
+                            </c:if>
 
-                            </crfn:form>
+                            <stripes:layout-render name="/pages/common/factsheet_table.jsp"
+                                        subjectUrl="${subjectUrl}" subjectUri="${subjectUri}"
+                                        enableEdit="${actionBean.context.eventName=='edit' && editAllowed}"/>
+
                         </div>
                         <c:if test="${actionBean.userLoggedIn}">
                             <div id="bookmark_dialog" title="Add bookmark">

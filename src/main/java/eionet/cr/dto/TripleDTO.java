@@ -71,6 +71,9 @@ public class TripleDTO {
     /** Local holder of object derivation source uri. */
     private String objectDerivSourceUri;
 
+    /** */
+    private String objectMd5;
+
     /**
      * Creates a new TripleDTO object.
      *
@@ -339,6 +342,14 @@ public class TripleDTO {
      */
     public void setObjectDerivGenTime(Long objectDerivGenTime) {
         this.objectDerivGenTime = objectDerivGenTime;
+    }
+
+    public String getObjectMd5() {
+        return objectMd5;
+    }
+
+    public void setObjectMd5(String objectMd5) {
+        this.objectMd5 = objectMd5;
     }
 
     /*

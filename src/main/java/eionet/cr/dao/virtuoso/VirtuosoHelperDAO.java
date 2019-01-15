@@ -1053,9 +1053,12 @@ public class VirtuosoHelperDAO extends VirtuosoBaseDAO implements HelperDAO {
         if (predicate != null) {
             sb.append("   filter (?p = <" + predicate.stringValue() + ">)\n");
         }
-        if (object != null) {
-            sb.append("   filter (str(?o) = '" + StringEscapeUtils.escapeSql(object.stringValue()) + "')");
+        if (StringUtils.isNotBlank(triple.getObjectMd5())) {
+            sb.append("   filter (bif:md5(str(?o)) = '" + triple.getObjectMd5() + "')");
+        } else if (object != null) {
+            sb.append("   filter (str(?o) = '''" + object.stringValue() + "''')");
         }
+
         sb.append("}");
 
         java.sql.Statement stmt = null;
