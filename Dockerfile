@@ -7,7 +7,7 @@ ENV MAVEN_VERSION=3.3.9-4
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git maven="$MAVEN_VERSION" \
             openjdk-8-jdk="$JAVA_DEBIAN_VERSION" \
-           ca-certificates-java="$CA_CERTIFICATES_JAVA_VERSION" \
+           ca-certificates-java \
  && mkdir -p $CR_HOME \
              $CR_HOME/acl \
              $CR_HOME/filestore \
