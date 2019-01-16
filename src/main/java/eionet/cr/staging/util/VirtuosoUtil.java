@@ -76,8 +76,10 @@ public final class VirtuosoUtil {
      */
     public static String createTableStatement(Table table, String dbName, String dbUser) {
 
+        String qualifiedSanitizedTableName = fullyQualifiedSanitizedTableName(table.getName(), dbName, dbUser);
+
         StringBuilder sb = new StringBuilder("CREATE TABLE ");
-        sb.append(fullyQualifiedSanitizedTableName(table.getName(), dbName, dbUser)).append(" (\n");
+        sb.append(qualifiedSanitizedTableName).append(" (\n");
 
         LinkedHashSet<String> primKeyColumns = new LinkedHashSet<String>();
         try {
@@ -89,7 +91,7 @@ public final class VirtuosoUtil {
                 }
             }
         } catch (IllegalArgumentException e) {
-            // This exception means no primary key index set on this table
+            // This exception means no primary key index set on this table.
         }
 
         int i = 0;
@@ -171,9 +173,7 @@ public final class VirtuosoUtil {
      */
     private static String fullyQualifiedSanitizedTableName(String tableName, String dbName, String dbUser) {
 
-        String sanitizedTableName = tableName.trim().replaceAll("\\s+", "_");
-        // return new
-        // StringBuilder(dbName).append(".").append(dbUser).append(".\"").append(sanitizedTableName).append("\"").toString();
+        String sanitizedTableName = tableName.trim().replaceAll("\\s+", "_").replace('-', '_');
         return new StringBuilder(dbName).append(".").append(dbUser).append(".").append(sanitizedTableName).toString();
     }
 
