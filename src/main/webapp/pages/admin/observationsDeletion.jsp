@@ -48,7 +48,7 @@
                     <stripes:label for="timePeriodsText" class="question">Time period URIs:</stripes:label><br/>
                     <stripes:textarea id="timePeriodsText" name="timePeriodUris" cols="70" rows="4"/><br/>
                     <stripes:submit name="delete" value="Delete"/>
-                    <label><img id="loader" src="http://dev.cloudcell.co.uk/bin/loading.gif" style="display:none"/></label>
+                    <label><img id="loader" src="${pageContext.request.contextPath}/images/animated-loader.gif" style="display:none"/></label>
                 </div>
             </crfn:form>
         </div>
