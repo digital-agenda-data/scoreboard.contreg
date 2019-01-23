@@ -638,3 +638,36 @@ table.datatable tr.odd {
 table.datatable tr.even {
     background: #FFFFFF;
 }
+
+/* ---------------------------------------------------------------------------------------------------------- */
+/* ---------------------------- CSS for pure-Javascript editable select ------------------------------------- */
+/* ---------------------------------------------------------------------------------------------------------- */
+
+.select-editable {
+    position:relative;
+    background-color:white;
+    border:solid grey 1px;
+    width:400px;
+    height:18px;
+}
+.select-editable select {
+    position:absolute;
+    top:0px;
+    left:0px;
+    font-size:14px;
+    border:none;
+    width:400px;
+    margin:0;
+}
+.select-editable input {
+    position:absolute;
+    top:0px;
+    left:0px;
+    width:380px;
+    padding:1px;
+    font-size:14px;
+    border:none;
+}
+.select-editable select:focus, .select-editable input:focus {
+    outline:none;
+}

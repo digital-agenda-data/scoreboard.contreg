@@ -280,13 +280,19 @@
                                         <tr>
                                             <td><stripes:label for="propertySelect">Property:</stripes:label></td>
                                             <td>
-                                                <stripes:select name="propertyUri" id="propertySelect">
-                                                    <c:forEach var="prop" items="${actionBean.addibleProperties}">
-                                                        <stripes:option value="${prop.value}" label="${prop.label} (${prop.value})" title="${empty prop.title ? prop.label : prop.title}"/>
-                                                    </c:forEach>
-                                                </stripes:select>
+                                                <div class="select-editable">
+                                                    <select id="propertySelect" onchange="this.nextElementSibling.value=this.value">
+                                                        <option value=""></option>
+                                                        <c:forEach var="prop" items="${actionBean.addibleProperties}">
+                                                            <option value="${prop.value}" title="${empty prop.title ? prop.label : prop.title}">
+                                                                <c:out value="${prop.label} (${prop.value})"/>
+                                                            </option>
+                                                        </c:forEach>
+                                                    </select>
+                                                    <input type="text" name="propertyUri" value=""/>
+                                                </div>
                                             </td>
-                                            <td>&nbsp;</td>
+                                            <td></td>
                                         </tr>
                                         <tr>
                                             <td><stripes:label for="propertyText">Value:</stripes:label></td>

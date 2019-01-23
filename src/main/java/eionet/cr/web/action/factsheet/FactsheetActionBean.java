@@ -27,6 +27,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import eionet.cr.util.URIUtil;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -388,6 +389,18 @@ public class FactsheetActionBean extends AbstractActionBean {
      */
     public Resolution add() throws DAOException {
 
+        RedirectResolution resolution = new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+        if (StringUtils.isBlank(propertyUri) || StringUtils.isBlank(propertyValue)) {
+            addWarningMessage("Property URI or value empty!");
+            return resolution;
+        }
+
+        String trimmedPropertyUri = propertyUri.trim();
+        if (!URIUtil.isAbsoluteURI(trimmedPropertyUri)) {
+            addWarningMessage("Not a valid absolute URI: " + trimmedPropertyUri);
+            return resolution;
+        }
+
         SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
 
         // Get the distinct types that this subject currently has in repository.
@@ -397,11 +410,11 @@ public class FactsheetActionBean extends AbstractActionBean {
         String sourceUri = StringUtils.isBlank(this.sourceUri) ? (types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri())
                 : this.sourceUri;
 
-        //addTripleByUser(uri, anonymous, propertyUri, propertyValue, sourceUri);
-        addTripleByUser(uri, anonymous, propertyUri, propertyValue, sourceUri);
+        addTripleByUser(uri, anonymous, trimmedPropertyUri, propertyValue, sourceUri);
         updateDctModified(currSubj, types, sourceUri);
+        addSystemMessage("Property successfully saved!");
 
-        return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+        return resolution;
     }
 
     /**
@@ -614,19 +627,30 @@ public class FactsheetActionBean extends AbstractActionBean {
 
             // Get addible properties from the repository.
             HelperDAO dao = DAOFactory.get().getDao(HelperDAO.class);
-            Map<String, HTMLSelectOption> options = dao.getAddibleProperties(uri, rdfTypes);
+            Map<String, HTMLSelectOption> optionMap = dao.getAddibleProperties(uri, rdfTypes);
 
             // Add some hard-coded addable properties.
             for (HTMLSelectOption htmlSelectOption : COMMON_ADDBL_PROPS) {
-                options.put(htmlSelectOption.getValue(), htmlSelectOption);
+                optionMap.put(htmlSelectOption.getValue(), htmlSelectOption);
             }
 
             result = new ArrayList<HTMLSelectOption>();
-            result.addAll(options.values());
+            result.addAll(optionMap.values());
             Collections.sort(result, new BeanComparator("label"));
 
             getContext().setSessionAttribute(sessionAttrName, result);
         }
+
+        LinkedHashSet<HTMLSelectOption> resultSet = new LinkedHashSet<>(result);
+        if (fullSubjectDTO != null && fullSubjectDTO.getPredicateCount() > 0) {
+            Set<String> predicateUris = fullSubjectDTO.getPredicateUris();
+            for (String predUri : predicateUris) {
+                resultSet.add(HTMLSelectOption.createFromUri(predUri, StringUtils.EMPTY));
+            }
+        }
+
+        result = new ArrayList<>(resultSet);
+        Collections.sort(result, new BeanComparator("labelUppercase"));
 
         return result;
     }
@@ -1030,20 +1054,10 @@ public class FactsheetActionBean extends AbstractActionBean {
 
         if (isAllEditable == null) {
 
-            isAllEditable = Boolean.FALSE;
             Collection<String> types = fullSubjectDTO == null ? null : fullSubjectDTO.getObjectValues(Predicates.RDF_TYPE);
-            if (types != null && !types.isEmpty()) {
-                if (EDITABLE_TYPES != null && !EDITABLE_TYPES.isEmpty()) {
-
-                    for (String type : types) {
-                        if (EDITABLE_TYPES.contains(type)) {
-                            isAllEditable = Boolean.TRUE;
-                            break;
-                        }
-                    }
-                }
-            }
+            isAllEditable = types != null && EDITABLE_TYPES != null && CollectionUtils.containsAny(EDITABLE_TYPES, types);
         }
+
         return isAllEditable.booleanValue();
     }
 

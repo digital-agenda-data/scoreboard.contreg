@@ -1,6 +1,10 @@
 package eionet.cr.web.util;
 
 import eionet.cr.util.URIUtil;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
+import java.util.Objects;
 
 /**
  * Helper bean for representing options of an HTML <select>.
@@ -81,6 +85,33 @@ public class HTMLSelectOption {
      */
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getLabelUppercase() {
+        return label == null ? null : label.toUpperCase();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HTMLSelectOption that = (HTMLSelectOption) o;
+        return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(value);
+    }
+
+    @Override
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE);
     }
 
     /**

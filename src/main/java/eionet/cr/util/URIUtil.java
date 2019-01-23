@@ -80,6 +80,25 @@ public final class URIUtil {
      * @param str
      * @return
      */
+    public static boolean isAbsoluteURI(String str) {
+
+        if (Util.isNullOrEmpty(str)) {
+            return false;
+        }
+
+        try {
+            URI uri = new URI(str);
+            return uri.isAbsolute();
+        } catch (URISyntaxException e) {
+            return false;
+        }
+    }
+
+    /**
+     *
+     * @param str
+     * @return
+     */
     public static boolean isURI(String str) {
 
         if (Util.isNullOrEmpty(str)) {
@@ -128,6 +147,14 @@ public final class URIUtil {
         if (URLUtil.isURL(uri)) {
 
             int i = Math.max(uri.lastIndexOf('#'), uri.lastIndexOf('/'));
+            if (i >= 0) {
+                result = uri.substring(i + 1);
+                if (result.trim().length() == 0) {
+                    result = null;
+                }
+            }
+        } else if (URIUtil.isAbsoluteURI(uri)) {
+            int i = uri.lastIndexOf(':');
             if (i >= 0) {
                 result = uri.substring(i + 1);
                 if (result.trim().length() == 0) {
