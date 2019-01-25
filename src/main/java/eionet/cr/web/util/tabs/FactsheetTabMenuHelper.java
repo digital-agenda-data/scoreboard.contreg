@@ -226,6 +226,12 @@ public final class FactsheetTabMenuHelper {
             result.add(t);
         }
 
+        if (isDataCubeDataset()) {
+            TabElement te4 = new TabElement(TabId.DATASET_INDICATORS, "/datasetIndicators.action", selectedTab);
+            te4.addParam("datasetUri", subject.getUri());
+            result.add(te4);
+        }
+
         return result;
     }
 
@@ -266,7 +272,6 @@ public final class FactsheetTabMenuHelper {
 
     /**
      * @param selectedTab
-     * @param title
      * @return
      */
     private TabElement createObjectsInSourceTab(TabId selectedTab) {

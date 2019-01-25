@@ -239,6 +239,48 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "group by ?uri\n" +
             "order by ?uri";
 
+    /** */
+    private static final String DATASET_INDICATORS = "" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
+            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
+            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
+            "\n" +
+            "select\n" +
+            "    ?uri min(distinct ?notation) as ?skosNotation min(distinct ?prefLabel) as ?skosPrefLabel\n" +
+            "where {\n" +
+            "    ?obs a cube:Observation .\n" +
+            "    ?obs cube:dataSet ?dst .\n" +
+            "    ?obs dad-prop:indicator ?uri .\n" +
+            "#per  ?obs dad-prop:time-period ?per. \n" +
+            "#per  filter(?per = ?periodUri) \n" +
+            "#txt  ?uri ?p ?o \n" +
+            "#txt  filter bif:contains(?o, ?objectVal) \n" +
+            "    optional {?uri skos:notation ?notation} \n" +
+            "    optional {?uri skos:prefLabel ?prefLabel} \n" +
+            "    filter (?dst = ?dstUri) \n" +
+            "} \n" +
+            "group by ?uri \n" +
+            "order by ?uri";
+
+    private static final String DATASET_TIME_PERIODS = "" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
+            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
+            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+            "\n" +
+            "select\n" +
+            "    ?uri min(distinct ?notation) as ?skosNotation min(distinct ?prefLabel) as ?skosPrefLabel\n" +
+            "where {\n" +
+            "    ?obs a cube:Observation .\n" +
+            "    ?obs cube:dataSet ?dst .\n" +
+            "    ?obs dad-prop:time-period ?uri \n" +
+            "    optional {?uri skos:notation ?notation} \n" +
+            "    optional {?uri rdfs:label ?prefLabel} \n" +
+            "    filter (?dst = ?dstUri) \n" +
+            "} \n" +
+            "group by ?uri \n" +
+            "order by ?uri";
+
     /** The Constant GET_DISTINCT_DATASET_URIS. */
     private static final String GET_DISTINCT_DATASET_URIS = "" +
             "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
@@ -358,6 +400,45 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         }
 
         List<SkosItemDTO> list = executeSPARQL(query, bindings, new SkosItemsReader());
+        return list;
+    }
+
+    @Override
+    public List<SkosItemDTO> getDatasetIndicators(String datasetUri, String timePeriodUri, String freeText) throws DAOException {
+
+        if (StringUtils.isBlank(datasetUri)) {
+            throw new IllegalArgumentException("Dataset URI must not be blank!");
+        }
+
+        Bindings bindings = new Bindings();
+        bindings.setURI("dstUri", datasetUri);
+
+        String query = new String(DATASET_INDICATORS);
+        if (StringUtils.isNotBlank(timePeriodUri)) {
+            query = StringUtils.replace(query, "#per", "");
+            bindings.setURI("periodUri", timePeriodUri);
+        }
+
+        if (StringUtils.isNotBlank(freeText)) {
+            query = StringUtils.replace(query, "#txt", "");
+            bindings.setString("objectVal", "'" + freeText + "'");
+        }
+
+        List<SkosItemDTO> list = executeSPARQL(query, bindings, new SkosItemsReader());
+        return list;
+    }
+
+    @Override
+    public List<SkosItemDTO> getDatasetTimePeriods(String datasetUri) throws DAOException {
+
+        if (StringUtils.isBlank(datasetUri)) {
+            throw new IllegalArgumentException("Dataset URI must not be blank!");
+        }
+
+        Bindings bindings = new Bindings();
+        bindings.setURI("dstUri", datasetUri);
+
+        List<SkosItemDTO> list = executeSPARQL(DATASET_TIME_PERIODS, bindings, new SkosItemsReader());
         return list;
     }
 

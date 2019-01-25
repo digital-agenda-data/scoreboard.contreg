@@ -2,7 +2,7 @@
 
 <%@ include file="/pages/common/taglibs.jsp"%>
 
-<stripes:layout-render name="/pages/common/template.jsp" pageTitle="Resource references">
+<stripes:layout-render name="/pages/common/template.jsp" pageTitle="Source contents">
 
     <stripes:layout-component name="contents">
 

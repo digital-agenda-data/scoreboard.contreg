@@ -90,6 +90,10 @@ public interface ScoreboardSparqlDAO extends DAO {
             getFilterValues(Map<ObservationFilter, String> selections, ObservationFilter filter, boolean isAdmin)
                     throws DAOException;
 
+    List<SkosItemDTO> getDatasetIndicators(String datasetUri, String timePeriodUri, String freeText) throws DAOException;
+
+    List<SkosItemDTO> getDatasetTimePeriods(String datasetUri) throws DAOException;
+
     /**
      *
      * @param identifier
