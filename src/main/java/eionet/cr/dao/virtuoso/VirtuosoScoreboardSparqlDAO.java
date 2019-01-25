@@ -78,14 +78,21 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
     /** The Constant GET_CODELIST_ITEMS_SPARQL. */
     private static final String GET_CODELIST_ITEMS_SPARQL = "" +
+            "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
             "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
             "select\n" +
             "  ?uri min(?notation) as ?skosNotation min(?prefLabel) as ?skosPrefLabel\n" +
             "where {\n" +
-            "  ?scheme skos:hasTopConcept ?uri\n" +
-            "  filter (?scheme = ?schemeUri)\n" +
-            "  optional {?uri skos:notation ?notation}\n" +
-            "  optional {?uri skos:prefLabel ?prefLabel}\n" +
+            "  ?scheme skos:hasTopConcept ?uri \n" +
+            "  filter (?scheme = ?schemeUri) \n" +
+            "#dst  ?obs a cube:Observation . \n" +
+            "#dst  ?obs cube:dataSet ?dataset . \n" +
+            "#dst  ?obs ?pred ?uri \n" +
+            "#dst  filter(?dataset = ?datasetUri) \n" +
+            "#txt  ?uri ?p ?o \n" +
+            "#txt  filter bif:contains(?o, ?objectVal) \n" +
+            "  optional {?uri skos:notation ?notation} \n" +
+            "  optional {?uri skos:prefLabel ?prefLabel} \n" +
             "}\n" +
             "group by ?uri\n" +
             "order by ?uri";
@@ -324,13 +331,13 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         return list;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see eionet.cr.dao.ScoreboardSparqlDAO#getCodelistItems(java.lang.String)
-     */
     @Override
     public List<SkosItemDTO> getCodelistItems(String codelistUri) throws DAOException {
+        return getCodelistItems(codelistUri, null, null);
+    }
+
+    @Override
+    public List<SkosItemDTO> getCodelistItems(String codelistUri, String datasetUri, String freeText) throws DAOException {
 
         if (StringUtils.isBlank(codelistUri)) {
             throw new IllegalArgumentException("Codelist URI must not be blank!");
@@ -339,7 +346,18 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         Bindings bindings = new Bindings();
         bindings.setURI("schemeUri", codelistUri);
 
-        List<SkosItemDTO> list = executeSPARQL(GET_CODELIST_ITEMS_SPARQL, bindings, new SkosItemsReader());
+        String query = new String(GET_CODELIST_ITEMS_SPARQL);
+        if (StringUtils.isNotBlank(datasetUri)) {
+            query = StringUtils.replace(query, "#dst", "");
+            bindings.setURI("datasetUri", datasetUri);
+        }
+
+        if (StringUtils.isNotBlank(freeText)) {
+            query = StringUtils.replace(query, "#txt", "");
+            bindings.setString("objectVal", "'" + freeText + "'");
+        }
+
+        List<SkosItemDTO> list = executeSPARQL(query, bindings, new SkosItemsReader());
         return list;
     }
 

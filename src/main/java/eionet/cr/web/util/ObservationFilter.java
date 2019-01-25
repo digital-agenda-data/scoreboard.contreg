@@ -94,7 +94,7 @@ public enum ObservationFilter {
 
     /**
      *
-     * @param alias
+     * @param filter
      * @return
      */
     public static ObservationFilter getNext(ObservationFilter filter) {

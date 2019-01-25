@@ -5,11 +5,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
+import eionet.cr.common.Predicates;
+import eionet.cr.dto.SearchResultDTO;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -52,6 +55,10 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
     private static final String JSP = "/pages/browseCodelists.jsp";
 
     /** */
+    private static final String[] LABEL_PREDICATES = {Predicates.DCTERMS_TITLE, Predicates.RDFS_LABEL, Predicates.DC_TITLE,
+            Predicates.FOAF_NAME};
+
+    /** */
     private List<Pair<String, String>> codelists;
 
     /** */
@@ -59,6 +66,8 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
 
     /** */
     private String codelistUri;
+    private String datasetUri;
+    private String freeText;
 
     /**
      *
@@ -81,7 +90,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
 
         if (StringUtils.isNotBlank(codelistUri)) {
             try {
-                codelistItems = dao.getCodelistItems(codelistUri);
+                codelistItems = dao.getCodelistItems(codelistUri, datasetUri, freeText);
             } catch (DAOException e) {
                 LOGGER.error("Error when retrieving items of this codelist: " + codelistUri, e);
                 addWarningMessage("A technical error occurred when when retrieving items of the selected codelist"
@@ -255,5 +264,29 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
      */
     public Class getFactsheetActionBeanClass() {
         return FactsheetActionBean.class;
+    }
+
+    public String getDatasetUri() {
+        return datasetUri;
+    }
+
+    public void setDatasetUri(String datasetUri) {
+        this.datasetUri = datasetUri;
+    }
+
+    public String getFreeText() {
+        return freeText;
+    }
+
+    public void setFreeText(String freeText) {
+        this.freeText = freeText;
+    }
+
+    public List<Pair<String, String>> getDatasets() throws DAOException {
+
+        ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
+        SearchResultDTO<Pair<String, String>> searchResult =
+                dao.getDistinctDatasets(isUserLoggedIn(), null, null, LABEL_PREDICATES);
+        return searchResult == null ? new ArrayList<Pair<String, String>>() : searchResult.getItems();
     }
 }

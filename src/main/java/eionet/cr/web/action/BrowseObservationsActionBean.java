@@ -225,8 +225,8 @@ public class BrowseObservationsActionBean extends DisplaytagSearchActionBean {
     }
 
     /**
-     * @param applyFilter
-     *            the applyFilter to set
+     * @param changedFilter
+     *            the changedFilter to set
      */
     public void setApplyFilter(String changedFilter) {
         this.applyFilter = changedFilter;

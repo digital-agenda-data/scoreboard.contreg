@@ -54,13 +54,26 @@ public interface ScoreboardSparqlDAO extends DAO {
     /**
      * Return all items in the codelist by the given URI.
      *
-     * @param codelistUri
-     *            Codelist URI.
+     * @param codelistUri Codelist URI.
      * @return List of items in the given codelist.
      * @throws DAOException
      *             If database access error happens.
      */
     List<SkosItemDTO> getCodelistItems(String codelistUri) throws DAOException;
+
+    /**
+     * Return all items in the codelist by the given URI and being referred to in observations of the given dataset.
+     * If dataset URI not given, it is ignored.
+     *
+     * @param codelistUri Codelist URI.
+     * @param datasetUri Dataset URI.
+     * @param freeText Free text.
+     *
+     * @return List of items in the given codelist.
+     * @throws DAOException
+     *             If database access error happens.
+     */
+    List<SkosItemDTO> getCodelistItems(String codelistUri, String datasetUri, String freeText) throws DAOException;
 
     /**
      * Returns a list of observations filter values matching the given selections and starting after the given filter. Example:
