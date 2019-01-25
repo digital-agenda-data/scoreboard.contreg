@@ -35,25 +35,31 @@
 
     <div style="margin-top:20px;width:100%">
         <crfn:form id="codelistsForm" beanclass="${actionBean['class'].name}" method="get">
-            <label for="codelistsSelect" class="question">Codelist:</label>
-            <stripes:select id="codelistsSelect" name="codelistUri" value="${actionBean.codelistUri}" onchange="this.form.submit();" title="${actionBean.codelistUri}">
-                <c:forEach items="${actionBean.codelists}" var="codelist">
-                    <stripes:option value="${codelist.left}" label="${codelist.right}" title="${codelist.left}"/>
-                </c:forEach>
-            </stripes:select>&nbsp;
-            <stripes:submit name="metadata" value="Codelist metadata" title="Go to the factsheet about the metadata of the selected codelist."/>&nbsp;
-            <stripes:submit name="export" value="Excel export" title="Download the selected codelist as an MS Excel file."/>
-            <br/>
-            <label for="datasetSelect" class="question">Dataset:</label>
-            <stripes:select id="datasetSelect" name="datasetUri" value="${actionBean.datasetUri}" onchange="this.form.submit();" title="${actionBean.datasetUri}">
-                <option value="">-- all datasets --</option>
-                <c:forEach items="${actionBean.datasets}" var="dst">
-                    <stripes:option value="${dst.left}" label="${dst.right}" title="${dst.left}"/>
-                </c:forEach>
-            </stripes:select>
-            <br/>
-            <label for="freeText" class="question">Free text:</label>
-            <stripes:text id="freeText" name="freeText"/>
+
+            <div>
+                <label for="codelistsSelect" class="question inline-left w-80">Codelist:</label>
+                <stripes:select id="codelistsSelect" name="codelistUri" value="${actionBean.codelistUri}" onchange="this.form.submit();" title="${actionBean.codelistUri}">
+                    <c:forEach items="${actionBean.codelists}" var="codelist">
+                        <stripes:option value="${codelist.left}" label="${codelist.right}" title="${codelist.left}"/>
+                    </c:forEach>
+                </stripes:select>&nbsp;
+                <stripes:submit name="metadata" value="Codelist metadata" title="Go to the factsheet about the metadata of the selected codelist."/>&nbsp;
+                <stripes:submit name="export" value="Excel export" title="Download the selected codelist as an MS Excel file."/>
+            </div>
+
+            <div>
+                <label for="datasetSelect" class="question inline-left w-80">Dataset:</label>
+                <stripes:select id="datasetSelect" name="datasetUri" value="${actionBean.datasetUri}" onchange="this.form.submit();" title="${actionBean.datasetUri}">
+                    <option value="">-- all datasets --</option>
+                    <c:forEach items="${actionBean.datasets}" var="dst">
+                        <stripes:option value="${dst.left}" label="${dst.right}" title="${dst.left}"/>
+                    </c:forEach>
+                </stripes:select>
+            </div>
+            <div>
+                <label for="freeText" class="question inline-left w-80">Free text:</label>
+                <stripes:text id="freeText" name="freeText"/>&nbsp;<stripes:submit name="search" value="Search" title="Search based on above selections and free text."/>
+            </div>
         </crfn:form>
     </div>
 

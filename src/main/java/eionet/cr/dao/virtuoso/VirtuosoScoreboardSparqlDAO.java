@@ -81,7 +81,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
             "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
             "select\n" +
-            "  ?uri min(?notation) as ?skosNotation min(?prefLabel) as ?skosPrefLabel\n" +
+            "  ?uri min(distinct ?notation) as ?skosNotation min(distinct  ?prefLabel) as ?skosPrefLabel\n" +
             "where {\n" +
             "  ?scheme skos:hasTopConcept ?uri \n" +
             "  filter (?scheme = ?schemeUri) \n" +

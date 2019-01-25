@@ -671,3 +671,45 @@ table.datatable tr.even {
 .select-editable select:focus, .select-editable input:focus {
     outline:none;
 }
+
+.w-20 {
+    width: 20px;
+}
+
+.w-40 {
+    width: 40px;
+}
+
+.w-60 {
+    width: 60px;
+}
+
+.w-80 {
+    width: 80px;
+}
+
+.w-100 {
+    width: 100px;
+}
+
+.w-120 {
+    width: 120px;
+}
+
+.w-140 {
+    width: 140px;
+}
+
+.w-160 {
+    width: 160px;
+}
+
+.inline-left {
+    display: inline-block;
+    text-align: left;
+}
+
+.inline-right {
+    display: inline-block;
+    text-align: right;
+}
