@@ -164,7 +164,6 @@ public abstract class VirtuosoBaseDAO {
      *
      * @param <T>
      * @param sql
-     * @param params
      * @param reader
      * @return
      * @throws DAOException if query fails
@@ -180,7 +179,6 @@ public abstract class VirtuosoBaseDAO {
      * @param <T>
      * @param sparql
      * @param bindings Binding values for the prepared SPARQL
-     * @param params
      * @param reader
      * @return
      * @throws DAOException if query fails
@@ -245,14 +243,6 @@ public abstract class VirtuosoBaseDAO {
         }
 
         return subjectDTO;
-
-        // Bindings bindings = new Bindings();
-        // SubjectDataReader reader = SubjectDataReader.getInstance(Collections.singletonList(subjectUri), null);
-        // String query = reader.getQuery(bindings);
-        // executeSPARQL(query, bindings, reader);
-        //
-        // List<SubjectDTO> resultList = reader.getResultList();
-        // return resultList != null && !resultList.isEmpty() ? resultList.get(0) : null;
     }
 
     /**

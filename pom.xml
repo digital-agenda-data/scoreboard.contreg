@@ -9,7 +9,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <env>local</env>
-        <javaVersion>1.7</javaVersion>
+        <javaVersion>1.8</javaVersion>
         <sesame.openrdf.version>2.7.16</sesame.openrdf.version>
         <encoding>UTF-8</encoding>
     </properties>

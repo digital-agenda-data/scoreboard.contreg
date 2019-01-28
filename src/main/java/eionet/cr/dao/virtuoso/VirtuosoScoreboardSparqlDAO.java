@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import eionet.cr.dto.SubjectDTO;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -95,6 +96,20 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  optional {?uri skos:prefLabel ?prefLabel} \n" +
             "}\n" +
             "group by ?uri\n" +
+            "order by ?uri";
+
+    private static final String GET_SKOS_ITEMS_DATA_SPARQL = "" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> \n" +
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \n" +
+            "select \n" +
+            "    ?uri min(?notation) as ?skosNotation min(?prefLabel) as ?skosPrefLabel \n" +
+            "where { \n" +
+            "    ?uri ?p ?o . \n" +
+            "    filter (?uri IN (@item_uris@)) \n" +
+            "    optional {?uri skos:notation ?notation} \n" +
+            "    optional {?uri skos:prefLabel ?prefLabel} \n" +
+            "} \n" +
+            "group by ?uri \n" +
             "order by ?uri";
 
     /** The Constant EXPORT_CODELIST_ITEMS_SPARQL. */
@@ -262,23 +277,19 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "group by ?uri \n" +
             "order by ?uri";
 
-    private static final String DATASET_TIME_PERIODS = "" +
+    private static final String DATASET_TIME_PERIOD_URIS = "" +
             "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
             "PREFIX cube: <http://purl.org/linked-data/cube#>\n" +
             "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/>\n" +
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "\n" +
-            "select\n" +
-            "    ?uri min(distinct ?notation) as ?skosNotation min(distinct ?prefLabel) as ?skosPrefLabel\n" +
+            "select distinct ?uri \n" +
             "where {\n" +
             "    ?obs a cube:Observation .\n" +
             "    ?obs cube:dataSet ?dst .\n" +
             "    ?obs dad-prop:time-period ?uri \n" +
-            "    optional {?uri skos:notation ?notation} \n" +
-            "    optional {?uri rdfs:label ?prefLabel} \n" +
             "    filter (?dst = ?dstUri) \n" +
             "} \n" +
-            "group by ?uri \n" +
             "order by ?uri";
 
     /** The Constant GET_DISTINCT_DATASET_URIS. */
@@ -437,9 +448,17 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         Bindings bindings = new Bindings();
         bindings.setURI("dstUri", datasetUri);
+        List<String> timePeriodUris = executeSPARQL(DATASET_TIME_PERIOD_URIS, bindings, new SingleObjectReader<String>());
 
-        List<SkosItemDTO> list = executeSPARQL(DATASET_TIME_PERIODS, bindings, new SkosItemsReader());
-        return list;
+        List<SkosItemDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(timePeriodUris)) {
+
+            bindings = new Bindings();
+            String itemsDataQuery = GET_SKOS_ITEMS_DATA_SPARQL.replace("@item_uris@", SPARQLQueryUtil.urisToCSV(timePeriodUris, "uriVal", bindings));
+            resultList = executeSPARQL(itemsDataQuery, bindings, new SkosItemsReader());
+        }
+
+        return resultList;
     }
 
     /*

@@ -4,25 +4,29 @@ import eionet.cr.dao.*;
 import eionet.cr.dto.FactsheetDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.dto.SubjectDTO;
+import eionet.cr.util.Pair;
 import eionet.cr.web.action.AbstractSearchActionBean;
 import eionet.cr.web.util.columns.SearchResultColumn;
 import eionet.cr.web.util.tabs.FactsheetTabMenuHelper;
 import eionet.cr.web.util.tabs.TabElement;
 import eionet.cr.web.util.tabs.TabId;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
  */
 @UrlBinding("/datasetIndicators.action")
 public class DatasetIndicatorsActionBean extends AbstractSearchActionBean<SubjectDTO> {
+
+    /** */
+    private static final Logger LOGGER = Logger.getLogger(DatasetIndicatorsActionBean.class);
 
     /** */
     private static final String JSP = "/pages/factsheet/datasetIndicators.jsp";
@@ -46,6 +50,10 @@ public class DatasetIndicatorsActionBean extends AbstractSearchActionBean<Subjec
     private List<TabElement> tabs;
     private FactsheetDTO datasetFactsheetDTO;
 
+    /** */
+    private List<String> selIndicUris;
+    private String executedDeletionSparql;
+
     @Override
     @DefaultHandler
     public Resolution search() throws DAOException {
@@ -63,6 +71,44 @@ public class DatasetIndicatorsActionBean extends AbstractSearchActionBean<Subjec
         tabs = helper.getTabs(TabId.DATASET_INDICATORS);
 
         return new ForwardResolution(JSP);
+    }
+
+    public Resolution deleteSelected() throws DAOException {
+
+        Resolution resolution = new RedirectResolution(this.getClass(), "search").addParameter("datasetUri", datasetUri);
+        try {
+            ScoreboardSparqlDAO ssDao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
+            Pair<Integer, String> resultPair = ssDao.deleteObservations(datasetUri, selIndicUris, StringUtils.isBlank(timePeriodUri) ? null : Arrays.asList(timePeriodUri));
+            int updateCount = resultPair.getLeft().intValue();
+            executedDeletionSparql = resultPair.getRight();
+            addSystemMessage("Operation successfully executed! Number of deleted triples: " + updateCount);
+        } catch (DAOException e) {
+            addWarningMessage("A technical error occurred: " + e.toString());
+            LOGGER.error("Failed to delete observations", e);
+            return new ForwardResolution(JSP);
+        }
+
+        return resolution;
+    }
+
+    public Resolution deleteAllMatching() throws DAOException {
+
+        Resolution resolution = new RedirectResolution(this.getClass(), "search").addParameter("datasetUri", datasetUri);
+        try {
+            ScoreboardSparqlDAO ssDao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
+            indicators = ssDao.getDatasetIndicators(datasetUri, timePeriodUri, freeText);
+            List<String> indicatorUris = indicators.stream().map(i -> i.getUri()).collect(Collectors.toList());
+            Pair<Integer, String> resultPair = ssDao.deleteObservations(datasetUri, indicatorUris, Arrays.asList(timePeriodUri));
+            int updateCount = resultPair.getLeft().intValue();
+            executedDeletionSparql = resultPair.getRight();
+            addSystemMessage("Operation successfully executed! Number of deleted triples: " + updateCount);
+        } catch (DAOException e) {
+            addWarningMessage("A technical error occurred: " + e.toString());
+            LOGGER.error("Failed to delete observations", e);
+            return new ForwardResolution(JSP);
+        }
+
+        return new RedirectResolution(this.getClass(), "search").addParameter("datasetUri", datasetUri);
     }
 
     @Override
@@ -108,5 +154,13 @@ public class DatasetIndicatorsActionBean extends AbstractSearchActionBean<Subjec
 
     public void setFreeText(String freeText) {
         this.freeText = freeText;
+    }
+
+    public void setSelIndicUris(List<String> selIndicUris) {
+        this.selIndicUris = selIndicUris;
+    }
+
+    public String getExecutedDeletionSparql() {
+        return executedDeletionSparql;
     }
 }
