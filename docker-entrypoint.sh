@@ -35,6 +35,10 @@ function replace_propr() {
     sed -i "s/DB_RO_PASSWORD/${DB_RO_PASSWORD}/g" $PROPR_FILE
   fi
 
+  if [ -n "$SPARQL_ENDPOINT" ]; then
+    sed -i "s/SPARQL_ENDPOINT/${SPARQL_ENDPOINT}/g" $PROPR_FILE
+  fi
+
 }
 
 
