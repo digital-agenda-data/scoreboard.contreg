@@ -39,6 +39,10 @@ function replace_propr() {
     sed -i "s/SPARQL_ENDPOINT/${SPARQL_ENDPOINT}/g" $PROPR_FILE
   fi
 
+  if [ -n "$CR_INSTANCES" ]; then
+    sed -i "s/CR_INSTANCES/${CR_INSTANCES}/g" $PROPR_FILE
+  fi
+
 }
 
 
