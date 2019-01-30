@@ -24,7 +24,7 @@ function replace_propr() {
 
 
   if [ -n "$DB_PASSWORD" ]; then
-    sed -i "s/DB_PASSWORD/${DB_PASSWORD}/g" $PROPR_FILE
+    sed -i "s#DB_PASSWORD#${DB_PASSWORD}#g" $PROPR_FILE
   fi
 
   if [ -n "$DB_RO_USER" ]; then
@@ -32,15 +32,15 @@ function replace_propr() {
   fi
 
   if [ -n "$DB_RO_PASSWORD" ]; then
-    sed -i "s/DB_RO_PASSWORD/${DB_RO_PASSWORD}/g" $PROPR_FILE
+    sed -i "s#DB_RO_PASSWORD#${DB_RO_PASSWORD}#g" $PROPR_FILE
   fi
 
   if [ -n "$SPARQL_ENDPOINT" ]; then
-    sed -i "s/SPARQL_ENDPOINT/${SPARQL_ENDPOINT}/g" $PROPR_FILE
+    sed -i "s#SPARQL_ENDPOINT#${SPARQL_ENDPOINT}#g" $PROPR_FILE
   fi
 
   if [ -n "$CR_INSTANCES" ]; then
-    sed -i "s/CR_INSTANCES/${CR_INSTANCES}/g" $PROPR_FILE
+    sed -i "s#CR_INSTANCES#${CR_INSTANCES}#g" $PROPR_FILE
   fi
 
 }
@@ -50,8 +50,8 @@ replace_propr "$CATALINA_HOME/webapps/data/WEB-INF/classes/*.properties"
 replace_propr "$CATALINA_HOME/webapps/data/META-INF/*.xml"
 replace_propr "$CR_BASE/build/local.properties"
 replace_propr "$CR_BASE/build/target/classes/*.properties"
-replace_propr "$CR_BASE/build/target/cr-das/*.properties"
+replace_propr "$CR_BASE/build/target/cr-das/WEB-INF/classes/*.properties"
+replace_propr "$CR_BASE/build/target/cr-das/META-INF/*.xml"
 
- 
 exec "$@"
 
