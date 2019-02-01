@@ -11,7 +11,7 @@
             </c:when>
             <c:otherwise>
                 <li>
-                    <stripes:link href="${tab.href}"><c:out value="${tab.title}" />
+                    <stripes:link href="${tab.href}" prependContext="true"><c:out value="${tab.title}" />
                         <c:if test="${not empty tab.event}">
                             <stripes:param name="${tab.event}" />
                         </c:if>
@@ -19,6 +19,7 @@
                             <stripes:param name="${item.key}" value="${item.value}" />
                         </c:forEach>
                     </stripes:link>
+                    <div style="display: none"><c:out value="${tab.href}"/></div>
                 </li>
             </c:otherwise>
         </c:choose>
