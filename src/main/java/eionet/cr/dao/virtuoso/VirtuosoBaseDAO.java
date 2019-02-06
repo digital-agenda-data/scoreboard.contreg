@@ -232,6 +232,10 @@ public abstract class VirtuosoBaseDAO {
                     boolean isAnonymous = isLiteral ? false : ((Resource) object) instanceof BNode;
 
                     ObjectDTO objectDTO = new ObjectDTO(object.stringValue(), language, isLiteral, isAnonymous, datatype);
+                    Resource context = statement.getContext();
+                    if (context != null) {
+                        objectDTO.setSourceUri(context.stringValue());
+                    }
                     subjectDTO.addObject(statement.getPredicate().stringValue(), objectDTO);
                 }
             }

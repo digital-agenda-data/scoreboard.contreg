@@ -382,6 +382,7 @@ public class FactsheetActionBean extends AbstractActionBean {
     }
 
     /**
+     * Adds a user-submitted property to the underlying subject.
      *
      * @return Resolution
      * @throws DAOException
@@ -390,6 +391,7 @@ public class FactsheetActionBean extends AbstractActionBean {
     public Resolution add() throws DAOException {
 
         RedirectResolution resolution = new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+
         if (StringUtils.isBlank(propertyUri) || StringUtils.isBlank(propertyValue)) {
             addWarningMessage("Property URI or value empty!");
             return resolution;
@@ -401,19 +403,11 @@ public class FactsheetActionBean extends AbstractActionBean {
             return resolution;
         }
 
-        SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
+        TripleDTO triple = new TripleDTO(uri, trimmedPropertyUri, propertyValue, sourceUri);
+        triple.setAnonymousSubject(anonymous);
+        DAOFactory.get().getDao(ScoreboardSparqlDAO.class).addUserTriple(triple, getUser());
 
-        // Get the distinct types that this subject currently has in repository.
-        // FIXME: the resulting list should also probably be complemented with any new types coming from the current save!
-        Collection<String> types = currSubj == null ? new HashSet<String>() : currSubj.getObjectValues(Predicates.RDF_TYPE);
-
-        String sourceUri = StringUtils.isBlank(this.sourceUri) ? (types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri())
-                : this.sourceUri;
-
-        addTripleByUser(uri, anonymous, trimmedPropertyUri, propertyValue, sourceUri);
-        updateDctModified(currSubj, types, sourceUri);
         addSystemMessage("Property successfully saved!");
-
         return resolution;
     }
 
@@ -467,74 +461,30 @@ public class FactsheetActionBean extends AbstractActionBean {
 
     /**
      *
-     * @throws DAOException
-     */
-    private void updateDctModified() throws DAOException {
-
-        // FIXME: the resulting types list should also probably be complemented with any new types coming from the current save!
-        SubjectDTO currSubj = DAOFactory.get().getDao(HelperDAO.class).getSubject(uri);
-        Collection<String> types = currSubj == null ? new HashSet<String>() : currSubj.getObjectValues(Predicates.RDF_TYPE);
-        String sourceUri = types.contains(Subjects.DATACUBE_DATA_SET) ? uri : getUser().getRegistrationsUri();
-
-        updateDctModified(currSubj, types, sourceUri);
-    }
-
-    /**
-     * Helper method for updating dcterms:modified if the given subject has been updated (i.e. triples added or deleted).
-     *
-     * @param currSubj The subject's DTO as it is currently in the repository.
-     * @param types The subject's RDF types.
-     * @param sourceUri The graph URI where the dcterms:modified should be updated.
-     * @throws DAOException if any sort of DB error happens
-     */
-    private void updateDctModified(SubjectDTO currSubj, Collection<String> types, String sourceUri) {
-
-        if (currSubj == null || StringUtils.isBlank(sourceUri)) {
-            return;
-        }
-
-        String dctModifiedSubjectUri = null;
-
-        if (types.contains(Subjects.DATACUBE_DATA_SET)) {
-            dctModifiedSubjectUri = uri;
-        } else if (types.contains(Subjects.DATACUBE_OBSERVATION)) {
-            if (currSubj != null) {
-                List<String> datasetUris = currSubj.getObjectValues(Predicates.DATACUBE_DATA_SET);
-                if (datasetUris != null && !datasetUris.isEmpty()) {
-                    dctModifiedSubjectUri = datasetUris.iterator().next();
-                }
-            }
-        } else if (uri.contains(CODELIST_SUBSTRING)) {
-            String tail = StringUtils.substringAfter(uri, CODELIST_SUBSTRING);
-            int i = tail.indexOf('/');
-            if (i < 0) {
-                dctModifiedSubjectUri = uri;
-            } else {
-                dctModifiedSubjectUri = StringUtils.substringBefore(uri, CODELIST_SUBSTRING) + CODELIST_SUBSTRING + tail.substring(0, i) ;
-            }
-        }
-
-        if (StringUtils.isNotBlank(dctModifiedSubjectUri)) {
-
-            try {
-                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(dctModifiedSubjectUri, new Date(), sourceUri);
-            } catch (DAOException e) {
-                LOGGER.error("Failed to update dcterms:modified", e);
-            }
-        }
-    }
-
-    /**
-     *
      * @return
      * @throws DAOException
      */
     public Resolution delete() throws DAOException {
 
-        deleteTripleByUser(uri, propertyUri, propertyValueMd5, sourceUri);
-        updateDctModified();
+        RedirectResolution resolution = new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+        if (StringUtils.isBlank(propertyUri) || StringUtils.isBlank(propertyValueMd5)) {
+            addWarningMessage("Property URI or value MD5 empty!");
+            return resolution;
+        }
 
-        return new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+        String trimmedPropertyUri = propertyUri.trim();
+        if (!URIUtil.isAbsoluteURI(trimmedPropertyUri)) {
+            addWarningMessage("Not a valid absolute URI: " + trimmedPropertyUri);
+            return resolution;
+        }
+
+        TripleDTO triple = new TripleDTO(uri, trimmedPropertyUri, null, sourceUri);
+        triple.setObjectMd5(propertyValueMd5);
+        triple.setAnonymousSubject(anonymous);
+
+        DAOFactory.get().getDao(ScoreboardSparqlDAO.class).deleteUserTriple(triple, getUser());
+        addSystemMessage("Property successfully deleted!");
+        return resolution;
     }
 
     /**
@@ -544,28 +494,26 @@ public class FactsheetActionBean extends AbstractActionBean {
      */
     public Resolution save() throws DAOException {
 
+        RedirectResolution resolution = new RedirectResolution(this.getClass(), "edit").addParameter("uri", uri);
+
+        if (StringUtils.isBlank(propertyUri) || StringUtils.isBlank(propertyValue)) {
+            addWarningMessage("Property URI or value empty!");
+            return resolution;
+        }
+
+        String trimmedPropertyUri = propertyUri.trim();
+        if (!URIUtil.isAbsoluteURI(trimmedPropertyUri)) {
+            addWarningMessage("Not a valid absolute URI: " + trimmedPropertyUri);
+            return resolution;
+        }
+
+        TripleDTO triple = new TripleDTO(uri, trimmedPropertyUri, propertyValue, sourceUri);
+        triple.setAnonymousSubject(anonymous);
         String oldValue = getContext().getRequestParameter("oldPropertyValueMd5");
-        deleteTripleByUser(uri, propertyUri, oldValue, sourceUri);
-        return add();
-    }
 
-    /**
-     *
-     * @param uri
-     * @param predicateUri
-     * @param objectMd5
-     * @param sourceUri
-     * @throws DAOException
-     */
-    private void deleteTripleByUser(String uri, String predicateUri, String objectMd5, String sourceUri) throws DAOException {
-
-        TripleDTO triple = new TripleDTO(uri, predicateUri, null);
-        triple.setObjectMd5(objectMd5);
-        triple.setSourceUri(sourceUri);
-
-        HelperDAO helperDao = factory.getDao(HelperDAO.class);
-        helperDao.deleteTriple(triple);
-        helperDao.updateUserHistory(getUser(), uri);
+        DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateUserTriple(triple, oldValue, getUser());
+        addSystemMessage("Property successfully saved!");
+        return resolution;
     }
 
     /**

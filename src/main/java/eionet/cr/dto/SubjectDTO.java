@@ -166,7 +166,6 @@ public class SubjectDTO implements Serializable {
      *
      * @param predicateUri
      * @param languages
-     * @param preferHitSource
      * @return
      */
     public Collection<ObjectDTO> getObjectsForSearchResultsDisplay(String predicateUri, List<String> languages) {
@@ -553,5 +552,36 @@ public class SubjectDTO implements Serializable {
         }
 
         return result;
+    }
+
+    /**
+     *
+     * @param rdfType
+     * @return
+     */
+    public boolean hasRdfType(String rdfType) {
+
+        List<String> values = this.getObjectValues(Predicates.RDF_TYPE);
+        return values != null && values.contains(rdfType);
+    }
+
+    /**
+     *
+     * @param predicateUri
+     * @param objectValue
+     * @return
+     */
+    public ObjectDTO getPredicateObject(String predicateUri, String objectValue) {
+
+        Collection<ObjectDTO> objects = getObjects(predicateUri);
+        if (objects != null && !objects.isEmpty()) {
+            for (ObjectDTO object : objects) {
+                if (object.getValue().equals(objectValue)) {
+                    return object;
+                }
+            }
+        }
+
+        return null;
     }
 }

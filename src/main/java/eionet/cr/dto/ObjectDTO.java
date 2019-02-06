@@ -321,9 +321,9 @@ public class ObjectDTO implements Serializable {
      */
     public String getSourceSmart() {
 
-        if (derivSourceUri != null && derivSourceUri.trim().length() > 0) {
+        if (StringUtils.isNotBlank(derivSourceUri)) {
             return derivSourceUri;
-        } else if (sourceUri != null && sourceUri.trim().length() > 0) {
+        } else if (StringUtils.isNotBlank(sourceUri)) {
             return sourceUri;
         } else {
             return null;

@@ -149,11 +149,11 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             // If this far, then lets update dataset or codelist modification date, depending on whether
             // we're uploading observations or a codelist.
             if (isObservationsUpload) {
-                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(targetDataset, new Date(), targetDataset);
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateSubjectModificationDate(targetDataset, new Date(), targetDataset);
             } else {
                 String graphUri = uploadType.getGraphUri();
                 String codelistUri = StringUtils.substringBeforeLast(graphUri, "/");
-                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateDcTermsModified(codelistUri, new Date(), graphUri);
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateSubjectModificationDate(codelistUri, new Date(), graphUri);
             }
 
             // Run post-import fixes.
