@@ -9,9 +9,11 @@ import java.util.Set;
 
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
+import eionet.cr.dto.TripleDTO;
 import eionet.cr.util.Pair;
 import eionet.cr.util.SortingRequest;
 import eionet.cr.util.pagination.PagingRequest;
+import eionet.cr.web.security.CRUser;
 import eionet.cr.web.util.ObservationFilter;
 
 /**
@@ -144,7 +146,7 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @throws DAOException
      *             Any sort of exception that happens is wrapped into this one.
      */
-    void updateDcTermsModified(String subjectUri, Date date, String graphUri) throws DAOException;
+    void updateSubjectModificationDate(String subjectUri, Date date, String graphUri) throws DAOException;
 
     /**
      * From the given subjects returns those that have the given property bound.
@@ -277,4 +279,10 @@ public interface ScoreboardSparqlDAO extends DAO {
      * @throws DAOException Any sort of exception that happens is wrapped into this one.
      */
     int getEarliestObservationYear(String indicatorUri, String datasetUri) throws DAOException;
+
+    void updateUserTriple(TripleDTO triple, String oldObjectValueMd5, CRUser user) throws DAOException;
+
+    void addUserTriple(TripleDTO triple, CRUser user) throws DAOException;
+
+    void deleteUserTriple(TripleDTO triple, CRUser user) throws DAOException;
 }

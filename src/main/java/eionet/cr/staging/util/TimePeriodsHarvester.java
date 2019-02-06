@@ -107,7 +107,7 @@ public class TimePeriodsHarvester {
             try {
                 Date date = new Date();
                 LOGGER.debug("Setting dcterms:modified of " + codelistUri + " to " + date);
-                ssDAO.updateDcTermsModified(codelistUri, date, codelistGraphUri);
+                ssDAO.updateSubjectModificationDate(codelistUri, date, codelistGraphUri);
             } catch (DAOException e) {
                 LOGGER.warn("Failed to update dcterms:modified of " + codelistUri, e);
             }
@@ -125,7 +125,7 @@ public class TimePeriodsHarvester {
                 try {
                     Date date = new Date();
                     LOGGER.debug("Setting dcterms:modified of " + codelistUri + " to " + date);
-                    ssDAO.updateDcTermsModified(codelistUri, date, codelistGraphUri);
+                    ssDAO.updateSubjectModificationDate(codelistUri, date, codelistGraphUri);
                 } catch (DAOException e) {
                     LOGGER.warn("Failed to update dcterms:modified of " + codelistUri, e);
                 }

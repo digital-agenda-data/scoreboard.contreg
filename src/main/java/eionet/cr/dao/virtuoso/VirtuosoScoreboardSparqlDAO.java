@@ -7,15 +7,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import eionet.cr.dto.SubjectDTO;
+import eionet.cr.dao.*;
+import eionet.cr.dto.*;
+import eionet.cr.util.*;
+import eionet.cr.web.security.CRUser;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -32,18 +30,8 @@ import org.openrdf.repository.RepositoryException;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
-import eionet.cr.dao.DAOException;
-import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dao.readers.CodelistExporter;
 import eionet.cr.dao.readers.SkosItemsReader;
-import eionet.cr.dto.SearchResultDTO;
-import eionet.cr.dto.SkosItemDTO;
-import eionet.cr.util.Bindings;
-import eionet.cr.util.Pair;
-import eionet.cr.util.SortOrder;
-import eionet.cr.util.SortingRequest;
-import eionet.cr.util.URIUtil;
-import eionet.cr.util.Util;
 import eionet.cr.util.pagination.PagingRequest;
 import eionet.cr.util.sesame.SPARQLQueryUtil;
 import eionet.cr.util.sesame.SesameUtil;
@@ -62,6 +50,9 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
     /** Static logger for this class. */
     private static final Logger LOGGER = Logger.getLogger(VirtuosoScoreboardSparqlDAO.class);
+
+    /** Substring by which URIs of codelists and their members are checked. */
+    private static final String CODELIST_SUBSTRING = "/codelist/";
 
     // @formatter:off
 
@@ -655,10 +646,10 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     /*
      * (non-Javadoc)
      *
-     * @see eionet.cr.dao.ScoreboardSparqlDAO#updateDcTermsModified(java.lang.String, java.util.Date, java.lang.String)
+     * @see eionet.cr.dao.ScoreboardSparqlDAO#updateSubjectModificationDate(java.lang.String, java.util.Date, java.lang.String)
      */
     @Override
-    public void updateDcTermsModified(String subjectUri, Date date, String graphUri) throws DAOException {
+    public void updateSubjectModificationDate(String subjectUri, Date date, String graphUri) throws DAOException {
 
         if (StringUtils.isBlank(subjectUri)) {
             throw new IllegalArgumentException("The subject URI must not be blank!");
@@ -670,7 +661,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             date = new Date();
         }
 
-        LOGGER.debug("Setting dcterms:modified of <" + subjectUri + "> in graph <" + graphUri + "> to this value: " + date);
+        LOGGER.debug(String.format("Updating modification date of <%s> in graph <%s> to %s", subjectUri, graphUri, date.toString()));
 
         RepositoryConnection repoConn = null;
         try {
@@ -695,7 +686,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
 
         } catch (RepositoryException e) {
             SesameUtil.rollback(repoConn);
-            throw new DAOException("Failed to update dcterms:modified of " + subjectUri, e);
+            throw new DAOException("Failed to update modification date of " + subjectUri, e);
         } finally {
             SesameUtil.close(repoConn);
         }
@@ -1160,8 +1151,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
                 }
 
                 updateCount += pstmt.executeUpdate();
-                if (updateCount > 0 &&!datasetUpdated) {
-                    updateDatasetModificationDate(conn, datasetUri, datasetGraphUri);
+                if (updateCount > 0 && !datasetUpdated) {
+                    updateSubjectModificationDate(conn, datasetUri, datasetGraphUri);
                     datasetUpdated = true;
                 }
             }
@@ -1180,50 +1171,43 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     /**
      *
      * @param conn
-     * @param datasetUri
-     * @param datasetGraphUri
+     * @param subjectUri
+     * @param graphUri
      * @throws SQLException
      */
-    private void updateDatasetModificationDate(Connection conn, String datasetUri, String datasetGraphUri) throws SQLException {
-
-        LOGGER.debug("Querying dcterms:modified graphs ...");
+    private void updateSubjectModificationDate(Connection conn, String subjectUri, String graphUri) throws SQLException {
 
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             pstmt = conn.prepareStatement("sparql select distinct ?g where {graph ?g {`iri(??)` `iri(??)` ?o}}");
-            pstmt.setString(1, datasetUri);
+            pstmt.setString(1, subjectUri);
             pstmt.setString(2, Predicates.DCTERMS_MODIFIED);
             rs = pstmt.executeQuery();
-            HashSet<String> dcTermsModifiedGraphs = new HashSet<String>();
+
+            HashSet<String> dctModifiedGraphs = new HashSet<String>();
             while (rs.next()) {
-                dcTermsModifiedGraphs.add(rs.getString(1));
+                dctModifiedGraphs.add(rs.getString(1));
             }
             SQLUtil.close(pstmt);
 
-            LOGGER.debug("Found these dcterms:modified graphs: " + dcTermsModifiedGraphs);
-
-            if (!dcTermsModifiedGraphs.isEmpty()) {
+            if (!dctModifiedGraphs.isEmpty()) {
                 pstmt = conn.prepareStatement(DELETE_SUBJECT_PREDICATE);
-                for (String graphUri : dcTermsModifiedGraphs) {
+                for (String gUri : dctModifiedGraphs) {
 
-                    LOGGER.debug("Deleting dcterms:modified from graph " + graphUri);
-
-                    pstmt.setString(1, graphUri);
-                    pstmt.setString(2, graphUri);
-                    pstmt.setString(3, datasetUri);
+                    pstmt.setString(1, gUri);
+                    pstmt.setString(2, gUri);
+                    pstmt.setString(3, subjectUri);
                     pstmt.setString(4, Predicates.DCTERMS_MODIFIED);
                     pstmt.executeUpdate();
                 }
                 SQLUtil.close(pstmt);
             }
 
-            LOGGER.debug("Inserting new dcterms:modified ...");
-
             pstmt = conn.prepareStatement("sparql prefix xsd: <http://www.w3.org/2001/XMLSchema#> "
                     + "insert into graph iri(??) {`iri(??)` `iri(??)` `xsd:dateTime(??)`}");
-            pstmt.setString(1, datasetGraphUri);
-            pstmt.setString(2, datasetUri);
+            pstmt.setString(1, graphUri);
+            pstmt.setString(2, subjectUri);
             pstmt.setString(3, Predicates.DCTERMS_MODIFIED);
             pstmt.setString(4, DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
             pstmt.executeUpdate();
@@ -1251,5 +1235,198 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         String value = executeUniqueResultSPARQL(sparql, new SingleObjectReader<String>());
         int result = NumberUtils.toInt(value, 0);
         return result;
+    }
+
+    @Override
+    public void updateUserTriple(TripleDTO triple, String oldObjectValueMd5, CRUser user) throws DAOException {
+
+        TripleDTO oldTriple = new TripleDTO(triple.getSubjectUri(), triple.getPredicateUri(), null, triple.getSourceUri());
+        oldTriple.setObjectMd5(oldObjectValueMd5);;
+        deleteUserTriple(oldTriple, user, false);
+
+        addUserTriple(triple, user);
+    }
+
+    @Override
+    public void addUserTriple(TripleDTO triple, CRUser user) throws DAOException {
+
+        if (user == null) {
+            throw new IllegalArgumentException("Given user object must be null!");
+        }
+
+        String sUri = triple.getSubjectUri();
+        String pUri = triple.getPredicateUri();
+        String oValue = triple.getObject();
+        String gUri = triple.getSourceUri();
+        boolean isAnonymousSubject = triple.isAnonymousSubject();
+
+        if (StringUtils.isBlank(sUri) || StringUtils.isBlank(pUri) || StringUtils.isBlank(oValue)) {
+            throw new IllegalArgumentException("Given triple must have no blank subject uri, predicate uri or object value!");
+        }
+
+        HelperDAO helperDAO = DAOFactory.get().getDao(HelperDAO.class);
+        SubjectDTO originalSubjectDTO = helperDAO.getSubject(sUri);
+
+        if (StringUtils.isBlank(gUri)) {
+            gUri = deriveGraphUriForUserTriple(originalSubjectDTO, pUri, user);
+        }
+
+        // Prepare blank subject DTO for collecting the triples about to be saved.
+        SubjectDTO newTriplesDTO = new SubjectDTO(sUri, isAnonymousSubject);
+
+        // URI of property (i.e. predicate) that is saved. Special case if it's cr:tag.
+        if (pUri.equals(Predicates.CR_TAG)) {
+
+            List<String> tags = Util.splitStringBySpacesExpectBetweenQuotes(oValue);
+            for (String tag : tags) {
+                ObjectDTO objectDTO = new ObjectDTO(tag, true);
+                objectDTO.setSourceUri(gUri);
+                newTriplesDTO.addObject(pUri, objectDTO);
+            }
+        } else {
+            // If saved property is not cr:tag, add saved predicate-object pair into subject DTO.
+            boolean isLiteral = !URLUtil.isURL(oValue);
+            ObjectDTO objectDTO = new ObjectDTO(oValue, isLiteral);
+            objectDTO.setSourceUri(gUri);
+            newTriplesDTO.addObject(pUri, objectDTO);
+        }
+
+        // Add saved triples into repository.
+        helperDAO.addTriples(newTriplesDTO);
+        helperDAO.updateUserHistory(user, sUri);
+
+        // Since user registrations URI was used as triple source, add it to HARVEST_SOURCE too
+        // (but set interval minutes to 0, to avoid it being background-harvested)
+        if (gUri != null && gUri.equals(user.getRegistrationsUri())) {
+            DAOFactory
+                    .get()
+                    .getDao(HarvestSourceDAO.class)
+                    .addSourceIgnoreDuplicate(
+                            HarvestSourceDTO.create(gUri, true, 0, user.getUserName()));
+        }
+
+        updateDownstreamModificationDate(originalSubjectDTO, gUri);
+    }
+
+    /**
+     *
+     * @param subjectDTO
+     * @param propertyUri
+     * @param user
+     * @return
+     */
+    private String deriveGraphUriForUserTriple(SubjectDTO subjectDTO, String propertyUri, CRUser user) {
+
+        String resultGraphUri = null;
+
+        // Find most frequently used graph for the already existing values of this property.
+        Collection<ObjectDTO> existingSubjectPropertyValues = subjectDTO.getObjects(propertyUri);
+        if (CollectionUtils.isNotEmpty(existingSubjectPropertyValues)) {
+            resultGraphUri = existingSubjectPropertyValues.stream().map(pv -> pv.getSourceUri()).collect(Collectors.groupingBy(s -> s, Collectors.counting())).
+                    entrySet().stream().max(Comparator.comparing(Map.Entry::getValue)).get().getKey();
+        }
+
+        // If no result graph derived yet, take that of the already existing rdfType=cube:Dataset triple.
+        if (StringUtils.isBlank(resultGraphUri)) {
+            ObjectDTO rdfTypeObject = subjectDTO.getPredicateObject(Predicates.RDF_TYPE, Subjects.DATACUBE_DATA_SET);
+            resultGraphUri = rdfTypeObject == null ? resultGraphUri : rdfTypeObject.getSourceUri();
+        }
+
+        // If no result graph derived yet, take that of the already existing rdfType=cube:Observation triple.
+        if (StringUtils.isBlank(resultGraphUri)) {
+            ObjectDTO rdfTypeObject = subjectDTO.getPredicateObject(Predicates.RDF_TYPE, Subjects.DATACUBE_OBSERVATION);
+            resultGraphUri = rdfTypeObject == null ? resultGraphUri : rdfTypeObject.getSourceUri();
+        }
+
+        // If no result graph derived yet and the subject is a codelist or codelist item, take the graph of the already
+        // existing skos:notation triple.
+        if (StringUtils.isBlank(resultGraphUri)) {
+            if (subjectDTO.getUri().contains(CODELIST_SUBSTRING)) {
+                ObjectDTO skosNotationObject = subjectDTO.getObject(Predicates.SKOS_NOTATION);
+                resultGraphUri = skosNotationObject == null ? resultGraphUri : skosNotationObject.getSourceUri();
+            }
+        }
+
+        return StringUtils.isNotBlank(resultGraphUri) ? resultGraphUri : user.getRegistrationsUri();
+    }
+
+    @Override
+    public void deleteUserTriple(TripleDTO triple, CRUser user) throws DAOException {
+        deleteUserTriple(triple, user, true);
+    }
+
+    /**
+     *
+     * @param triple
+     * @param user
+     * @param updateModificationDate
+     * @throws DAOException
+     */
+    private void deleteUserTriple(TripleDTO triple, CRUser user, boolean updateModificationDate) throws DAOException {
+
+        if (user == null) {
+            throw new IllegalArgumentException("Given user object must be null!");
+        }
+
+        String sUri = triple.getSubjectUri();
+        String pUri = triple.getPredicateUri();
+        String oMd5 = triple.getObjectMd5();
+        String gUri = triple.getSourceUri();
+
+        if (StringUtils.isBlank(sUri) || StringUtils.isBlank(pUri) || StringUtils.isBlank(oMd5) || StringUtils.isBlank(gUri)) {
+            throw new IllegalArgumentException("Given triple must have no blank subject uri, predicate uri, graph uri or object MD5 value!");
+        }
+
+        HelperDAO helperDao = DAOFactory.get().getDao(HelperDAO.class);
+        helperDao.deleteTriple(triple);
+        helperDao.updateUserHistory(user, sUri);
+
+        if (updateModificationDate) {
+            updateDownstreamModificationDate(helperDao.getSubject(sUri), gUri);
+        }
+    }
+
+    /**
+     *
+     * @param modifiedSubject
+     * @param graphUri
+     */
+    private void updateDownstreamModificationDate(SubjectDTO modifiedSubject, String graphUri) {
+
+        if (modifiedSubject == null || StringUtils.isBlank(graphUri)) {
+            return;
+        }
+
+        String uri = modifiedSubject.getUri();
+        Collection<String> types = modifiedSubject.getObjectValues(Predicates.RDF_TYPE);
+        String downstreamSubjectUri = null;
+
+        if (types.contains(Subjects.DATACUBE_DATA_SET)) {
+            downstreamSubjectUri = uri;
+        } else if (types.contains(Subjects.DATACUBE_OBSERVATION)) {
+            if (modifiedSubject != null) {
+                List<String> datasetUris = modifiedSubject.getObjectValues(Predicates.DATACUBE_DATA_SET);
+                if (datasetUris != null && !datasetUris.isEmpty()) {
+                    downstreamSubjectUri = datasetUris.iterator().next();
+                }
+            }
+        } else if (uri.contains(CODELIST_SUBSTRING)) {
+            String tail = StringUtils.substringAfter(uri, CODELIST_SUBSTRING);
+            int i = tail.indexOf('/');
+            if (i < 0) {
+                downstreamSubjectUri = uri;
+            } else {
+                downstreamSubjectUri = StringUtils.substringBefore(uri, CODELIST_SUBSTRING) + CODELIST_SUBSTRING + tail.substring(0, i) ;
+            }
+        }
+
+        if (StringUtils.isNotBlank(downstreamSubjectUri)) {
+
+            try {
+                DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateSubjectModificationDate(downstreamSubjectUri, new Date(), graphUri);
+            } catch (DAOException e) {
+                LOGGER.error("Failed to update downstream modification date", e);
+            }
+        }
     }
 }

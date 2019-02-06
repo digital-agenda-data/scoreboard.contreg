@@ -79,12 +79,26 @@ public class TripleDTO {
      *
      * @param subjectUri subject URI
      * @param predicateUri predicate Uri
-     * @param object Object value
+     * @param objectValue Object value
      */
-    public TripleDTO(String subjectUri, String predicateUri, String object) {
+    public TripleDTO(String subjectUri, String predicateUri, String objectValue) {
         this.subjectUri = subjectUri;
         this.predicateUri = predicateUri;
-        this.object = object;
+        this.object = objectValue;
+    }
+
+    /**
+     *
+     * @param subjectUri
+     * @param predicateUri
+     * @param objectValue
+     * @param graphUri
+     */
+    public TripleDTO(String subjectUri, String predicateUri, String objectValue, String graphUri) {
+        this.subjectUri = subjectUri;
+        this.predicateUri = predicateUri;
+        this.object = objectValue;
+        this.sourceUri = graphUri;
     }
 
     /**
