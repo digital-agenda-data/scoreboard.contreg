@@ -49,7 +49,7 @@
 :Codelist {
     [ xl:uri "'http://semantic.digital-agenda-data.eu/codelist/source/' & URLENCODE(LCASE(A2))"^^xl:Expr ] a skos:Concept ; a dad-class:Source ;
     skos:topConceptOf "URI('http://semantic.digital-agenda-data.eu/codelist/source')"^^xl:Expr ;
-    skos:notation "A2"^^xl:Expr ;
+    skos:notation "LCASE(A2)"^^xl:Expr ;
     skos:prefLabel "B2"^^xl:Expr ;
     skos:definition "C2"^^xl:Expr ;
     foaf:page "URI(D2)"^^xl:Expr ;

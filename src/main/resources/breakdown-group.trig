@@ -50,7 +50,7 @@
     [ xl:uri "'http://semantic.digital-agenda-data.eu/codelist/breakdown-group/' & URLENCODE(LCASE(A2))"^^xl:Expr ] a skos:Concept ; a dad-class:BreakdownGroup ;
     skos:topConceptOf "URI('http://semantic.digital-agenda-data.eu/codelist/breakdown-group')"^^xl:Expr ;
     skos:prefLabel "B2"^^xl:Expr ;
-    skos:notation "A2"^^xl:Expr ;
+    skos:notation "LCASE(A2)"^^xl:Expr ;
     skos:altLabel "C2"^^xl:Expr ;
     skos:definition "D2"^^xl:Expr ;
     rdfs:seeAlso "URI(E2)"^^xl:Expr ;

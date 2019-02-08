@@ -50,7 +50,7 @@
     [ xl:uri "'http://semantic.digital-agenda-data.eu/codelist/indicator-group/' & URLENCODE(LCASE(A2))"^^xl:Expr ] a skos:Concept ; a dad-class:IndicatorGroup ;
     skos:topConceptOf "URI('http://semantic.digital-agenda-data.eu/codelist/indicator-group')"^^xl:Expr ;
     skos:prefLabel "B2"^^xl:Expr ;
-    skos:notation "A2"^^xl:Expr ;
+    skos:notation "LCASE(A2)"^^xl:Expr ;
     dad-prop:order "C2"^^xl:Expr .
 
     [ xl:uri "http://semantic.digital-agenda-data.eu/codelist/indicator-group"]
