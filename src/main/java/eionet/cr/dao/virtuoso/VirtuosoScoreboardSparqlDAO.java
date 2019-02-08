@@ -1175,7 +1175,8 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      * @param graphUri
      * @throws SQLException
      */
-    private void updateSubjectModificationDate(Connection conn, String subjectUri, String graphUri) throws SQLException {
+    @Override
+    public void updateSubjectModificationDate(Connection conn, String subjectUri, String graphUri) throws SQLException {
 
         PreparedStatement pstmt = null;
         ResultSet rs = null;

@@ -13,6 +13,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import eionet.cr.dao.DAOException;
+import eionet.cr.dao.DAOFactory;
+import eionet.cr.dao.ScoreboardSparqlDAO;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -126,6 +129,9 @@ public class DatasetMigrationRunner extends Thread {
         // Import metadata.
         setAutoCommit(false);
         importMetadata(metadataGraphUri, packageDir, migrationDTO.isPrePurge());
+
+        // Update dataset modification date.
+        DAOFactory.get().getDao(ScoreboardSparqlDAO.class).updateSubjectModificationDate(sqlConn, metadataGraphUri, metadataGraphUri);
 
         // If we have reached this point without any exceptions, make a checkpoint.
         makeCheckpoint();
@@ -258,16 +264,6 @@ public class DatasetMigrationRunner extends Thread {
     private void importFile(File file, String graphUri) throws SQLException {
 
         LOGGER.debug(String.format("Importing file [%s] into graph [%s]", file.getAbsolutePath(), graphUri));
-
-//        RDFFormatLoader loader = new RDFFormatLoader(RDFFormat.TURTLE);
-//        HarvestSourceDAO dao = DAOFactory.get().getDao(HarvestSourceDAO.class);
-//        try {
-//            LOGGER.debug("Here we go...");
-//            dao.loadContent(file, loader, graphUri);
-//        } catch (DAOException e) {
-//            throw new CRRuntimeException(e);
-//        }
-
 
         String filePath = file.getAbsolutePath().replace('\\', '/');
         String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", filePath, graphUri, TTLP_MASK);

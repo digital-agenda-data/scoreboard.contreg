@@ -1,6 +1,8 @@
 package eionet.cr.dao;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -269,6 +271,8 @@ public interface ScoreboardSparqlDAO extends DAO {
     Pair<Integer, String>
             deleteObservations(String datasetUri, Collection<String> indicatorUris, Collection<String> timePeriodUris)
                     throws DAOException;
+
+    void updateSubjectModificationDate(Connection conn, String subjectUri, String graphUri) throws SQLException;
 
     /**
      * Returns earliest observation year of the given indicator in the given dataset.
