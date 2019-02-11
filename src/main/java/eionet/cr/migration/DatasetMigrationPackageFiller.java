@@ -123,6 +123,7 @@ public class DatasetMigrationPackageFiller extends Thread {
 
         File dumpFile = new File(packageDir, packageDir.getName() + DATA_FILE_SUFFIX);
         String dumpFilePath = dumpFile.getAbsolutePath().replace('\\', '/');
+        dumpFilePath = dumpFilePath.substring(dumpFilePath.indexOf('/'));
 
         String dataGraphUri = datasetUri.replace("/dataset/", "/data/");
         // String dataDumpSQL = String.format("DB.DBA.dump_one_graph('%s', '%s', %d)", dataGraphUri, dumpFilePath,

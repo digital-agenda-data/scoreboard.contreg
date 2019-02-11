@@ -266,6 +266,7 @@ public class DatasetMigrationRunner extends Thread {
         LOGGER.debug(String.format("Importing file [%s] into graph [%s]", file.getAbsolutePath(), graphUri));
 
         String filePath = file.getAbsolutePath().replace('\\', '/');
+        filePath = filePath.substring(filePath.indexOf('/'));
         String sql = String.format("DB.DBA.TTLP(file_to_string_output('%s'), '', '%s', %d)", filePath, graphUri, TTLP_MASK);
 
         Statement stmt = null;
