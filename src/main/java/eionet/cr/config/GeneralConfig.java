@@ -131,6 +131,8 @@ public final class GeneralConfig {
     /** */
     public static final String MIGRATABLE_CR_INSTANCES = "migratable.cr.instances";
 
+    public static final String UPLOADS_DIR = "uploads.dir";
+
     /** */
     public static final int SEVERITY_INFO = 1;
     public static final int SEVERITY_CAUTION = 2;

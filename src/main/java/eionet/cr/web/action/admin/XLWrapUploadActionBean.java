@@ -9,6 +9,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
+import eionet.cr.common.UserUploadFilePath;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.FileBean;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -124,12 +125,12 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             }
         }
 
-        File spreadsheetFile = TempFilePathGenerator.generate("xls");
+        File spreadsheetFile = UserUploadFilePath.get(getUser(), uploadType.name() + ".xls");
         try {
             fileBean.save(spreadsheetFile);
         } catch (IOException e) {
-            addCautionMessage("Failed saving the upload file to a temporary location!");
-            LOGGER.error("Failed saving " + fileBean.getFileName() + " to " + spreadsheetFile);
+            addCautionMessage("Failed saving the uploaded file!");
+            LOGGER.error("Failed saving " + fileBean.getFileName() + " to " + spreadsheetFile, e);
             return new ForwardResolution(JSP);
         }
 
@@ -186,8 +187,6 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             LOGGER.error(e.getMessage(), e);
             addCautionMessage("An unexpected technical error occurred!");
             return new ForwardResolution(JSP);
-        } finally {
-            FileDeletionJob.register(spreadsheetFile);
         }
     }
 
