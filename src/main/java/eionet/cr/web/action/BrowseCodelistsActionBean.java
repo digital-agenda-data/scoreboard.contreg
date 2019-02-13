@@ -1,41 +1,30 @@
 package eionet.cr.web.action;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletResponse;
-
-import eionet.cr.common.Predicates;
-import eionet.cr.dto.SearchResultDTO;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.StreamingResolution;
-import net.sourceforge.stripes.action.UrlBinding;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-
 import at.jku.xlwrap.common.XLWrapException;
+import eionet.cr.common.Predicates;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
+import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
 import eionet.cr.util.xlwrap.XLWrapUtil;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
+import eionet.cr.web.security.CRUser;
+import net.sourceforge.stripes.action.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.log4j.Logger;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.util.*;
 
 /**
  * An action bean for browsing codelists starting with a particular URI prefix.
@@ -68,6 +57,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
     private String codelistUri;
     private String datasetUri;
     private String freeText;
+    private List<String> templateColumnNames;
 
     /**
      *
@@ -89,12 +79,26 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
         }
 
         if (StringUtils.isNotBlank(codelistUri)) {
+
             try {
                 codelistItems = dao.getCodelistItems(codelistUri, datasetUri, freeText);
             } catch (DAOException e) {
                 LOGGER.error("Error when retrieving items of this codelist: " + codelistUri, e);
-                addWarningMessage("A technical error occurred when when retrieving items of the selected codelist"
+                addWarningMessage("A technical error occurred when retrieving items of the selected codelist"
                         + e.getMessage());
+            }
+
+            XLWrapUploadType codelistType = XLWrapUploadType.getByCodelistUri(codelistUri);
+            if (codelistType != null) {
+                try {
+                    templateColumnNames = XLWrapUtil.getTemplateColumnNames(codelistType);
+                } catch (Exception e) {
+                    LOGGER.error("Error when retrieving codelist template column names", e);
+                    addWarningMessage("A technical error occurred when retrieving codelist template column names");
+                }
+            } else {
+                LOGGER.error("Failed to find codelist upload type by this codelist URI: " + codelistUri);
+                addWarningMessage("A technical error occurred when detecting codelist type from codelist URI");
             }
         }
 
@@ -112,6 +116,62 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
             addWarningMessage("No codelist selected!");
             return new ForwardResolution(JSP);
         }
+    }
+
+    /**
+     *
+     * @return
+     */
+    public Resolution createItem() {
+
+        if (StringUtils.isBlank(codelistUri)) {
+            LOGGER.error(getContext().getEventName() + ": found no codelist URI in request!");
+            addWarningMessage("An unexpected technical error occurred!");
+            return new RedirectResolution(getClass());
+        }
+
+        RedirectResolution resolution = new RedirectResolution(getClass()).addParameter("codelistUri", this.codelistUri);
+
+        XLWrapUploadType codelistType = XLWrapUploadType.getByCodelistUri(codelistUri);
+        if (codelistType != null) {
+        } else {
+            LOGGER.error("Failed to find codelist upload type by this codelist URI: " + codelistUri);
+            addWarningMessage("A technical error occurred when detecting codelist type!");
+            return resolution;
+        }
+
+        Map<Integer, String> columnsMap = new HashMap<>();
+        HttpServletRequest request = getContext().getRequest();
+        Enumeration paramNames = request.getParameterNames();
+        String colParamPrefix = "col_";
+        while (paramNames.hasMoreElements()) {
+            String paramName = paramNames.nextElement().toString();
+            if (paramName.startsWith(colParamPrefix)) {
+                int colIndex = NumberUtils.toInt(StringUtils.substringAfter(paramName, colParamPrefix), -1);
+                if (colIndex >= 0) {
+                    columnsMap.put(colIndex, request.getParameter(paramName));
+                }
+            }
+        }
+
+        List<String> colValues = new ArrayList<>();
+        for (int i = 0; i < columnsMap.size(); i++) {
+            colValues.add(StringUtils.trimToEmpty(columnsMap.get(i)));
+        }
+
+        try {
+            int resourceCount = XLWrapUtil.importCodelistItem(codelistType, colValues);
+            if (resourceCount > 0) {
+                addSystemMessage("Item successfully created in the below list!");
+            } else {
+                addWarningMessage("Failed to create the codelist item!");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to create the codelist item", e);
+            addWarningMessage("A technical error occurred when trying to create the codelist item!");
+        }
+
+        return resolution;
     }
 
     /**
@@ -288,5 +348,13 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
         SearchResultDTO<Pair<String, String>> searchResult =
                 dao.getDistinctDatasets(isUserLoggedIn(), null, null, LABEL_PREDICATES);
         return searchResult == null ? new ArrayList<Pair<String, String>>() : searchResult.getItems();
+    }
+
+    public List<String> getTemplateColumnNames() {
+        return templateColumnNames;
+    }
+
+    public boolean isModifyPermitted() {
+        return getUser() != null && CRUser.hasPermission(getContext().getRequest().getSession(), "/registrations", "u");
     }
 }

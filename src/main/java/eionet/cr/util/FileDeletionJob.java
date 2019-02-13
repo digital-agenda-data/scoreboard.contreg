@@ -21,6 +21,14 @@
 
 package eionet.cr.util;
 
+import eionet.cr.common.JobScheduler;
+import eionet.cr.common.TempFilePathGenerator;
+import eionet.cr.config.GeneralConfig;
+import org.apache.log4j.Logger;
+import org.quartz.*;
+
+import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletContextListener;
 import java.io.File;
 import java.io.FileFilter;
 import java.text.ParseException;
@@ -28,20 +36,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-
-import org.apache.log4j.Logger;
-import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
-import org.quartz.JobExecutionException;
-import org.quartz.SchedulerException;
-import org.quartz.StatefulJob;
-
-import eionet.cr.common.JobScheduler;
-import eionet.cr.common.TempFilePathGenerator;
-import eionet.cr.config.GeneralConfig;
 
 /**
  * Background job that silently deletes CR's temporary files in the background. Files must be registered to this job to get deleted.
@@ -149,7 +143,6 @@ public class FileDeletionJob implements ServletContextListener, StatefulJob {
     /**
      *
      * @param file
-     * @param marker
      */
     public static synchronized void register(File file) {
 

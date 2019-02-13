@@ -1,13 +1,12 @@
 package eionet.cr.util.xlwrap;
 
+import eionet.cr.common.CRRuntimeException;
+import eionet.cr.common.Subjects;
+import org.apache.commons.lang.WordUtils;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
-
-import org.apache.commons.lang.WordUtils;
-
-import eionet.cr.common.CRRuntimeException;
-import eionet.cr.common.Subjects;
 
 public enum XLWrapUploadType {
 
@@ -165,6 +164,23 @@ public enum XLWrapUploadType {
         XLWrapUploadType[] values = XLWrapUploadType.values();
         for (int i = 0; i < values.length; i++) {
             if (values[i].getGraphUri().equals(graphUri)) {
+                return values[i];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     *
+     * @param codelistUri
+     * @return
+     */
+    public static XLWrapUploadType getByCodelistUri(String codelistUri) {
+
+        XLWrapUploadType[] values = XLWrapUploadType.values();
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].getGraphUri().startsWith(codelistUri)) {
                 return values[i];
             }
         }

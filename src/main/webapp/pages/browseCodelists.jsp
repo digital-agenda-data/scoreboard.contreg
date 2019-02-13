@@ -17,6 +17,23 @@
                             return true;
                         });
 
+                        // Actions for the display/closing of the "Change dataset status" popup
+                        $("#btnCreateCodelistItem").click(function() {
+                            $('#codelistItemCreationDialog').dialog('option','width', 800);
+                            $('#codelistItemCreationDialog').dialog('open');
+                            return false;
+                        });
+
+                        $('#codelistItemCreationDialog').dialog({
+                            autoOpen: false,
+                            width: 800
+                        });
+
+                        $("#closeCodelistItemCreationDialog").click(function() {
+                            $('#codelistItemCreationDialog').dialog("close");
+                            return true;
+                        });
+
                     });
             } ) ( jQuery );
         // ]]>
@@ -45,6 +62,7 @@
                 </stripes:select>&nbsp;
                 <stripes:submit name="metadata" value="Codelist metadata" title="Go to the factsheet about the metadata of the selected codelist."/>&nbsp;
                 <stripes:submit name="export" value="Excel export" title="Download the selected codelist as an MS Excel file."/>
+                <c:if test="${actionBean.modifyPermitted}"><input type="button" id="btnCreateCodelistItem" name="btnAddItem" value="Add item ..."/></c:if>
             </div>
 
             <div>
@@ -90,6 +108,41 @@
                 </display:column>
 
             </display:table>
+        </div>
+    </c:if>
+
+    <c:if test="${actionBean.modifyPermitted}">
+        <div id="codelistItemCreationDialog" title="Codelist item creation">
+
+            <div class="tip-msg">
+                <strong>Tip</strong>
+                <p><small>Create an item in this codelist: <stripes:link href="/factsheet.action" target="_blank"><c:out value="${actionBean.codelistUri}"/>
+                    <stripes:param name="uri" value="${actionBean.codelistUri}"/>
+                </stripes:link><br/>Fill the inputs just as you would fill them in spreadsheet upload template!</small></p>
+            </div>
+
+            <stripes:form beanclass="${actionBean['class'].name}" method="post">
+
+                <table>
+                    <c:forEach items="${actionBean.templateColumnNames}" var="colName" varStatus="colNameLoop">
+                        <tr>
+                            <td style="padding-right:5px">
+                                <label class="question ${fn:endsWith(colName, 'notation') ? 'required' : ''}" for="col_${colNameLoop.index}"><c:out value="${colName}"/>:</label>
+                            </td>
+                            <td>
+                                <input type="text" id="col_${colNameLoop.index}" name="col_${colNameLoop.index}" ${fn:endsWith(colName, 'notation') ? 'required' : ''} size="65"/>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </table>
+
+                <div style="padding-top:10px">
+                    <stripes:hidden name="codelistUri" value="${actionBean.codelistUri}"/>
+                    <input type="submit" name="createItem" value="Create"/>
+                    <input type="button" id="closeCodelistItemCreationDialog" value="Cancel"/>
+                </div>
+
+            </stripes:form>
         </div>
     </c:if>
 

@@ -1,39 +1,38 @@
 package eionet.cr.util.xlwrap;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Properties;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
-import org.openrdf.OpenRDFException;
-import org.openrdf.rio.RDFHandler;
-
 import at.jku.xlwrap.common.XLWrapException;
 import at.jku.xlwrap.exec.XLWrapMaterializer;
 import at.jku.xlwrap.map.MapTemplate;
 import at.jku.xlwrap.map.MappingParser;
 import at.jku.xlwrap.map.XLWrapMapping;
-
+import at.jku.xlwrap.spreadsheet.Sheet;
+import at.jku.xlwrap.spreadsheet.Workbook;
+import at.jku.xlwrap.spreadsheet.WorkbookFactory;
+import at.jku.xlwrap.spreadsheet.XLWrapEOFException;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
-
+import eionet.cr.common.CRRuntimeException;
 import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
 import eionet.cr.util.jena.JenaUtil;
+import jxl.JXLException;
+import jxl.write.Label;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.openrdf.OpenRDFException;
+import org.openrdf.rio.RDFHandler;
+
+import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Utility class for importing an MS Excel or OpenDocument spreadsheet into the RDF model and triple store, using a given
@@ -58,6 +57,22 @@ public class XLWrapUtil {
      */
     private XLWrapUtil() {
         // Empty constructor.
+    }
+
+    /**
+     *
+     * @param uploadType
+     * @param spreadsheetFile
+     * @param targetDataset
+     * @param clear
+     * @return
+     * @throws IOException
+     * @throws XLWrapException
+     * @throws OpenRDFException
+     */
+    public static int importMapping(XLWrapUploadType uploadType, File spreadsheetFile, String targetDataset, boolean clear)
+            throws IOException, XLWrapException, OpenRDFException {
+        return importMapping(uploadType, spreadsheetFile, targetDataset, clear, null);
     }
 
     /**
@@ -231,5 +246,75 @@ public class XLWrapUtil {
         }
 
         return map;
+    }
+
+    /**
+     *
+     * @param xlWrapUploadType
+     * @return
+     * @throws XLWrapException
+     * @throws XLWrapEOFException
+     */
+    public static List<String> getTemplateColumnNames(XLWrapUploadType xlWrapUploadType) throws XLWrapException, XLWrapEOFException {
+
+        File spreadsheetTemplate = xlWrapUploadType.getSpreadsheetTemplate();
+        Workbook workbook = WorkbookFactory.getWorkbook(spreadsheetTemplate.toURI().toString());
+        if (workbook == null) {
+            throw new CRRuntimeException("Unable to find such a workbook: " + spreadsheetTemplate);
+        }
+
+        try {
+            List<String> resultList = new ArrayList<>();
+            Sheet sheet = workbook.getSheet(0);
+            int colCount = sheet.getColumns();
+            for (int i = 0; i < colCount; i++) {
+                resultList.add(sheet.getCell(i, 0).getText());
+            }
+
+            return resultList;
+        } finally {
+            workbook.close();
+        }
+    }
+
+    /**
+     *
+     * @param itemType
+     * @param itemColumnValues
+     * @return
+     * @throws IOException
+     * @throws XLWrapException
+     * @throws OpenRDFException
+     */
+    public static int importCodelistItem(XLWrapUploadType itemType, List<String> itemColumnValues)
+            throws IOException, XLWrapException, OpenRDFException, JXLException {
+
+        if (CollectionUtils.isEmpty(itemColumnValues)) {
+            return 0;
+        }
+
+        jxl.Workbook templateWorkbook = jxl.Workbook.getWorkbook(itemType.getSpreadsheetTemplate());
+
+        File targetFile = TempFilePathGenerator.generate(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
+        WritableWorkbook targetWorkbook = null;
+        try {
+            targetWorkbook = jxl.Workbook.createWorkbook(targetFile, templateWorkbook);
+            WritableSheet sheet = targetWorkbook.getSheet(0);
+            for (int col = 0; col < itemColumnValues.size(); col++) {
+
+                String colValue = itemColumnValues.get(col);
+                Label label = new Label(col, 1, StringUtils.trimToEmpty(colValue));
+                sheet.addCell(label);
+            }
+
+            targetWorkbook.write();
+            targetWorkbook.close();
+            return importMapping(itemType, targetFile, null, false);
+        } finally {
+            if (targetWorkbook != null) {
+                try { targetWorkbook.close(); } catch (Exception e) {}
+            }
+            FileDeletionJob.register(targetFile);
+        }
     }
 }

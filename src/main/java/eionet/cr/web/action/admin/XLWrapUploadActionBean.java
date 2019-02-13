@@ -1,45 +1,35 @@
 package eionet.cr.web.action.admin;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
-import javax.servlet.http.HttpSession;
-
-import eionet.cr.common.UserUploadFilePath;
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.FileBean;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.RedirectResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
-import net.sourceforge.stripes.validation.ValidationMethod;
-
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.openrdf.OpenRDFException;
-
 import at.jku.xlwrap.common.XLWrapException;
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
-import eionet.cr.common.TempFilePathGenerator;
+import eionet.cr.common.UserUploadFilePath;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.HelperDAO;
 import eionet.cr.dao.ScoreboardSparqlDAO;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.staging.util.TimePeriodsHarvester;
-import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
 import eionet.cr.util.xlwrap.StatementListener;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
 import eionet.cr.util.xlwrap.XLWrapUtil;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.factsheet.ObjectsInSourceActionBean;
+import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.openrdf.OpenRDFException;
+
+import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Action bean for uploading an MS Excel or OpenDocument spreadsheet file into the RDF model and triple store. Pre-configured types
@@ -167,7 +157,7 @@ public class XLWrapUploadActionBean extends AbstractActionBean {
             addSystemMessage(stmtListener.getSubjects().size()
                     + " items of selected type successfully imported!\n Click on on the below link to explore them further.");
 
-            // Update the uploaded graph attribute in session and redirect to defaulkt event.
+            // Update the uploaded graph attribute in session and redirect to default event.
             getContext().setSessionAttribute(UPLOADED_GRAPH_ATTR, isObservationsUpload ? dataGraphUri : uploadType.getGraphUri());
             return new RedirectResolution(getClass());
 

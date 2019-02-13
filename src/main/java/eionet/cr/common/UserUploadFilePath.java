@@ -6,7 +6,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Date;
 
 /**
