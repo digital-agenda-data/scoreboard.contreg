@@ -1,7 +1,5 @@
 <%@ include file="/pages/common/taglibs.jsp"%>
 
-<%@page import="eionet.cr.web.util.BaseUrl"%>
-
 <stripes:layout-definition>
     <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 
@@ -34,6 +32,10 @@
             <script type="text/javascript" src="<c:url value="/scripts/pageops.js"/>"></script>
             <script type="text/javascript" src="<c:url value="/scripts/prototype.js"/>"></script>
             <script type="text/javascript" src="<c:url value="/scripts/map.js"/>"></script>
+
+            <c:if test="${not empty initParam.trackingJsFile && !fn:contains(initParam.trackingJsFile, '${') && fn:contains(initParam.trackingJsFile, '.js')}">
+                <script type="text/javascript" src="<c:url value="/scripts/${initParam.trackingJsFile}"/>"></script>
+            </c:if>
 
             <stripes:layout-component name="head"/>
         </head>

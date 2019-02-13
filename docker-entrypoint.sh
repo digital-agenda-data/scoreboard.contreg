@@ -43,6 +43,10 @@ function replace_propr() {
     sed -i "s#CR_INSTANCES#${CR_INSTANCES}#g" $PROPR_FILE
   fi
 
+  if [ -n "$CR_TRACKING_JS_FILE" ]; then
+    sed -i "s#CR_TRACKING_JS_FILE#${CR_TRACKING_JS_FILE}#g" $PROPR_FILE
+  fi
+
 }
 
 
