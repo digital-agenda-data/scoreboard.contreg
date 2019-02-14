@@ -32,6 +32,7 @@
             <script type="text/javascript" src="<c:url value="/scripts/pageops.js"/>"></script>
             <script type="text/javascript" src="<c:url value="/scripts/prototype.js"/>"></script>
             <script type="text/javascript" src="<c:url value="/scripts/map.js"/>"></script>
+            <script type="text/javascript" src="<c:url value="/scripts/cookie-consent.js"/>"></script>
 
             <c:if test="${not empty initParam.trackingJsFile && !fn:contains(initParam.trackingJsFile, '${') && fn:contains(initParam.trackingJsFile, '.js')}">
                 <script type="text/javascript" src="<c:url value="/scripts/${initParam.trackingJsFile}"/>"></script>

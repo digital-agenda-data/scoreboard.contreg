@@ -713,3 +713,46 @@ table.datatable tr.even {
     display: inline-block;
     text-align: right;
 }
+
+.cookie-consent {
+    background-color: #EBF6FC;
+    border: thin solid #23527c;
+    width:100%;
+    position:fixed;
+    bottom:0;
+    z-index:10;
+}
+
+.cookie-consent p {
+    margin: 0.5em 1em;
+}
+
+.cookie-consent button {
+    display: inline;
+    margin-left: 5px;
+    color: #fff;
+    padding: 4px 12px;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: normal;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    touch-action: manipulation;
+    cursor: pointer;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.cookie-consent .btn-success {
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+}
+
+.cookie-consent .btn-danger {
+    background-color: #d9534f;
+    border-color: #d43f3a;
+}
