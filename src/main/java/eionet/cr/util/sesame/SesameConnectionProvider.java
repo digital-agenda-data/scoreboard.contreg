@@ -1,24 +1,20 @@
 package eionet.cr.util.sesame;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.text.MessageFormat;
-
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.sql.DataSource;
-
+import eionet.cr.common.CRRuntimeException;
+import eionet.cr.config.GeneralConfig;
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
-
 import virtuoso.sesame2.driver.VirtuosoRepository;
 import virtuoso.sesame2.driver.VirtuosoRepositoryConnection;
-import eionet.cr.common.CRRuntimeException;
-import eionet.cr.config.GeneralConfig;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.text.MessageFormat;
 
 /**
  *
@@ -114,10 +110,11 @@ public final class SesameConnectionProvider {
     /**
      * @return the readWriteDataSource
      */
-    private static synchronized DataSource getReadWriteDataSource() {
+    public static synchronized DataSource getReadWriteDataSource() {
 
         if (readWriteDataSource == null) {
-            readWriteDataSource = lookupDataSource(READWRITE_DATASOURCE_NAME);
+            readWriteDataSource = createDataSource(GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_USR),
+                    GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_PWD));
         }
         return readWriteDataSource;
     }
@@ -125,28 +122,38 @@ public final class SesameConnectionProvider {
     /**
      * @return the readOnlyDataSource
      */
-    private static synchronized DataSource getReadOnlyDataSource() {
+    public static synchronized DataSource getReadOnlyDataSource() {
 
         if (readOnlyDataSource == null) {
-            readOnlyDataSource = lookupDataSource(READONLY_DATASOURCE_NAME);
+            readOnlyDataSource = createDataSource(GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_ROUSR),
+                    GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_ROPWD));
         }
         return readOnlyDataSource;
     }
 
     /**
      *
-     * @param dataSourceName
+     * @param usr
+     * @param pwd
      * @return
      */
-    private static DataSource lookupDataSource(String dataSourceName) {
+    private static DataSource createDataSource(String usr, String pwd) {
 
-        try {
-            Context initContext = new InitialContext();
-            Context context = (Context) initContext.lookup("java:comp/env");
-            return (javax.sql.DataSource) context.lookup(dataSourceName);
-        } catch (NamingException e) {
-            return null;
-        }
+        String drv = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_DRV);
+        String url = GeneralConfig.getRequiredProperty(GeneralConfig.VIRTUOSO_DB_URL);
+
+        BasicDataSource dataSource = new BasicDataSource();
+        dataSource.setDriverClassName(drv);
+        dataSource.setUrl(url);
+        dataSource.setUsername(usr);
+        dataSource.setPassword(pwd);
+
+        dataSource.setMaxTotal(GeneralConfig.getIntProperty(GeneralConfig.VIRTUOSO_DB_POOL_MAX_ACTIVE, 100));
+        dataSource.setMaxIdle(GeneralConfig.getIntProperty(GeneralConfig.VIRTUOSO_DB_POOL_MAX_IDLE, 30));
+        dataSource.setInitialSize(GeneralConfig.getIntProperty(GeneralConfig.VIRTUOSO_DB_POOL_MAX_INIT_SIZE, 5));
+        dataSource.setMaxWaitMillis((long) GeneralConfig.getIntProperty(GeneralConfig.VIRTUOSO_DB_POOL_MAX_WAIT_MS, 10000));
+
+        return dataSource;
     }
 
     /**

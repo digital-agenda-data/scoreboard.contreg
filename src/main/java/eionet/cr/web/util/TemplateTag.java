@@ -1,11 +1,10 @@
 package eionet.cr.web.util;
 
-import java.io.File;
+import org.apache.commons.io.FileUtils;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.tagext.TagSupport;
-
-import org.apache.commons.io.FileUtils;
+import java.io.File;
 
 /**
  * Custom tag for inserting template file
@@ -21,7 +20,15 @@ public class TemplateTag extends TagSupport {
         file = s;
     }
 
+    @Override
     public int doEndTag() throws JspException {
+
+        System.out.println("\n\n\n");
+        System.out.println("_________________________________________________________");
+        System.out.println("_________________________________________________________");
+        System.out.println("_________________________________________________________");
+        System.out.println("\n\n\n");
+
         try {
             if (file != null && file.length() > 0) {
                 String folderPath = pageContext.getServletContext().getInitParameter("templateCacheFolder");

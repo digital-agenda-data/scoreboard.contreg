@@ -20,25 +20,19 @@
  */
 package eionet.cr.web.security;
 
-import static eionet.cr.web.util.WebConstants.AFTER_LOGIN_EVENT;
-import static eionet.cr.web.util.WebConstants.LOGIN_ACTION;
-import static eionet.cr.web.util.WebConstants.USER_SESSION_ATTR;
+import edu.yale.its.tp.cas.client.filter.CASFilter;
+import eionet.cr.web.util.CrCasFilterConfig;
+import org.apache.log4j.Logger;
 
+import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
-import edu.yale.its.tp.cas.client.filter.CASFilter;
-import eionet.cr.web.util.CrCasFilterConfig;
+import static eionet.cr.web.util.WebConstants.*;
 
 /**
  *
@@ -46,6 +40,9 @@ import eionet.cr.web.util.CrCasFilterConfig;
  *
  */
 public class EionetCASFilter extends CASFilter {
+
+    /** */
+    private static final Logger LOGGER = Logger.getLogger(EionetCASFilter.class);
 
     /** */
     private static String casLoginUrl = null;
@@ -56,7 +53,10 @@ public class EionetCASFilter extends CASFilter {
      *
      * @see edu.yale.its.tp.cas.client.filter.CASFilter#init(javax.servlet.FilterConfig)
      */
+    @Override
     public void init(FilterConfig config) throws ServletException {
+
+        LOGGER.debug(getClass().getSimpleName() + " initializing");
 
         CrCasFilterConfig filterConfig = CrCasFilterConfig.getInstance(config);
 
@@ -72,6 +72,7 @@ public class EionetCASFilter extends CASFilter {
      * @see edu.yale.its.tp.cas.client.filter.CASFilter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse,
      * javax.servlet.FilterChain)
      */
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain fc) throws ServletException, IOException {
 
         if (request.getParameter("action") != null && !request.getParameter("action").equalsIgnoreCase("list_services")) {
@@ -220,6 +221,7 @@ class CASFilterChain implements FilterChain {
 
     private boolean doNext = false;
 
+    @Override
     public void doFilter(ServletRequest request, ServletResponse response) {
         doNext = true;
     }

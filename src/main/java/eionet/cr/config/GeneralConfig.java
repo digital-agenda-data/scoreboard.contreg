@@ -20,13 +20,23 @@
  */
 package eionet.cr.config;
 
-import java.io.IOException;
+import org.apache.commons.configuration2.ConfigurationLookup;
+import org.apache.commons.configuration2.PropertiesConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
+import org.apache.commons.configuration2.interpol.InterpolatorSpecification;
+import org.apache.commons.configuration2.interpol.Lookup;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -34,6 +44,9 @@ import org.apache.commons.logging.LogFactory;
  *
  */
 public final class GeneralConfig {
+
+    /** */
+    private static final Logger LOGGER = Logger.getLogger(GeneralConfig.class);
 
     /** */
     public static final String BUNDLE_NAME = "cr";
@@ -51,8 +64,6 @@ public final class GeneralConfig {
     /** */
     public static final String XMLCONV_LIST_CONVERSIONS_URL = "xmlconv.listConversions.url";
     public static final String XMLCONV_CONVERT_URL = "xmlconv.convert.url";
-    public static final String XMLCONV_CONVERT_PUSH_URL = "xmlconv.convertPush.url";
-    public static final String XMLCONV_XSL_URL = "xmlconv.xsl.url";
 
     /** */
     public static final String MAIL_SYSADMINS = "mail.sysAdmins";
@@ -88,6 +99,12 @@ public final class GeneralConfig {
     public static final String VIRTUOSO_DB_ROUSR = "virtuoso.db.rousr";
     public static final String VIRTUOSO_DB_ROPWD = "virtuoso.db.ropwd";
 
+    /** */
+    public static final String VIRTUOSO_DB_POOL_MAX_ACTIVE = "virtuoso.db.pool.maxActive";
+    public static final String VIRTUOSO_DB_POOL_MAX_IDLE = "virtuoso.db.pool.maxIdle";
+    public static final String VIRTUOSO_DB_POOL_MAX_INIT_SIZE = "virtuoso.db.pool.initialSize";
+    public static final String VIRTUOSO_DB_POOL_MAX_WAIT_MS = "virtuoso.db.pool.maxWaitMillis";
+
     /**
      * General ruleSet name for inferencing. Schema sources are added into that ruleset.
      * */
@@ -111,10 +128,13 @@ public final class GeneralConfig {
     public static final String APPLICATION_DISPLAY_NAME = "application.displayName";
 
     /** */
-    public static final String USE_CENTRAL_AUTHENTICATION_SERVICE = "useCentralAuthenticationService";
+    public static final String TEMPLATE_JSP_FILE_NAME = "templateJsp";
 
     /** */
-    public static final String ENABLE_EEA_FUNCTIONALITY = "enableEEAFunctionality";
+    public static final String EEA_TEMPLATE_FOLDER = "application.eea.template.folder";
+
+    /** */
+    public static final String USE_CENTRAL_AUTHENTICATION_SERVICE = "useCentralAuthenticationService";
 
     /** */
     public static final String PING_WHITELIST = "pingWhitelist";
@@ -131,7 +151,15 @@ public final class GeneralConfig {
     /** */
     public static final String MIGRATABLE_CR_INSTANCES = "migratable.cr.instances";
 
+    /** */
     public static final String UPLOADS_DIR = "uploads.dir";
+
+    /** */
+    public static final String LIQUIBASE_CHANGELOG = "liquibase.changelog";
+    public static final String LIQUIBASE_CONTEXTS = "liquibase.contexts";
+
+    /** */
+    public static final String TRACKING_JAVASCRIPT_FILE = "tracking.js.file";
 
     /** */
     public static final int SEVERITY_INFO = 1;
@@ -140,9 +168,6 @@ public final class GeneralConfig {
 
     /** */
     public static final String HARVESTER_URI = getRequiredProperty(APPLICATION_HOME_URL) + "/harvester";
-
-    /** */
-    private static Log logger = LogFactory.getLog(GeneralConfig.class);
 
     /** */
     private static Properties properties = null;
@@ -156,9 +181,11 @@ public final class GeneralConfig {
 
     /** */
     private static void init() {
-        properties = new Properties();
+
+        LOGGER.debug(GeneralConfig.class.getSimpleName() + " initializing");
+
         try {
-            properties.load(GeneralConfig.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE_NAME));
+            properties = getInterpolatedProperties();
 
             // trim all the values (i.e. we don't allow preceding or trailing
             // white space in property values)
@@ -166,14 +193,61 @@ public final class GeneralConfig {
                 entry.setValue(entry.getValue().toString().trim());
             }
 
-        } catch (IOException e) {
-            logger.fatal("Failed to load properties from " + PROPERTIES_FILE_NAME, e);
+        } catch (Exception e) {
+            LOGGER.fatal("Failed to load properties from " + PROPERTIES_FILE_NAME, e);
         }
     }
 
     /**
      *
-     * @param name
+     * @return
+     * @throws ConfigurationException
+     */
+    private static Properties getInterpolatedProperties() throws ConfigurationException {
+
+        URL propsResource = GeneralConfig.class.getClassLoader().getResource(PROPERTIES_FILE_NAME);
+        if (propsResource == null) {
+            return null;
+        }
+
+        ArrayList<Lookup> defaultLookups = new ArrayList();
+
+        String envPropsFilePath = System.getProperty("cr.external.props");
+        if (!StringUtils.isBlank(envPropsFilePath)) {
+
+            File envPropsFile = new File(envPropsFilePath);
+            if (envPropsFile.exists() && envPropsFile.isFile()) {
+                PropertiesConfiguration envConfig = new Configurations().properties(envPropsFile);
+                defaultLookups.add(new ConfigurationLookup(envConfig));
+            }
+        }
+
+        Map<String, Lookup> prefixLookups = ConfigurationInterpolator.getDefaultPrefixLookups();
+        defaultLookups.add(prefixLookups.get("sys"));
+        defaultLookups.add(prefixLookups.get("env"));
+
+        InterpolatorSpecification spec = (new InterpolatorSpecification.Builder()).withPrefixLookups(prefixLookups)
+                .withDefaultLookups(defaultLookups).create();
+        ConfigurationInterpolator interpolator = ConfigurationInterpolator.fromSpecification(spec);
+
+        PropertiesConfiguration propConfig = new Configurations().properties(propsResource);
+        propConfig.setInterpolator(interpolator);
+
+        Properties interpolatedProperties = new Properties();
+        Iterator<String> keys = propConfig.getKeys();
+        while (keys != null && keys.hasNext()) {
+
+            String key = keys.next();
+            String value = propConfig.getString(key);
+            interpolatedProperties.setProperty(key, value);
+        }
+
+        return interpolatedProperties;
+    }
+
+    /**
+     *
+     * @param key
      * @return
      */
     public static synchronized String getProperty(String key) {

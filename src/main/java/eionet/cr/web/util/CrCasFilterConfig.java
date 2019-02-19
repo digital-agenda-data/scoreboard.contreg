@@ -20,16 +20,14 @@
  */
 package eionet.cr.web.util;
 
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.ResourceBundle;
-import java.util.concurrent.ConcurrentHashMap;
+import edu.yale.its.tp.cas.client.filter.CASFilter;
+import eionet.cr.config.GeneralConfig;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletContext;
-
-import edu.yale.its.tp.cas.client.filter.CASFilter;
-import eionet.cr.config.GeneralConfig;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * An implementation of {@link FilterConfig} that reads configs from property file.
@@ -68,6 +66,7 @@ public final class CrCasFilterConfig implements FilterConfig {
      *
      * @see javax.servlet.FilterConfig#getFilterName()
      */
+    @Override
     public String getFilterName() {
         return this.defaultConfig.getFilterName();
     }
@@ -77,6 +76,7 @@ public final class CrCasFilterConfig implements FilterConfig {
      *
      * @see javax.servlet.FilterConfig#getInitParameter(java.lang.String)
      */
+    @Override
     public String getInitParameter(String parameterKey) {
         return this.initParamMap.get(parameterKey);
     }
@@ -86,6 +86,7 @@ public final class CrCasFilterConfig implements FilterConfig {
      *
      * @see javax.servlet.FilterConfig#getInitParameterNames()
      */
+    @Override
     public Enumeration<String> getInitParameterNames() {
         return this.initParamMap.keys();
     }
@@ -95,6 +96,7 @@ public final class CrCasFilterConfig implements FilterConfig {
      *
      * @see javax.servlet.FilterConfig#getServletContext()
      */
+    @Override
     public ServletContext getServletContext() {
         return this.defaultConfig.getServletContext();
     }
@@ -119,10 +121,11 @@ public final class CrCasFilterConfig implements FilterConfig {
     private static synchronized void initFilterParams(FilterConfig defaultConfig) {
 
         crInitParamsMap = new ConcurrentHashMap<String, String>();
-        ResourceBundle resourceBundle = ResourceBundle.getBundle(GeneralConfig.BUNDLE_NAME);
 
-        for (CRInitParameterKey initParameterKey : CRInitParameterKey.values()) {
-            crInitParamsMap.put(initParameterKey.getParameterKey(), resourceBundle.getString(initParameterKey.getParameterKey()));
+        for (CRInitParameterKey initParamKey : CRInitParameterKey.values()) {
+            String key = initParamKey.getParameterKey();
+            String value = GeneralConfig.getProperty(key);
+            crInitParamsMap.put(key, value);
         }
     }
 

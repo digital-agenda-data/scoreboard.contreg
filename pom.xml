@@ -100,13 +100,9 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.0.2</version>
                 <configuration>
-                    <filters>
-                        <filter>${basedir}/${env}.properties</filter>
-                    </filters>
                     <webResources>
                         <resource>
                             <directory>${basedir}/src/main/webapp/META-INF</directory>
-                            <filtering>true</filtering>
                             <targetPath>META-INF</targetPath>
                             <includes>
                                 <include>context.xml</include>
@@ -114,7 +110,6 @@
                         </resource>
                         <resource>
                             <directory>${basedir}/src/main/webapp/WEB-INF</directory>
-                            <filtering>true</filtering>
                             <targetPath>WEB-INF</targetPath>
                             <includes>
                                 <include>web.xml</include>
@@ -122,7 +117,6 @@
                         </resource>
                         <resource>
                             <directory>${basedir}/src/main/webapp/pages/common</directory>
-                            <filtering>true</filtering>
                             <targetPath>pages/common</targetPath>
                             <includes>
                                 <include>dropdownmenus.txt</include>
@@ -257,7 +251,7 @@
             </resource>
         </resources>
 
-        <!-- resources for the main code -->
+        <!-- resources for the test code -->
 
         <testResources>
             <testResource>
@@ -310,6 +304,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-dbcp2</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+        <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
             <version>1.6</version>
@@ -320,11 +319,6 @@
             <version>3.2</version>
         </dependency>
         <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.1</version>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.0</version>
@@ -333,6 +327,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>2.4</version>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
@@ -351,20 +350,20 @@
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.5</version>
-            <scope>provided</scope>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.0.1</version>
+            <!--<scope>provided</scope>-->
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
-            <version>1.1.0</version>
+            <groupId>javax.servlet.jsp.jstl</groupId>
+            <artifactId>javax.servlet.jsp.jstl-api</artifactId>
+            <version>1.2.1</version>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jsp-api</artifactId>
-            <version>2.0</version>
-            <scope>provided</scope>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>javax.servlet.jsp-api</artifactId>
+            <version>2.3.0</version>
+            <!--<scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>cas</groupId>
@@ -395,6 +394,12 @@
             <groupId>displaytag</groupId>
             <artifactId>displaytag</artifactId>
             <version>1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>mysql</groupId>
@@ -459,7 +464,7 @@
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
-            <version>1.7.0</version>
+            <version>1.9.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

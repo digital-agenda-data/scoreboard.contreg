@@ -5,64 +5,6 @@
      version="2.4">
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-    <!-- context parameters -->
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-
-    <display-name>${application.displayName}</display-name>
-
-    <context-param>
-        <param-name>appDispName</param-name>
-        <param-value>${application.displayName}</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>templateJsp</param-name>
-        <param-value>${templateJsp}</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>trackingJsFile</param-name>
-        <param-value>${tracking.js.file}</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>templateCacheFolder</param-name>
-        <param-value>${application.eea.template.folder}</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>useCentralAuthenticationService</param-name>
-        <param-value>${useCentralAuthenticationService}</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>enableEEAFunctionality</param-name>
-        <param-value>${enableEEAFunctionality}</param-value>
-    </context-param>
-
-    <!-- Liquibase configuration -->
-
-    <context-param>
-        <param-name>liquibase.changelog</param-name>
-        <param-value>sql/liquibase-virtuoso-db-struct.xml</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>liquibase.datasource</param-name>
-        <param-value>java:comp/env/jdbc/readWriteRepo</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>liquibase.onerror.fail</param-name>
-        <param-value>true</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>liquibase.contexts</param-name>
-        <param-value>production</param-value>
-    </context-param>
-
-    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <!-- filters -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
@@ -156,7 +98,7 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
     <listener>
-        <listener-class>eionet.cr.liquibase.CRLiquibaseServletListener</listener-class>
+        <listener-class>eionet.cr.web.context.CRServletContextListener</listener-class>
     </listener>
     <listener>
         <listener-class>eionet.cr.web.util.ApplicationCache</listener-class>
