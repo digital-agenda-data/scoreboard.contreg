@@ -18,15 +18,10 @@ COPY . $CR_BASE/build
 
 RUN cd $CR_BASE/build \
  && cp docker.properties local.properties \
- && sed -i "/^\s*application.homeDir/c\application.homeDir\=${CR_HOME}" local.properties \
  && mvn clean install -Dmaven.test.skip=true \
- && cp -pr target/cr-das $CATALINA_HOME/webapps/data \
- && cp $CR_BASE/build/docker-entrypoint.sh /docker-entrypoint.sh 
+ && cp -pr target/cr-das $CATALINA_HOME/webapps/data
 
 VOLUME  ${CR_HOME}
-
-ENTRYPOINT ["/docker-entrypoint.sh"]
-
 
 CMD ["catalina.sh", "run"]
 
