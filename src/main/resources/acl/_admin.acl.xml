@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<acl description="ACL that control access to admin-only functionality">
+    <entries>
+        <entry type="object">
+            <principal id="cr_admin" type="localgroup"/>
+            <permissions>
+                <permission id="a"/>
+            </permissions>
+        </entry>
+    </entries>
+</acl>

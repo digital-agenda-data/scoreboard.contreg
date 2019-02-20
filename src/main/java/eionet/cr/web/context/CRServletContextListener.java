@@ -1,6 +1,7 @@
 package eionet.cr.web.context;
 
 import eionet.cr.common.CRRuntimeException;
+import eionet.cr.config.ConfigUtils;
 import eionet.cr.config.GeneralConfig;
 import eionet.cr.util.sesame.SesameConnectionProvider;
 import eionet.liquibase.VirtuosoDatabase;
@@ -10,28 +11,20 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
-import org.apache.commons.configuration2.ConfigurationLookup;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
-import org.apache.commons.configuration2.interpol.InterpolatorSpecification;
-import org.apache.commons.configuration2.interpol.Lookup;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.sql.Connection;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -60,90 +53,18 @@ public class CRServletContextListener implements ServletContextListener {
         LOGGER.debug(getClass().getSimpleName() + " initializing");
 
         try {
-            initProperties();
+            ConfigUtils.interpolatePropertyFiles(Arrays.asList(PROP_FILES));
         } catch (Exception e) {
             LOGGER.error("Failed to initialize properties", e);
         }
 
         initServletContextParams(servletContextEvent);
         initLiquibase();
-    }
 
-    /**
-     *
-     */
-    private void initProperties() throws ConfigurationException {
-
-        if (PROP_FILES == null || PROP_FILES.length == 0) {
-            return;
-        }
-
-        String envPropsFilePath = System.getProperty("cr.external.props");
-        if (StringUtils.isBlank(envPropsFilePath)) {
-            return;
-        }
-
-        File envPropsFile = new File(envPropsFilePath);
-        if (!envPropsFile.exists() || !envPropsFile.isFile()) {
-            return;
-        }
-
-        PropertiesConfiguration envConfig = new Configurations().properties(envPropsFile);
-        Map<String, Lookup> prefixLookups = ConfigurationInterpolator.getDefaultPrefixLookups();
-        ArrayList<Lookup> defaultLookups = new ArrayList();
-
-        defaultLookups.add(new ConfigurationLookup(envConfig));
-        defaultLookups.add(prefixLookups.get("sys"));
-        defaultLookups.add(prefixLookups.get("env"));
-
-        InterpolatorSpecification spec = (new InterpolatorSpecification.Builder()).withPrefixLookups(prefixLookups)
-                .withDefaultLookups(defaultLookups).create();
-        ConfigurationInterpolator interpolator = ConfigurationInterpolator.fromSpecification(spec);
-
-        for (String propFileName : PROP_FILES) {
-            try {
-                initPropertyFile(propFileName, interpolator);
-            } catch (Exception e) {
-                LOGGER.warn(String.format("Failed to init propety file %s: %s", propFileName, e.toString()));
-            }
-        }
-    }
-
-    /**
-     *
-     * @param propFileName
-     * @param interpolator
-     */
-    private void initPropertyFile(String propFileName, ConfigurationInterpolator interpolator) throws URISyntaxException, ConfigurationException, IOException {
-
-        URL propsResource = getClass().getClassLoader().getResource(propFileName);
-        if (propsResource == null) {
-            return;
-        }
-
-        PropertiesConfiguration propConfig = new Configurations().properties(propsResource);
-        propConfig.setInterpolator(interpolator);
-
-        Properties interpolatedProperties = new Properties();
-        Iterator<String> keys = propConfig.getKeys();
-        while (keys != null && keys.hasNext()) {
-
-            String key = keys.next();
-            String value = propConfig.getString(key);
-            interpolatedProperties.setProperty(key, value);
-        }
-
-        File propsFile = new File(propsResource.toURI());
-        if (!propsFile.exists() || !propsFile.isFile()) {
-            return;
-        }
-
-        OutputStream out = null;
         try {
-            out = new FileOutputStream(propsFile);
-            interpolatedProperties.store(out, "Interpolated");
-        } finally {
-            IOUtils.closeQuietly(out);
+            initAcls();
+        } catch (Exception e) {
+            LOGGER.error("Failed to initialize ACL resources", e);
         }
     }
 
@@ -203,7 +124,61 @@ public class CRServletContextListener implements ServletContextListener {
         }
     }
 
+    /**
+     *
+     * @throws URISyntaxException
+     */
+    private void initAcls() throws URISyntaxException, IOException {
+
+        LOGGER.debug("Initializing ACL resources");
+
+        URL resource = getClass().getClassLoader().getResource("acl/");
+        LOGGER.debug("ACL resources URL = " + resource);
+        if (resource == null) {
+            return;
+        }
+
+        File resourceDir = new File(resource.toURI());
+        if (!resourceDir.exists() || !resourceDir.isDirectory()) {
+            return;
+        }
+
+        File appHomeDir = new File(GeneralConfig.getRequiredProperty(GeneralConfig.APP_HOME_DIR));
+        if (!appHomeDir.exists() || !appHomeDir.isDirectory()) {
+            LOGGER.error("Found no such app-home directory: " + appHomeDir);
+            return;
+        }
+
+        File aclTargetDir = new File(appHomeDir, "acl");
+        if (!aclTargetDir.exists() || !aclTargetDir.isDirectory()) {
+            LOGGER.debug("Creating target ACL directory: " + aclTargetDir);
+            aclTargetDir.mkdir();
+        }
+
+        File[] aclFiles = resourceDir.listFiles();
+        if (aclFiles != null && aclFiles.length > 0) {
+            for (File aclFile : aclFiles) {
+
+                String fileName = aclFile.getName();
+                File destFile = new File(aclTargetDir, fileName);
+                if (fileName.contains(".prms") || fileName.contains(".permissions") || !destFile.exists()) {
+                    LOGGER.debug(String.format("Copying %s to %s", fileName, destFile));
+                    FileUtils.copyFile(aclFile, destFile);
+                } else {
+                    LOGGER.debug(String.format("%s already exists in destination, so not overwriting it", fileName));
+                }
+            }
+        } else {
+            LOGGER.debug("Found no ACL resource files in " + resourceDir);
+        }
+    }
+
+    /**
+     *
+     * @param servletContextEvent
+     */
     @Override
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
+        LOGGER.debug(getClass().getSimpleName() + " context shutdown ...");
     }
 }

@@ -20,21 +20,9 @@
  */
 package eionet.cr.config;
 
-import org.apache.commons.configuration2.ConfigurationLookup;
-import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
-import org.apache.commons.configuration2.interpol.ConfigurationInterpolator;
-import org.apache.commons.configuration2.interpol.InterpolatorSpecification;
-import org.apache.commons.configuration2.interpol.Lookup;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -185,7 +173,8 @@ public final class GeneralConfig {
         LOGGER.debug(GeneralConfig.class.getSimpleName() + " initializing");
 
         try {
-            properties = getInterpolatedProperties();
+            LOGGER.debug("Getting interpolated properties from " + PROPERTIES_FILE_NAME);
+            properties = ConfigUtils.getInterpolatedProperties(PROPERTIES_FILE_NAME);
 
             // trim all the values (i.e. we don't allow preceding or trailing
             // white space in property values)
@@ -196,53 +185,6 @@ public final class GeneralConfig {
         } catch (Exception e) {
             LOGGER.fatal("Failed to load properties from " + PROPERTIES_FILE_NAME, e);
         }
-    }
-
-    /**
-     *
-     * @return
-     * @throws ConfigurationException
-     */
-    private static Properties getInterpolatedProperties() throws ConfigurationException {
-
-        URL propsResource = GeneralConfig.class.getClassLoader().getResource(PROPERTIES_FILE_NAME);
-        if (propsResource == null) {
-            return null;
-        }
-
-        ArrayList<Lookup> defaultLookups = new ArrayList();
-
-        String envPropsFilePath = System.getProperty("cr.external.props");
-        if (!StringUtils.isBlank(envPropsFilePath)) {
-
-            File envPropsFile = new File(envPropsFilePath);
-            if (envPropsFile.exists() && envPropsFile.isFile()) {
-                PropertiesConfiguration envConfig = new Configurations().properties(envPropsFile);
-                defaultLookups.add(new ConfigurationLookup(envConfig));
-            }
-        }
-
-        Map<String, Lookup> prefixLookups = ConfigurationInterpolator.getDefaultPrefixLookups();
-        defaultLookups.add(prefixLookups.get("sys"));
-        defaultLookups.add(prefixLookups.get("env"));
-
-        InterpolatorSpecification spec = (new InterpolatorSpecification.Builder()).withPrefixLookups(prefixLookups)
-                .withDefaultLookups(defaultLookups).create();
-        ConfigurationInterpolator interpolator = ConfigurationInterpolator.fromSpecification(spec);
-
-        PropertiesConfiguration propConfig = new Configurations().properties(propsResource);
-        propConfig.setInterpolator(interpolator);
-
-        Properties interpolatedProperties = new Properties();
-        Iterator<String> keys = propConfig.getKeys();
-        while (keys != null && keys.hasNext()) {
-
-            String key = keys.next();
-            String value = propConfig.getString(key);
-            interpolatedProperties.setProperty(key, value);
-        }
-
-        return interpolatedProperties;
     }
 
     /**

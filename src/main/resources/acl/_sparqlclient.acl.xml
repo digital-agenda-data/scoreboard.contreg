@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<acl description="ACL for all kinds of registrations (i.e. adding harevst source, registering URL, etc)">
+    <entries>
+         <entry type="object">
+            <principal id="authenticated" type="user"/>
+            <permissions>
+                <permission id="v"/>
+            </permissions>
+        </entry>
+    </entries>
+</acl>

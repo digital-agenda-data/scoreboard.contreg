@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<acl description="project folder permissions">
+<entries>
+<entry type="object">
+<principal id="authenticated" type="user"/>
+<permissions>
+<permission id="v"/>
+<permission id="i"/>
+</permissions>
+</entry>
+<entry type="object">
+<principal id="anonymous" type="user"/>
+<permissions>
+<permission id="v"/>
+</permissions>
+</entry>
+<entry type="object">
+<principal id="cr_admin" type="localgroup"/>
+<permissions>
+<permission id="v"/>
+<permission id="d"/>
+<permission id="i"/>
+</permissions>
+</entry>
+<entry type="doc">
+<principal id="cr_admin" type="localgroup"/>
+<permissions>
+<permission id="v"/>
+<permission id="d"/>
+<permission id="i"/>
+<permission id="u"/>
+</permissions>
+</entry>
+<entry type="doc">
+<principal id="owner" type="user"/>
+<permissions>
+<permission id="v"/>
+<permission id="i"/>
+<permission id="u"/>
+<permission id="d"/>
+<permission id="c"/>
+</permissions>
+</entry>
+<entry type="doc">
+<principal id="authenticated" type="user"/>
+<permissions>
+<permission id="v"/>
+</permissions>
+</entry>
+<entry type="doc">
+<principal id="anonymous" type="user"/>
+<permissions>
+<permission id="v"/>
+</permissions>
+</entry>
+</entries>
+</acl>

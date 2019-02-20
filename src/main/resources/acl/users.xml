@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<local-users>
+	<user username="admin" password="notsosecret" fullname="Administrative user"/>
+	<user username="auser" password="notsosecret" fullname="Just another user"/>
+</local-users>
