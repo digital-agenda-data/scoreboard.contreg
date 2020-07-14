@@ -24,6 +24,7 @@ package eionet.cr.web.action.admin.staging;
 import java.io.File;
 import java.util.List;
 
+import eionet.cr.staging.util.VirtuosoUtil;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.RedirectResolution;
@@ -291,7 +292,10 @@ public class StagingDatabaseActionBean extends AbstractActionBean {
 
             if (StringUtils.isBlank(dbName)) {
                 addGlobalValidationError("Database name must not be blank!");
-            } else if (DAOFactory.get().getDao(StagingDatabaseDAO.class).exists(dbName)) {
+            } else if (!VirtuosoUtil.isLegalDatabaseName(dbName)) {
+                addGlobalValidationError("Database name must contain only latin letters, numbers and underscores, and must not start with a number!");
+            }
+            else if (DAOFactory.get().getDao(StagingDatabaseDAO.class).exists(dbName)) {
                 addGlobalValidationError("A database with this name already exists: " + dbName);
             }
         }
@@ -346,7 +350,8 @@ public class StagingDatabaseActionBean extends AbstractActionBean {
      * @return the suggested db name
      */
     public String getSuggestedDbName() {
-        return StringUtils.isBlank(fileName) ? "" : StringUtils.substringBefore(fileName, ".");
+        String s = StringUtils.isBlank(fileName) ? "" : StringUtils.substringBefore(fileName, ".");
+        return VirtuosoUtil.sanitizedDatabaseName(s);
     }
 
     /**

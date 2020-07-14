@@ -31,6 +31,7 @@ import com.healthmarketscience.jackcess.DataType;
 import com.healthmarketscience.jackcess.Index;
 import com.healthmarketscience.jackcess.IndexData.ColumnDescriptor;
 import com.healthmarketscience.jackcess.Table;
+import org.apache.commons.lang.StringUtils;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -175,6 +176,38 @@ public final class VirtuosoUtil {
 
         String sanitizedTableName = tableName.trim().replaceAll("\\s+", "_").replace('-', '_');
         return new StringBuilder(dbName).append(".").append(dbUser).append(".").append(sanitizedTableName).toString();
+    }
+
+    /**
+     * Retursin the string sanitized for legal Virtuoso database name.
+     * @param dbName
+     * @return
+     */
+    public static String sanitizedDatabaseName(String dbName) {
+
+        if (StringUtils.isBlank(dbName)) {
+            return StringUtils.trimToEmpty(dbName);
+        }
+
+        // Replace all spaces with underscore.
+        dbName = dbName.replace(' ', '_');
+
+        // Replace all non-alphanumeric and non-underscores  with underscore.
+        dbName = dbName.replaceAll("[^a-zA-Z0-9_]", "_");
+
+        // Replace more than 2 continuous underscores with just one.
+        dbName = dbName.replaceAll("_{2,}", "_");
+
+        // Ensure the string does not start with a number.
+        if (Character.isDigit(dbName.charAt(0))) {
+            dbName = "_" + dbName;
+        }
+
+        return dbName;
+    }
+
+    public static boolean isLegalDatabaseName(String dbName) {
+        return StringUtils.isNotBlank(dbName) && dbName.matches("[a-zA-Z0-9_]+") && !Character.isDigit(dbName.charAt(0));
     }
 
     /**
