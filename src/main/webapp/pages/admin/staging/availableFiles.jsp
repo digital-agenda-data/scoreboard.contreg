@@ -185,16 +185,6 @@
                         <td><stripes:file name="uploadFile" id="fileInput" size="80"/></td>
                     </tr>
                     <tr>
-                        <td><stripes:label for="txtName" class="question">Name:</stripes:label></td>
-                        <td>
-                            <stripes:text name="newFileName" id="txtName" size="80"/><br/>
-                            <span style="font-size:0.75em;color:#666666">
-                                Name you wish to give to the file. If not given, the uploaded file's name will be used.<br/>
-                                If a while with such a name already exists, the new file's name will prepended with a number,  e.g. (1).
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
                         <td>&nbsp;</td>
                         <td style="padding-top:10px">
                             <stripes:submit name="upload" value="Upload"/>

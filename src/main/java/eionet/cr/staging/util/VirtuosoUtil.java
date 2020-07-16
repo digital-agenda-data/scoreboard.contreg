@@ -21,6 +21,8 @@
 
 package eionet.cr.staging.util;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -192,7 +194,7 @@ public final class VirtuosoUtil {
         // Replace all spaces with underscore.
         dbName = dbName.replace(' ', '_');
 
-        // Replace all non-alphanumeric and non-underscores  with underscore.
+        // Replace all non-alphanumeric and non-underscores with underscore.
         dbName = dbName.replaceAll("[^a-zA-Z0-9_]", "_");
 
         // Replace more than 2 continuous underscores with just one.

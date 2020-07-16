@@ -138,6 +138,7 @@ public class FileDownloader extends Thread {
         }
 
         // Attempt detection from the response's "Content-Disposition" header.
+        String fileName = null;
         String contentDisposition = connection.getHeaderField("Content-Disposition");
         if (StringUtils.isNotBlank(contentDisposition)) {
             String s = StringUtils.substringAfter(contentDisposition, "filename");
@@ -148,24 +149,23 @@ public class FileDownloader extends Thread {
                     if (StringUtils.isNotBlank(s)) {
                         s = StringUtils.substringBefore(s, "\"");
                         if (StringUtils.isNotBlank(s)) {
-                            return s.trim();
+                            fileName = s.trim();
                         }
                     }
                 }
             }
         }
 
-        // // Attempt detection from the response's "Content-Location" header.
-        // String contentLocation = connection.getHeaderField("Content-Location");
-        // if (StringUtils.isNotBlank(contentLocation)) {
-        // String s = new File(contentLocation).getName();
-        // if (StringUtils.isNotBlank(s)) {
-        // return s.trim();
-        // }
-        // }
-        //
-        // Attempt detection from the URL itself.
+        if (StringUtils.isNotBlank(fileName)) {
+            fileName = fileName.replaceAll("[^a-zA-Z0-9-._ ]", "_");
 
+            // Replace more than 2 continuous underscores with just one.
+            fileName = fileName.replaceAll("_{2,}", "_");
+
+            return  fileName;
+        }
+
+        // Attempt detection from the URL itself.
         String s = StringUtils.substringAfterLast(connection.getURL().toString(), "#");
         if (StringUtils.isBlank(s)) {
             s = StringUtils.substringAfterLast(connection.getURL().toString(), "/");

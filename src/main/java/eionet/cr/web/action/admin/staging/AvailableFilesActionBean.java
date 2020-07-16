@@ -259,14 +259,18 @@ public class AvailableFilesActionBean extends AbstractActionBean {
      */
     public Resolution extract() throws IOException {
 
+        RedirectResolution resolution = new RedirectResolution(getClass());
+
         String fileName = getContext().getRequestParameter("extract");
         if (StringUtils.isBlank(fileName)) {
             addGlobalValidationError("No file selected!");
+            return resolution;
         }
 
         File file = new File(FileDownloader.FILES_DIR, fileName);
         if (!file.exists() || !file.isFile()) {
             addGlobalValidationError("Found no such file to extract from: " + fileName);
+            return resolution;
         }
 
         if (extractEntries == null || extractEntries.isEmpty()) {
@@ -276,7 +280,12 @@ public class AvailableFilesActionBean extends AbstractActionBean {
             for (String entry : extractEntries) {
                 String newName = getContext().getRequestParameter(DigestUtils.md5Hex(entry) + "_newName");
                 if (StringUtils.isNotBlank(newName)) {
-                    entryToNewName.put(entry, newName);
+                    if (!isValidNewFileName(newName)) {
+                        addWarningMessage("Renamed file name must contain only spaces, digits, latin letters, underscores, dots and minuses!");
+                        return resolution;
+                    } else {
+                        entryToNewName.put(entry, newName);
+                    }
                 } else {
                     entryToNewName.put(entry, entry);
                 }
@@ -290,24 +299,7 @@ public class AvailableFilesActionBean extends AbstractActionBean {
             addSystemMessage(msg);
         }
 
-        return new RedirectResolution(getClass());
-    }
-
-    /**
-     * Validate "upload" event.
-     */
-    @ValidationMethod(on = {"upload"})
-    public void validateUpload() {
-
-        // Check the user-supplied new file name is valid.
-        if (StringUtils.isNotBlank(newFileName)) {
-            String s = newFileName.replaceAll("[^a-zA-Z0-9-._]+", "");
-            if (!s.equals(newFileName)) {
-                addGlobalValidationError("Only digits, latin letters, underscores, dots and minuses allowed in file name!");
-            }
-        }
-
-        getContext().setSourcePageResolution(list());
+        return resolution;
     }
 
     /**
@@ -323,9 +315,8 @@ public class AvailableFilesActionBean extends AbstractActionBean {
 
         // Check the user-supplied new file name is valid.
         if (StringUtils.isNotBlank(newFileName)) {
-            String s = newFileName.replaceAll("[^a-zA-Z0-9-._]+", "");
-            if (!s.equals(newFileName)) {
-                addGlobalValidationError("Only digits, latin letters, underscores, dots and minuses allowed in file name!");
+            if (!isValidNewFileName(newFileName)) {
+                addGlobalValidationError("Only spaces, digits, latin letters, underscores, dots and minuses allowed in file name!");
             }
         }
 
@@ -498,4 +489,18 @@ public class AvailableFilesActionBean extends AbstractActionBean {
         this.extractEntries = extractEntries;
     }
 
+    /**
+     *
+     * @param fileName
+     * @return
+     */
+    private boolean isValidNewFileName(String fileName) {
+
+        if (StringUtils.isBlank(fileName)) {
+            return false;
+        }
+
+        String s = fileName.replaceAll("[^a-zA-Z0-9-._ ]+", "");
+        return s.equals(fileName);
+    }
 }
