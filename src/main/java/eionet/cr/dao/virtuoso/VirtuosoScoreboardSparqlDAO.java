@@ -354,6 +354,18 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     		"   ?s dad-prop:time-period ?time\n" +
     		"}";
 
+    /** Get bare codelist items. */
+    private static final String GET_BARE_CODELIST_ITEMS = "" +
+            "PREFIX qb: <http://purl.org/linked-data/cube#>\n" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
+            "select distinct ?o where { \n" +
+            "  ?obs a qb:Observation.\n" +
+            "  ?obs ?p ?o.\n" +
+            "  ?p a qb:CodedProperty.\n" +
+            "  FILTER NOT EXISTS { ?o skos:notation ?notation}\n" +
+            "}";
+
+
     // @formatter:on
 
     /*
@@ -1354,6 +1366,13 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     @Override
     public void deleteUserTriple(TripleDTO triple, CRUser user) throws DAOException {
         deleteUserTriple(triple, user, true);
+    }
+
+    @Override
+    public List<String> getBareCodelistElements() throws DAOException {
+
+        List<String> resultList = executeSPARQL(GET_BARE_CODELIST_ITEMS, new SingleObjectReader<String>());
+        return resultList;
     }
 
     /**

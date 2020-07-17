@@ -289,4 +289,6 @@ public interface ScoreboardSparqlDAO extends DAO {
     void addUserTriple(TripleDTO triple, CRUser user) throws DAOException;
 
     void deleteUserTriple(TripleDTO triple, CRUser user) throws DAOException;
+
+    List<String> getBareCodelistElements() throws DAOException;
 }

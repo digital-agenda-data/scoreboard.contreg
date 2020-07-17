@@ -31,6 +31,9 @@
                 <li><stripes:link href="/admin/migrationPackages.action">Dataset migration packages prepared in this CR</stripes:link></li>
                 <li><stripes:link href="/admin/migrations.action">List/start dataset migrations</stripes:link></li>
             </ul>
+            <ul style="padding-top:10px">
+                <li><stripes:link href="/admin/bareCodelistElements.action">Code list elements without metadata</stripes:link></li>
+            </ul>
         </c:when>
         <c:otherwise>
             <div class="error-msg">Access not allowed!</div>
