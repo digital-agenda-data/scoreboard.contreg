@@ -1545,10 +1545,18 @@ public class VirtuosoHelperDAO extends VirtuosoBaseDAO implements HelperDAO {
             + "} order by ?pred ?label";
 
     /** */
-    private static final String GET_PREDICATE_OBJECTS = "select ?obj ?objLabel ?g " + "where {graph ?g {"
-            + "?s ?p ?obj. filter(?s=iri(?subjectUri) and ?p=iri(?predicateUri))}" + ". optional {?obj <" + Predicates.RDFS_LABEL
-            + "> ?objLabel}" + "} order by str(bif:either(isLiteral(?obj),?obj,bif:coalesce(?objLabel,str(?obj)))) " + "limit "
-            + PredicateObjectsReader.PREDICATE_PAGE_SIZE + " offset ";
+    private static final String GET_PREDICATE_OBJECTS = "select \n" +
+            "?obj min(str(bif:either(isLiteral(?obj),?obj,bif:coalesce(?objLabel,str(?obj))))) as ?lbl min(?objLabel) as ?objLabel min(?g) as ?g \n" +
+            "where \n" +
+            "{graph ?g { \n" +
+            "   ?s ?p ?obj. \n" +
+            "   filter(?s=iri(?subjectUri) and ?p=iri(?predicateUri)) \n" +
+            "   }. \n" +
+            "   optional {?obj <" + Predicates.RDFS_LABEL + "> ?objLabel} \n" +
+            "} \n" +
+            "group by ?obj \n" +
+            "order by ?lbl limit " + PredicateObjectsReader.PREDICATE_PAGE_SIZE + " offset ";
+
     // @formatter:on
 
     /*
