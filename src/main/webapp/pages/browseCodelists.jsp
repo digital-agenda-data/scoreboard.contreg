@@ -34,6 +34,13 @@
                             return true;
                         });
 
+                        $("#freeText").keypress(function(e) {
+                            if (e.keyCode == 13) {
+                                e.preventDefault();
+                                $("#searchSubmit").click();
+                            }
+                        });
+
                     });
             } ) ( jQuery );
         // ]]>
@@ -76,8 +83,9 @@
             </div>
             <div>
                 <label for="freeText" class="question inline-left w-80">Free text:</label>
-                <stripes:text id="freeText" name="freeText"/>&nbsp;<stripes:submit name="search" value="Search" title="Search based on above selections and free text."/>
+                <stripes:text id="freeText" name="freeText"/>&nbsp;<stripes:submit id="searchSubmit" name="search" value="Search" title="Search based on above selections and free text."/>
             </div>
+
         </crfn:form>
     </div>
 
