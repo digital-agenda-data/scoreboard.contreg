@@ -10,12 +10,19 @@ import java.net.URL;
 
 public enum XLWrapUploadType {
 
-    INDICATOR("Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"), INDICATOR_GROUP(
-            "Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"), BREAKDOWN(
-            "Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"), BREAKDOWN_GROUP(
+    INDICATOR(
+            "Indicators metadata", "File containing metadata of the Digital Agenda Scoreboard indicators"),
+    INDICATOR_GROUP(
+            "Indicator groups metadata", "File containing metadata of the Digital Agenda Scoreboard indicator groups"),
+    BREAKDOWN(
+            "Breakdowns metadata", "File containing metadata of the Digital Agenda Scoreboard breakdowns"),
+    BREAKDOWN_GROUP(
             "Breakdown groups metadata", "File containing metadata of the Digital Agenda Scoreboard breakdown groups"),
-    UNIT_MEASURE("Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"), SOURCE(
-            "Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"), OBSERVATION(
+    UNIT_MEASURE(
+            "Units metadata", "File containing metadata of the Digital Agenda Scoreboard units"),
+    SOURCE(
+            "Data sources metadata", "File containing metadata of the Digital Agenda Scoreboard data sources"),
+    OBSERVATION(
             "Observations", "File containing Digital Agenda Scoreboard observations", "", Subjects.DATACUBE_OBSERVATION);
 
     /** */

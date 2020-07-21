@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import eionet.cr.dao.*;
+import eionet.cr.dao.util.UriLabelPair;
 import eionet.cr.dto.*;
 import eionet.cr.util.*;
 import eionet.cr.web.security.CRUser;
@@ -57,7 +58,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
     // @formatter:off
 
     /** The Constant GET_CODELISTS_SPARQL. */
-    private static final String GET_CODELISTS_SPARQL = "" +
+    private static final String GET_CODELISTS_BY_URI_PREFIX_SPARQL = "" +
             "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n" +
             "select\n" +
             "  ?uri as ?" + PairReader.LEFTCOL + " min(?prefLabel) as ?" + PairReader.RIGHTCOL + "\n" +
@@ -67,6 +68,21 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "  optional {?uri skos:prefLabel ?prefLabel}\n" +
             "}\n" +
             "group by ?uri order by ?uri";
+
+    private static final String GET_CODELISTS_SPARQL = "" +
+            "PREFIX qb: <http://purl.org/linked-data/cube#> \n" +
+            "PREFIX skos: <http://www.w3.org/2004/02/skos/core#> \n" +
+            "PREFIX dad-prop: <http://semantic.digital-agenda-data.eu/def/property/> \n" +
+            "\n" +
+            "select distinct ?codelistUri as ?" + PairReader.LEFTCOL + " ?prefLabel as ?" + PairReader.RIGHTCOL +
+            " where { \n" +
+            "  { ?d a qb:DataSet; qb:structure [qb:component [qb:dimension ?prop]] }\n" +
+            "    UNION { ?d a qb:DataSet; qb:structure [qb:component [qb:attribute ?prop]] }\n" +
+            "    UNION { ?x dad-prop:grouped-using ?prop.}\n" +
+            "    ?prop qb:codeList ?codelistUri.\n" +
+            "    optional {?codelistUri skos:prefLabel ?prefLabel}\n" +
+            "}\n" +
+            "order by str(coalesce(?prefLabel, ?codelistUri))";
 
     /** The Constant GET_CODELIST_ITEMS_SPARQL. */
     private static final String GET_CODELIST_ITEMS_SPARQL = "" +
@@ -383,8 +399,34 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         Bindings bindings = new Bindings();
         bindings.setString("uriStartsWith", uriStartsWith);
 
-        List<Pair<String, String>> list = executeSPARQL(GET_CODELISTS_SPARQL, bindings, new PairReader<String, String>());
+        List<Pair<String, String>> list = executeSPARQL(GET_CODELISTS_BY_URI_PREFIX_SPARQL, bindings, new PairReader<String, String>());
         return list;
+    }
+
+    @Override
+    public List<UriLabelPair> getCodelists() throws DAOException {
+
+        List<UriLabelPair> resultList = new ArrayList<>();
+        List<Pair<String, String>> pairs = executeSPARQL(GET_CODELISTS_SPARQL, new PairReader<String, String>());
+        for (Pair<String, String> pair : pairs) {
+            UriLabelPair uriLabelPair = UriLabelPair.create(pair.getLeft(), pair.getRight());
+            resultList.add(uriLabelPair);
+        }
+
+        return resultList;
+    }
+
+    @Override
+    public boolean isCodelist(String uri) throws DAOException {
+
+        List<UriLabelPair> codelists = getCodelists();
+        for (UriLabelPair pair : codelists) {
+            if (uri.equals(pair.getUri())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override

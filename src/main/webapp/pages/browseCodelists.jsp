@@ -64,7 +64,7 @@
                 <label for="codelistsSelect" class="question inline-left w-80">Codelist:</label>
                 <stripes:select id="codelistsSelect" name="codelistUri" value="${actionBean.codelistUri}" onchange="this.form.submit();" title="${actionBean.codelistUri}">
                     <c:forEach items="${actionBean.codelists}" var="codelist">
-                        <stripes:option value="${codelist.left}" label="${codelist.right}" title="${codelist.left}"/>
+                        <stripes:option value="${codelist.uri}" label="${codelist.label}" title="${codelist.uri}"/>
                     </c:forEach>
                 </stripes:select>&nbsp;
                 <stripes:submit name="metadata" value="Codelist metadata" title="Go to the factsheet about the metadata of the selected codelist."/>&nbsp;

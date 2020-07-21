@@ -20,6 +20,9 @@
  */
 package eionet.cr.dao.util;
 
+import eionet.cr.util.URIUtil;
+import org.apache.commons.lang.StringUtils;
+
 /**
  *
  * @author <a href="mailto:jaanus.heinlaid@tietoenator.com">Jaanus Heinlaid</a>
@@ -56,7 +59,7 @@ public class UriLabelPair implements Comparable {
      * @return the label
      */
     public String getLabel() {
-        return label;
+        return StringUtils.isBlank(label) ? URIUtil.extractURILabel(uri, uri) : label;
     }
 
     /*

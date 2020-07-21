@@ -28,14 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import eionet.cr.dao.*;
 import org.apache.commons.lang.StringUtils;
 
 import eionet.cr.common.Predicates;
 import eionet.cr.common.Subjects;
-import eionet.cr.dao.DAOException;
-import eionet.cr.dao.DAOFactory;
-import eionet.cr.dao.HarvestSourceDAO;
-import eionet.cr.dao.HelperDAO;
 import eionet.cr.dto.HarvestSourceDTO;
 import eionet.cr.dto.SubjectDTO;
 import eionet.cr.web.action.BrowseCodelistsActionBean;
@@ -74,6 +71,9 @@ public final class FactsheetTabMenuHelper {
 
     /** The subject's RDF types. */
     private HashSet<String> rdfTypes = new HashSet<String>();
+
+    /** */
+    private Boolean isScoreboardCodelist = null;
 
     /**
      *
@@ -314,8 +314,22 @@ public final class FactsheetTabMenuHelper {
      * @return
      */
     private boolean isScoreboardCodelist() {
-        String uri = subject.getUri();
-        return rdfTypes.contains(Subjects.SKOS_CONCEPT_SCHEME) && uri.startsWith(BrowseCodelistsActionBean.CODELISTS_PREFIX);
+
+        if (isScoreboardCodelist != null) {
+            return isScoreboardCodelist.booleanValue();
+        }
+
+        if (subject == null) {
+            return false;
+        }
+
+        try {
+            isScoreboardCodelist = DAOFactory.get().getDao(ScoreboardSparqlDAO.class).isCodelist(subject.getUri());
+        } catch (DAOException e) {
+            return false;
+        }
+
+        return isScoreboardCodelist;
     }
 
     /**

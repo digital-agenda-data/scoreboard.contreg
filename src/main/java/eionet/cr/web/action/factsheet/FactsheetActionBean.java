@@ -27,7 +27,7 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import eionet.cr.util.URIUtil;
+import eionet.cr.util.*;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.HandlesEvent;
@@ -69,9 +69,6 @@ import eionet.cr.harvest.HarvestException;
 import eionet.cr.harvest.OnDemandHarvester;
 import eionet.cr.harvest.scheduled.UrgentHarvestQueue;
 import eionet.cr.harvest.util.CsvImportUtil;
-import eionet.cr.util.Pair;
-import eionet.cr.util.URLUtil;
-import eionet.cr.util.Util;
 import eionet.cr.web.action.AbstractActionBean;
 import eionet.cr.web.action.BrowseCodelistsActionBean;
 import eionet.cr.web.action.source.ViewSourceActionBean;
@@ -194,6 +191,9 @@ public class FactsheetActionBean extends AbstractActionBean {
 
     /** */
     private String sourceUri;
+
+    /** */
+    private Boolean isScoreboardCodelist = null;
 
     /**
      *
@@ -981,18 +981,18 @@ public class FactsheetActionBean extends AbstractActionBean {
      *
      * @return
      */
-    public boolean isScoreboardCodelist() {
+    public boolean isScoreboardCodelist() throws DAOException {
 
-        if (fullSubjectDTO == null) {
+        if (isScoreboardCodelist != null) {
+            return isScoreboardCodelist.booleanValue();
+        }
+
+        if (subject == null) {
             return false;
         }
 
-        Collection<String> types = fullSubjectDTO.getObjectValues(Predicates.RDF_TYPE);
-        if (types != null && types.contains(Subjects.SKOS_CONCEPT_SCHEME)) {
-            return fullSubjectDTO.getUri().startsWith(BrowseCodelistsActionBean.CODELISTS_PREFIX);
-        } else {
-            return false;
-        }
+        isScoreboardCodelist = DAOFactory.get().getDao(ScoreboardSparqlDAO.class).isCodelist(subject.getUri());
+        return isScoreboardCodelist;
     }
 
     /**

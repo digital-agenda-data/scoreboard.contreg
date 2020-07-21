@@ -6,6 +6,7 @@ import eionet.cr.common.TempFilePathGenerator;
 import eionet.cr.dao.DAOException;
 import eionet.cr.dao.DAOFactory;
 import eionet.cr.dao.ScoreboardSparqlDAO;
+import eionet.cr.dao.util.UriLabelPair;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.util.FileDeletionJob;
@@ -48,7 +49,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
             Predicates.FOAF_NAME};
 
     /** */
-    private List<Pair<String, String>> codelists;
+    private List<UriLabelPair> codelists;
 
     /** */
     private List<SkosItemDTO> codelistItems;
@@ -68,14 +69,14 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
 
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            codelists = dao.getCodelists(CODELISTS_PREFIX);
+            codelists = dao.getCodelists();
         } catch (DAOException e) {
-            LOGGER.error("Error when retrieving codelists whose URI starts with " + CODELISTS_PREFIX, e);
+            LOGGER.error("Error when retrieving codelists", e);
             addWarningMessage("A technical error occurred when when retrieving available codelists" + e.getMessage());
         }
 
         if (StringUtils.isBlank(codelistUri) && codelists != null && !codelists.isEmpty()) {
-            codelistUri = codelists.iterator().next().getLeft();
+            codelistUri = codelists.iterator().next().getUri();
         }
 
         if (StringUtils.isNotBlank(codelistUri)) {
@@ -98,7 +99,6 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
                 }
             } else {
                 LOGGER.error("Failed to find codelist upload type by this codelist URI: " + codelistUri);
-                addWarningMessage("A technical error occurred when detecting codelist type from codelist URI");
             }
         }
 
@@ -188,7 +188,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
         String codelistGraphUri = codelistUri.endsWith("/") ? codelistUri : codelistUri + "/";
         XLWrapUploadType uploadType = XLWrapUploadType.getByGraphUri(codelistGraphUri);
         if (uploadType == null) {
-            addWarningMessage("Technical error: failed to detect codelist type from submitted inputs!");
+            addWarningMessage("Export not supported for this codelist type!");
             return defaultEvent();
         }
 
@@ -307,7 +307,7 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
     /**
      * @return the codelists
      */
-    public List<Pair<String, String>> getCodelists() {
+    public List<UriLabelPair> getCodelists() {
         return codelists;
     }
 

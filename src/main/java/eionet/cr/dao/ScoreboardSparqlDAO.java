@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import eionet.cr.dao.util.UriLabelPair;
 import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.dto.TripleDTO;
@@ -54,6 +55,10 @@ public interface ScoreboardSparqlDAO extends DAO {
      *             If database access error happens.
      */
     List<Pair<String, String>> getCodelists(String uriStartsWith) throws DAOException;
+
+    List<UriLabelPair> getCodelists() throws DAOException;
+
+    boolean isCodelist(String uri) throws DAOException;
 
     /**
      * Return all items in the codelist by the given URI.
