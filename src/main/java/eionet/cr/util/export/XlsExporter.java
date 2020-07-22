@@ -42,7 +42,7 @@ import eionet.cr.util.Pair;
 import eionet.cr.util.pagination.PagingRequest;
 
 /**
- * @author Enriko Käsper, TietoEnator Estonia AS XlsExporter
+ * @author Enriko Käsper
  */
 
 public class XlsExporter extends Exporter implements SubjectExportEvent {
@@ -56,7 +56,6 @@ public class XlsExporter extends Exporter implements SubjectExportEvent {
     /**
      * exports custom search to XLS format.
      *
-     * @param customSearch
      * @return
      * @throws IOException
      * @throws DAOException

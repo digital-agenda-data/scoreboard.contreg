@@ -11,6 +11,7 @@ import eionet.cr.dto.SearchResultDTO;
 import eionet.cr.dto.SkosItemDTO;
 import eionet.cr.util.FileDeletionJob;
 import eionet.cr.util.Pair;
+import eionet.cr.util.export.CodelistExportType;
 import eionet.cr.util.xlwrap.XLWrapUploadType;
 import eionet.cr.util.xlwrap.XLWrapUtil;
 import eionet.cr.web.action.factsheet.FactsheetActionBean;
@@ -25,6 +26,7 @@ import org.apache.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -185,72 +187,84 @@ public class BrowseCodelistsActionBean extends AbstractActionBean {
             return defaultEvent();
         }
 
+        String itemRdfType = null;
+        Map<String, Integer> propsToSpreadsheetCols = null;
+        File spreadsheetTemplate = null;
+        File destinationFile = null;
+
         String codelistGraphUri = codelistUri.endsWith("/") ? codelistUri : codelistUri + "/";
         XLWrapUploadType uploadType = XLWrapUploadType.getByGraphUri(codelistGraphUri);
-        if (uploadType == null) {
-            addWarningMessage("Export not supported for this codelist type!");
-            return defaultEvent();
-        }
+        if (uploadType != null) {
 
-        String itemRdfType = uploadType.getSubjectsTypeUri();
-        if (StringUtils.isBlank(itemRdfType)) {
-            addWarningMessage("Technical error: failed to detect the RDF type of this codelist's items!");
-            return defaultEvent();
-        }
-
-        File mappingTemplate = uploadType.getMappingTemplate();
-        if (mappingTemplate == null || !mappingTemplate.exists() || !mappingTemplate.isFile()) {
-            addWarningMessage("Technical error: failed to locate the corresponding spreadsheet mapping file!");
-            return defaultEvent();
-        }
-
-        LOGGER.debug("uploadType = " + uploadType);
-        LOGGER.debug("itemRdfType = " + itemRdfType);
-        LOGGER.debug("mappingTemplate = " + mappingTemplate);
-
-        Map<String, Integer> propsToSpreadsheetCols = null;
-        try {
-            propsToSpreadsheetCols = XLWrapUtil.getPropsToSpreadsheetCols(mappingTemplate);
-            if (propsToSpreadsheetCols == null || propsToSpreadsheetCols.isEmpty()) {
-                addWarningMessage("Found no property-to-spreadsheet-column mappings in the mapping file!");
+            itemRdfType = uploadType.getSubjectsTypeUri();
+            if (StringUtils.isBlank(itemRdfType)) {
+                addWarningMessage("Technical error: failed to detect the RDF type of this codelist's items!");
                 return defaultEvent();
             }
-        } catch (IOException e) {
-            LOGGER.error("I/O error when trying to parse the spreadsheet mapping file!", e);
-            addWarningMessage("Technical error: I/O error when trying to parse the spreadsheet mapping file!");
-            return defaultEvent();
-        } catch (XLWrapException e) {
-            LOGGER.error("XLWrapException when trying to parse the spreadsheet mapping file!", e);
-            addWarningMessage("Technical error: parsing error when parsing the spreadsheet mapping file!");
-            return defaultEvent();
+
+            File mappingTemplate = uploadType.getMappingTemplate();
+            if (mappingTemplate == null || !mappingTemplate.exists() || !mappingTemplate.isFile()) {
+                addWarningMessage("Technical error: failed to locate the corresponding spreadsheet mapping file!");
+                return defaultEvent();
+            }
+
+            LOGGER.debug("uploadType = " + uploadType);
+            LOGGER.debug("itemRdfType = " + itemRdfType);
+            LOGGER.debug("mappingTemplate = " + mappingTemplate);
+
+            try {
+                propsToSpreadsheetCols = XLWrapUtil.getPropsToSpreadsheetCols(mappingTemplate);
+                if (propsToSpreadsheetCols == null || propsToSpreadsheetCols.isEmpty()) {
+                    addWarningMessage("Found no property-to-spreadsheet-column mappings in the mapping file!");
+                    return defaultEvent();
+                }
+            } catch (IOException e) {
+                LOGGER.error("I/O error when trying to parse the spreadsheet mapping file!", e);
+                addWarningMessage("Technical error: I/O error when trying to parse the spreadsheet mapping file!");
+                return defaultEvent();
+            } catch (XLWrapException e) {
+                LOGGER.error("XLWrapException when trying to parse the spreadsheet mapping file!", e);
+                addWarningMessage("Technical error: parsing error when parsing the spreadsheet mapping file!");
+                return defaultEvent();
+            }
+
+            LOGGER.debug("propsToSpreadsheetCols = " + propsToSpreadsheetCols);
+
+            spreadsheetTemplate = uploadType.getSpreadsheetTemplate();
+            if (spreadsheetTemplate == null || !spreadsheetTemplate.exists() || !spreadsheetTemplate.isFile()) {
+                addWarningMessage("Technical error: failed to locate the corresponding spreadsheet template!");
+                return defaultEvent();
+            }
+
+            destinationFile = TempFilePathGenerator.generate(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
+        } else {
+
+            CodelistExportType exportType = CodelistExportType.getByCodelistUri(codelistUri);
+            if (exportType == null) {
+                addWarningMessage("Export not supported for this codelist type!");
+                return defaultEvent();
+            }
+
+            propsToSpreadsheetCols = exportType.getPropertiesToColumnsMapping();
+            spreadsheetTemplate = exportType.getSpreadsheetTemplateFile();
+            destinationFile = TempFilePathGenerator.generate(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
         }
 
-        LOGGER.debug("propsToSpreadsheetCols = " + propsToSpreadsheetCols);
-
-        File spreadsheetTemplate = uploadType.getSpreadsheetTemplate();
-        if (spreadsheetTemplate == null || !spreadsheetTemplate.exists() || !spreadsheetTemplate.isFile()) {
-            addWarningMessage("Technical error: failed to locate the corresponding spreadsheet template!");
-            return defaultEvent();
-        }
-        LOGGER.debug("spreadsheetTemplate = " + spreadsheetTemplate);
-
-        File destFile = TempFilePathGenerator.generate(XLWrapUploadType.SPREADSHEET_FILE_EXTENSION);
         try {
-            FileUtils.copyFile(spreadsheetTemplate, destFile);
+            FileUtils.copyFile(spreadsheetTemplate, destinationFile);
         } catch (IOException e) {
             LOGGER.error("Error when creating instance file from the located spreadsheet template!", e);
             addWarningMessage("Technical error when creating instance file from the located spreadsheet template!");
             return defaultEvent();
         }
-        LOGGER.debug("destFile = " + destFile);
 
         ScoreboardSparqlDAO dao = DAOFactory.get().getDao(ScoreboardSparqlDAO.class);
         try {
-            int itemCount = dao.exportCodelistItems(itemRdfType, spreadsheetTemplate, propsToSpreadsheetCols, destFile);
+            int itemCount = dao.exportCodelistItems(codelistUri, spreadsheetTemplate, propsToSpreadsheetCols, destinationFile);
             LOGGER.debug("Number of exported codelist items = " + itemCount);
-            return streamToResponse(destFile, spreadsheetTemplate.getName());
+            return streamToResponse(destinationFile, spreadsheetTemplate.getName());
         } catch (DAOException e) {
-            LOGGER.error("Error when exporting " + codelistUri + " to " + destFile, e);
+            LOGGER.error("Error when exporting " + codelistUri + " to " + destinationFile, e);
             addWarningMessage("Codelist export failed with technical error: " + e.getMessage());
             return defaultEvent();
         }

@@ -126,9 +126,9 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
             "select\n" +
             "  ?s ?p ?o ?memberOf ?order\n" +
             "where {\n" +
-            "  ?s a ?type.\n" +
-            "  ?s ?p ?o\n" +
-            "  filter (?type = ?typeValue)\n" +
+            "  ?scheme skos:hasTopConcept ?s \n" +
+            "  filter (?scheme = ?schemeUri) \n" +
+            "  ?s ?p ?o \n" +
             "  optional {filter (?p = prop:membership) \n" +
             "            ?o prop:member-of ?memberOf . \n" +
             "            optional {?o prop:order ?order}} \n" +
@@ -672,9 +672,9 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
      */
     @SuppressWarnings("unchecked")
     @Override
-    public int exportCodelistItems(String itemType, File templateFile, Map<String, Integer> mappings, File targetFile) throws DAOException {
+    public int exportCodelistItems(String codelistUri, File templateFile, Map<String, Integer> mappings, File targetFile) throws DAOException {
 
-        if (StringUtils.isBlank(itemType)) {
+        if (StringUtils.isBlank(codelistUri)) {
             throw new IllegalArgumentException("Items RDF type must not be blank!");
         }
         if (templateFile == null || !templateFile.exists() || !templateFile.isFile()) {
@@ -685,7 +685,7 @@ public class VirtuosoScoreboardSparqlDAO extends VirtuosoBaseDAO implements Scor
         if (mappings != null && !mappings.isEmpty()) {
 
             Bindings bindings = new Bindings();
-            bindings.setURI("typeValue", itemType);
+            bindings.setURI("schemeUri", codelistUri);
 
             CodelistExporter exporter = new CodelistExporter(templateFile, mappings, targetFile);
             executeSPARQL(EXPORT_CODELIST_ITEMS_SPARQL, bindings, exporter);

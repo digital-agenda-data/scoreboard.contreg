@@ -59,7 +59,7 @@ public class UriLabelPair implements Comparable {
      * @return the label
      */
     public String getLabel() {
-        return StringUtils.isBlank(label) ? URIUtil.extractURILabel(uri, uri) : label;
+        return label;
     }
 
     /*
